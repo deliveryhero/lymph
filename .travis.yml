@@ -1,0 +1,54 @@
+language: python
+
+python:
+    - 2.7
+    - 3.3
+# TODO: Waiting for https://github.com/travis-ci/travis-ci/issues/1989
+#    - 3.4
+
+cache:
+    apt: true
+    directories:
+        - /home/travis/pip-wheels
+        - /home/travis/pip-cache
+
+services:
+    - postgres
+
+before_install:
+    - curl http://packages.elasticsearch.org/GPG-KEY-elasticsearch | sudo apt-key add -
+    - echo "deb http://packages.elasticsearch.org/elasticsearch/1.0/debian stable main" | sudo tee -a /etc/apt/sources.list
+    - sudo apt-get update -qq
+    - export PIP_FIND_LINKS=/home/travis/pip-wheels
+    - export PIP_WHEEL_DIR=/home/travis/pip-wheels
+    - export PIP_DOWNLOAD_CACHE=/home/travis/pip-cache
+    - pip install -U pip
+    - pip install wheel
+    - pip wheel cython
+    - pip install cython
+    - pip wheel . -r requirements/dev.txt pip wheel
+
+
+install:
+    - sudo apt-get install
+      elasticsearch
+      zookeeper
+    - sudo service elasticsearch start
+    - pip install --no-index .
+
+
+before_script:
+    - psql -c 'create database "iris-s1";' -U postgres
+    - psql -c 'create database "iris-s2";' -U postgres
+    - export ZOOKEEPER_PATH=/usr/share/java
+
+script:
+    - wget -q --tries=10 --retry-connrefused  http://localhost:9200/ -O /dev/null
+    - mkdir -p tmp
+    - pushd tmp
+    - nosetests --with-iris iris
+    - popd
+
+notifications:
+    email: false
+
