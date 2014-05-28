@@ -1,3 +1,7 @@
+.. image:: https://travis-ci.org/deliveryhero/iris.svg?branch=master
+    :target: https://travis-ci.org/deliveryhero/iris
+
+
 Iris
 ====
 
