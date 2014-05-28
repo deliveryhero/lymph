@@ -1,6 +1,7 @@
 .tox
 .coverage
 .coverage-report
+.iris.yml
 *.pyc
 /env/
 /iris.egg-info/
