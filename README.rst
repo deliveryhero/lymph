@@ -8,6 +8,8 @@ iris is an opinionated framework for Python services. Its features are
 * Events: pluggable and reliable pub-sub messaging (e.g. backed by RabbitMQ)
 * Process Management
 
+There's `documentation <http://iris.readthedocs.org/>`_ on readthedocs.org.
+
 
 Installation (as a dependency)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
