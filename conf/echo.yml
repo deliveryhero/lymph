@@ -1,0 +1,3 @@
+interfaces:
+    echo:
+        class: echo:EchoService

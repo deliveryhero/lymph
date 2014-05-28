@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>iris monitor</title>
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.4.6/rickshaw.min.css" />
+    <style type="text/css">
+    body{font-family: Arial; padding: 0px 50px;}
+    h1{font-family: "Arial Black"; color: #222;}
+    h1 img{padding: 10px 10px 0px 0px;float: left;}
+    </style>
+</head>
+<body>
+    <h1><img src="/static/iris.svg" height="30"/>monitor</h1>
+    <div id="chart"></div>
+    <div id="legend"></div>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/2.4.1/lodash.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/rickshaw/1.4.6/rickshaw.min.js"></script>
+    <script type="text/javascript">
+    (function(){
+        var COLORS = ['red', 'orange', 'green', 'blue', 'purple', 'black', 'brown'];
+        var palette = new Rickshaw.Color.Palette( { scheme: 'cool' } );
+        var series = [{name: 'PLACEHOLDER', data: [{x: 0,y: 0}]}];
+        
+        var graph = new Rickshaw.Graph({
+            element: document.querySelector("#chart"),
+            renderer: 'scatterplot',
+            width: 1000,
+            height: 300,
+            series: series
+        });
+        graph.render();
+        
+        var hoverDetail = new Rickshaw.Graph.HoverDetail({
+            graph: graph
+        });
+        
+        var xAxis = new Rickshaw.Graph.Axis.Time({
+            graph: graph
+        });
+
+        xAxis.render();
+
+        var yAxis = new Rickshaw.Graph.Axis.Y({
+            graph: graph
+        });
+
+        yAxis.render();
+        
+        function updateSeries(name, data){
+            if(series[0].name == 'PLACEHOLDER'){
+                series.splice(0, 1);
+            }
+            var s = _.find(series, function(s){return s.name == name;});
+            if(_.isUndefined(s)){
+                s = {name: name, data: data, color: palette.color()};
+                series.push(s);
+            }
+            else{
+                s.data = data;
+            }
+            graph.update();
+            return s;
+        }
+        
+        function loadData(){
+            $.ajax('/api/stats/', {
+                dataType: 'json',
+                success: function(data){
+                    _.each(data, function(s){
+                        updateSeries(s.name, s.data);
+                    });
+                }
+            });
+        }
+        setInterval(loadData, 2000);
+    })();
+    </script>
+</body>
+</html>

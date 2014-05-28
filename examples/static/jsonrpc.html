@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head></head>
+<body>
+    <h1>jsonrpc</h1>
+    <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+    <script type="text/javascript" src="/static/jquery.json.js"></script>
+    <script type="text/javascript" src="/static/jquery.jsonrpcclient.js"></script>
+    <script type="text/javascript">
+        IrisClient = function(serviceType){
+            this.jsonrpc = new $.JsonRpcClient({ajaxUrl: '/api/jsonrpc/' + serviceType + '/'});
+        };
+        IrisClient.prototype.call = function(method, args, callback){
+            this.jsonrpc.call(method, [args], callback || console.log, function(){});
+        };
+    </script>
+</body>
+</html>

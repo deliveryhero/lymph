@@ -1,0 +1,10 @@
+[run]
+omit = 
+
+[html]
+directory = .coverage-report
+
+[report]
+exclude_lines = 
+    raise NotImplementedError
+    __import__\('pkg_resources'\).declare_namespace\(__name__\)

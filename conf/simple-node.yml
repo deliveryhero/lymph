@@ -1,0 +1,21 @@
+registry:
+    class: iris.discovery.service:IrisCoordinatorServiceRegistry
+    coordinator_endpoint: tcp://127.0.0.1:42400
+
+
+event_system:
+    class: iris.events.simple:SimpleEventSystem
+
+
+instances:
+    broker:
+        command: iris instance --config=conf/simple-node.yml --interface=iris.services.broker:Broker
+    
+    coordinator:
+        command: iris instance --config=conf/simple-node.yml --interface=iris.services.coordinator:Coordinator --port=42400
+    
+    echo:
+        command: iris instance --config=conf/echo.yml
+
+    demo:
+        command: iris instance --config=conf/demo.yml

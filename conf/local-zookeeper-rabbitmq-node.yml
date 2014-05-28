@@ -1,0 +1,17 @@
+registry:
+    class: iris.discovery.zookeeper:ZookeeperServiceRegistry
+    hosts: 127.0.0.1:2181
+
+
+event_system:
+    class: iris.events.kombu:KombuEventSystem
+    transport: amqp
+    hostname: 127.0.0.1
+
+
+instances:
+    echo:
+        command: iris instance --config=conf/echo.yml
+
+    demo:
+        command: iris instance --config=conf/demo.yml
