@@ -11,6 +11,7 @@ before_install:
 
 install:
     - sudo apt-get install zookeeper
+    - pip install -r requirements/base.txt
     - pip install .
 
 
