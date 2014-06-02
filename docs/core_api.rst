@@ -7,10 +7,6 @@ Core API
 
 .. class:: ServiceContainer
 
-    .. attribute:: logger
-
-        A unique python ``logging.Logger`` instance for this service
-
     .. classmethod:: from_config(config, **kwargs)
 
     .. method:: start()
