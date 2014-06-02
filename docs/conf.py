@@ -40,7 +40,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'iris'
-copyright = u'2013, deliveryhero'
+copyright = u'2013–2014, Delivery Hero Holding GmbH'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
