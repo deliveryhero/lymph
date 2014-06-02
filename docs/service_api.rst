@@ -32,11 +32,6 @@ Service API
         The service identifier that is used to register this service with the coordinator service.
         ``service_type`` is usually set as a class attribute.
 
-    .. attribute:: logger
-
-        A unique python ``logging.Logger`` instance for this service
-
-
     .. method:: on_start()
 
         Called when the service is started
