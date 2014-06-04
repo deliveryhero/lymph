@@ -3,8 +3,7 @@ language: python
 python:
     - 2.7
     - 3.3
-# TODO: Waiting for https://github.com/travis-ci/travis-ci/issues/1989
-#    - 3.4
+    - 3.4
 
 before_install:
     - pip install cython
