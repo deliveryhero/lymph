@@ -21,7 +21,8 @@ class TestStore(unittest.TestCase):
                                      'float': 3.4,
                                      'dict': {'one': 1, 'two': 'dos'},
                                      'date': datetime.date(2014, 5, 2),
-                                     'bool': True})
+                                     'bool': True,
+                                     'list': [1, 2, 3]})
         with patch('uuid.uuid4', Mock(hex='testuuid')):
             index.index(event)
         es_event = self.es.get(index='index_test_name', id='testuuid')
@@ -33,4 +34,5 @@ class TestStore(unittest.TestCase):
         self.assertEquals(es_event['_source']['d_date'], datetime.date(
             2014, 5, 2))
         self.assertEquals(es_event['_source']['b_bool'], True)
+        self.assertEquals(es_event['_source']['l_list'], [1, 2, 3])
         self.assertEquals(es_event['_source']['type'], 'test_event')

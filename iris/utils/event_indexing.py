@@ -29,6 +29,8 @@ class EventIndex(object):
         elif isinstance(value, dict):
             type_prefix = 'o'
             value = self.prepare_object(value)
+        elif isinstance(value, list):
+            type_prefix = 'l'
         elif isinstance(value, (datetime, date)):
             type_prefix = 'd'
         else:
