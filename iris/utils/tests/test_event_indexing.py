@@ -1,3 +1,4 @@
+import datetime
 import unittest
 from iris.utils.event_indexing import EventIndex
 from iris.core.events import Event
@@ -18,7 +19,9 @@ class TestStore(unittest.TestCase):
         event = Event('test_event', {'number': 3,
                                      'string': 'hi',
                                      'float': 3.4,
-                                     'dict': {'one': 1, 'two': 'dos'}})
+                                     'dict': {'one': 1, 'two': 'dos'},
+                                     'date': datetime.date(2014, 5, 2),
+                                     'bool': True})
         with patch('uuid.uuid4', Mock(hex='testuuid')):
             index.index(event)
         es_event = self.es.get(index='index_test_name', id='testuuid')
@@ -27,4 +30,7 @@ class TestStore(unittest.TestCase):
         self.assertEquals(es_event['_source']['f_float'], 3.4)
         self.assertEquals(es_event['_source']['o_dict'], {'s_two': 'dos',
                                                           'i_one': 1})
+        self.assertEquals(es_event['_source']['d_date'], datetime.date(
+            2014, 5, 2))
+        self.assertEquals(es_event['_source']['b_bool'], True)
         self.assertEquals(es_event['_source']['type'], 'test_event')

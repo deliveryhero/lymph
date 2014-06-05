@@ -18,7 +18,9 @@ class EventIndex(object):
                     for key, value in six.iteritems(data))
 
     def prepare_value(self, key, value):
-        if isinstance(value, six.integer_types):
+        if isinstance(value, bool):
+            type_prefix = 'b'
+        elif isinstance(value, six.integer_types):
             type_prefix = 'i'
         elif isinstance(value, six.string_types):
             type_prefix = 's'
@@ -29,8 +31,6 @@ class EventIndex(object):
             value = self.prepare_object(value)
         elif isinstance(value, (datetime, date)):
             type_prefix = 'd'
-        elif isinstance(value, bool):
-            type_prefix = 'b'
         else:
             raise TypeError('cannot index values of type %s' % type(value))
         return ('%s_%s' % (type_prefix, key)), value
