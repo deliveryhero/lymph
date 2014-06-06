@@ -68,6 +68,9 @@ class ServiceContainer(object):
         if events:
             events.install(self)
 
+    def spawn(self, func, *args, **kwargs):
+        return self.pool.spawn(func, *args, **kwargs)
+
     @classmethod
     def from_config(cls, config, **kwargs):
         config.setdefault('node_endpoint', os.environ.get('IRIS_NODE'))
@@ -141,7 +144,7 @@ class ServiceContainer(object):
     def start(self, register=True):
         self.running = True
         logger.info('starting %s at %s (pid=%s)', ', '.join(self.service_types), self.endpoint, os.getpid())
-        self.recv_loop_greenlet = self.pool.spawn(self.recv_loop)
+        self.recv_loop_greenlet = self.spawn(self.recv_loop)
         self.monitor.start()
         self.service_registry.on_start()
         self.event_system.on_start()
@@ -286,7 +289,7 @@ class ServiceContainer(object):
         connection = self.connect(msg.source)
         connection.on_recv(msg)
         if msg.is_request():
-            self.pool.spawn(self.dispatch_request, msg)
+            self.spawn(self.dispatch_request, msg)
         elif msg.is_reply():
             try:
                 channel = self.channels[msg.subject]
@@ -316,7 +319,7 @@ class ServiceContainer(object):
         if not event.evt_type:
             logger.warning("dropping event without type: %r", event)
             return
-        self.pool.spawn(self.dispatch_event, event)
+        self.spawn(self.dispatch_event, event)
 
     def dispatch_event(self, event):
         handled = False

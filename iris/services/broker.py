@@ -42,7 +42,7 @@ class Broker(Interface):
         channel.ack()
         # FIXME: complain if event_type is None
         for endpoint in broadcast_map.get(event_type):
-            self.container.pool.spawn(self.relay_msg, endpoint, channel.request.body)
+            self.container.spawn(self.relay_msg, endpoint, channel.request.body)
 
     def relay_msg(self, endpoint, msg_body):
         while True:
@@ -62,7 +62,7 @@ class Broker(Interface):
                 self.redis.srem('queues', endpoint)
             for raw_msg in queue:
                 # TODO: Why is this not using the normal serializer?
-                self.container.pool.spawn(
+                self.container.spawn(
                     self.relay_msg,
                     endpoint.decode('utf-8'),
                     msgpack.loads(raw_msg, encoding='utf-8'))

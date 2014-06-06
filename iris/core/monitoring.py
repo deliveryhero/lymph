@@ -13,7 +13,7 @@ class Monitor(object):
         self.socket.connect(monitor_endpoint)
 
     def start(self):
-        self.loop_greenlet = gevent.spawn(self.loop)
+        self.loop_greenlet = self.container.spawn(self.loop)
 
     def stop(self):
         self.loop_greenlet.kill()

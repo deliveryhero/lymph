@@ -24,7 +24,7 @@ class KafkaEventSystem(BaseEventSystem):
 
     def subscribe(self, container, event_type):
         consumer = SimpleConsumer(self.client, 'foo', event_type)
-        gevent.spawn(self._consume, consumer, container, event_type)
+        container.spawn(self._consume, consumer, container, event_type)
 
     def unsubscribe(self, container, event_type):
         pass

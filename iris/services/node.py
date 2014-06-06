@@ -94,7 +94,7 @@ class Node(Interface):
                 self.processes.append(p)
                 logger.info('starting %s', cmd)
                 p.start()
-        gevent.spawn(self.watch_processes)
+        self.container.spawn(self.watch_processes)
 
     def on_stop(self):
         logger.info("waiting for all service processes to die ...")

@@ -16,7 +16,7 @@ class Scheduler(Interface):
         self.redis = redis.StrictRedis()
 
     def on_start(self):
-        gevent.spawn(self.loop)
+        self.container.spawn(self.loop)
 
     @rpc()
     def schedule(self, channel, eta, event_type, payload):

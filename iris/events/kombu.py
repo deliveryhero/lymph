@@ -44,7 +44,7 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
 
     def start(self):
         self.should_stop = False
-        self.greenlet = gevent.spawn(self.run)
+        self.greenlet = self.container.spawn(self.run)
 
     def stop(self):
         self.should_stop = True

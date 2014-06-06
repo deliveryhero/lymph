@@ -46,8 +46,8 @@ class Connection(object):
         self.received_message_count = 0
         self.sent_message_count = 0
 
-        self.heartbeat_loop_greenlet = gevent.spawn(self.heartbeat_loop)
-        self.live_check_loop_greenlet = gevent.spawn(self.live_check_loop)
+        self.heartbeat_loop_greenlet = self.container.spawn(self.heartbeat_loop)
+        self.live_check_loop_greenlet = self.container.spawn(self.live_check_loop)
 
     def __str__(self):
         return "connection to=%s last_seen=%s" % (self.endpoint, self._dt())
