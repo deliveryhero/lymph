@@ -24,6 +24,7 @@ class RequestCommand(Command):
       --ip=<address>               Use this IP for all sockets.
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
+      --timeout=<seconds>          RPC timeout. [default: 2.0]
 
     {COMMON_OPTIONS}
     """
@@ -33,7 +34,12 @@ class RequestCommand(Command):
     def run(self, **kwargs):
         client = Client.from_config(self.config, **kwargs)
         body = json.loads(self.args.get('<params>', '{}'))
-        response = client.request(self.args['<address>'], self.args['<func>'], body)
+        try:
+            timeout = float(self.args.get('--timeout'))
+        except ValueError:
+            print("--timeout requires a number number (e.g. --timeout=0.42)")
+            return 1
+        response = client.request(self.args['<address>'], self.args['<func>'], body, timeout=timeout)
         print(response.body)
 
 
