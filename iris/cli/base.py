@@ -70,7 +70,7 @@ class ListCommand(Command):
 
     def run(self):
         for name, cls in six.iteritems(get_command_classes()):
-            print(u'%-10s   %s' % (name, cls.short_description))
+            print(u'%-15s   %s' % (name, cls.short_description))
 
 
 _command_class_cache = None
