@@ -33,16 +33,16 @@ class RequestCommandTests(CliIntegrationTestCase):
 class ListCommandTests(CliTestMixin, unittest.TestCase):
     def test_list(self):
         self.assert_lines_equal(['list'], """
-            tail         Stream the logs of one or more services.
-            emit         Manually emits an event.
-            request      Send a request message to some service and output the reply.
-            inspect      Describe the available rpc methods of a service.
-            discover     Show available services.
-            help         Display help information about iris.
-            list         List available commands.
-            subscribe    Prints events to stdout.
-            instance     Run a single service instance (one process).
-            node         Run a node service that manages a group of processes on the same machine.
+            tail              Stream the logs of one or more services.
+            emit              Manually emits an event.
+            request           Send a request message to some service and output the reply.
+            inspect           Describe the available rpc methods of a service.
+            discover          Show available services.
+            help              Display help information about iris.
+            list              List available commands.
+            subscribe         Prints events to stdout.
+            instance          Run a single service instance (one process).
+            node              Run a node service that manages a group of processes on the same machine.
         """, config=False)
 
 

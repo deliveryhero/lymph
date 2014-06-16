@@ -1,13 +1,16 @@
 import six
+import unittest
 
 from kazoo.handlers.gevent import SequentialGeventHandler
 from kazoo.testing.harness import KazooTestHarness
 
 from iris.core.container import ServiceContainer
 from iris.core.connection import Connection
+from iris.core.interfaces import Interface
 from iris.discovery.static import StaticServiceRegistry
 from iris.events.local import LocalEventSystem
 from iris.client import Client
+from iris.services.coordinator import Coordinator
 
 
 class MockServiceNetwork(object):
@@ -89,3 +92,29 @@ class IrisIntegrationTestCase(KazooTestHarness):
             interface = container.install(interface_cls)
         container.start()
         return container, interface
+
+
+class ClientInterface(Interface):
+    service_type = 'client'
+
+
+class IrisServiceTestCase(unittest.TestCase):
+    client_class = ClientInterface
+    service_class = ClientInterface
+    service_config = {}
+
+    def setUp(self):
+        self.network = MockServiceNetwork()
+        self.coordinator = self.network.add_service(Coordinator, port=42400)
+        self.service_container = self.network.add_service(self.service_class)
+        self.service = self.service_container.installed_services[
+            self.service_class.service_type]
+        self.service.apply_config(self.service_config)
+        self.client_container = self.network.add_service(self.client_class)
+        self.client = self.client_container.installed_services[
+            self.client_class.service_type]
+        self.network.start()
+
+    def tearDown(self):
+        self.network.stop()
+        self.network.join()
