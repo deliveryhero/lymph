@@ -1,6 +1,28 @@
 import six
 import yaml
+import collections
 from iris.utils import import_object
+
+
+class ConfigView(collections.Mapping):
+    def __init__(self, config, path):
+        self.root = config
+        self.path = path
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __len__(self):
+        return len(self.root.get_raw(self.path))
+
+    def get(self, key, default=None):
+        return self.root.get('%s.%s' % (self.path, key), default)
+
+    def set(self, key, value):
+        return self.root.set('%s.%s' % (self.path, key), value)
+
+    def __iter__(self):
+        return iter(self.root.get_raw(self.path))
 
 
 class Configuration(object):
@@ -40,21 +62,27 @@ class Configuration(object):
 
     def create_instance(self, key, default_class=None, **kwargs):
         config = self.get(key, {})
-        path = config.pop('class', default_class)
+        path = config.get('class', default_class)
         cls = import_object(path)
         return cls.from_config(config, **kwargs)
 
-    def get(self, key, default=None):
+    def get_raw(self, key, default=None):
         path = key.split('.')
         values = self.values
         for bit in path[:-1]:
-            try:
-                values = values[bit]
-            except KeyError:
-                return default
+            values = values[bit]
             if values is None:
-                return default
-        return values.get(path[-1], default)
+                raise KeyError
+        return values[path[-1]]
+
+    def get(self, key, default=None):
+        try:
+            value = self.get_raw(key)
+        except KeyError:
+            return default
+        if isinstance(value, dict):
+            value = ConfigView(self, key)
+        return value
 
     def __repr__(self):
         return "iris.config.Configuration(values={values})".format(

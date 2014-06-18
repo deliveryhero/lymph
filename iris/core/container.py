@@ -72,12 +72,14 @@ class ServiceContainer(object):
         return self.pool.spawn(func, *args, **kwargs)
 
     @classmethod
-    def from_config(cls, config, **kwargs):
-        config.setdefault('node_endpoint', os.environ.get('IRIS_NODE'))
-        for key, value in six.iteritems(kwargs):
+    def from_config(cls, config, **explicit_kwargs):
+        kwargs = dict(config)
+        kwargs.pop('class', None)
+        kwargs.setdefault('node_endpoint', os.environ.get('IRIS_NODE'))
+        for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
-                config[key] = value
-        return cls(**config)
+                kwargs[key] = value
+        return cls(**kwargs)
 
     def install(self, cls, **kwargs):
         obj = cls(self, **kwargs)
