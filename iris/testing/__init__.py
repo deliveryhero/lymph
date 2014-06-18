@@ -100,6 +100,7 @@ class ClientInterface(Interface):
 
 class IrisServiceTestCase(unittest.TestCase):
     client_class = ClientInterface
+    client_config = {}
     service_class = ClientInterface
     service_config = {}
 
@@ -113,6 +114,7 @@ class IrisServiceTestCase(unittest.TestCase):
         self.client_container = self.network.add_service(self.client_class)
         self.client = self.client_container.installed_services[
             self.client_class.service_type]
+        self.client.apply_config(self.client_config)
         self.network.start()
 
     def tearDown(self):
