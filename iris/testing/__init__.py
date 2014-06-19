@@ -1,3 +1,5 @@
+import json
+import os
 import six
 import unittest
 
@@ -11,6 +13,7 @@ from iris.discovery.static import StaticServiceRegistry
 from iris.events.local import LocalEventSystem
 from iris.client import Client
 from iris.services.coordinator import Coordinator
+from iris.utils.sockets import create_socket
 
 
 class MockServiceNetwork(object):
@@ -100,6 +103,7 @@ class ClientInterface(Interface):
 
 class IrisServiceTestCase(unittest.TestCase):
     client_class = ClientInterface
+    client_config = {}
     service_class = ClientInterface
     service_config = {}
 
@@ -113,8 +117,25 @@ class IrisServiceTestCase(unittest.TestCase):
         self.client_container = self.network.add_service(self.client_class)
         self.client = self.client_container.installed_services[
             self.client_class.service_type]
+        self.client.apply_config(self.client_config)
         self.network.start()
 
     def tearDown(self):
         self.network.stop()
         self.network.join()
+
+
+class IrisWebServiceTestCase(IrisServiceTestCase):
+    def setUp(self):
+        self.ip_address = '{}:{}'.format('127.0.0.1',
+                                         self.service_class.http_port)
+        self.socket = create_socket(self.ip_address, inheritable=True)
+        self.orig_env = os.environ.copy()
+        os.environ['IRIS_SHARED_SOCKET_FDS'] = json.dumps({
+            str(self.service_class.http_port): self.socket.fileno()})
+        super(IrisWebServiceTestCase, self).setUp()
+
+    def tearDown(self):
+        super(IrisWebServiceTestCase, self).tearDown()
+        self.socket.close()
+        os.environ = self.orig_env
