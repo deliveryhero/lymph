@@ -4,6 +4,7 @@ from werkzeug.exceptions import HTTPException
 
 from iris.core.interfaces import Interface
 from iris.core import trace
+from iris.exceptions import SocketNotCreated
 from iris.utils.sockets import create_socket
 
 
@@ -18,8 +19,7 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).on_start()
         try:
             socket_fd = self.container.get_shared_socket_fd(self.http_port)
-        except KeyError:
-            print self.container.ip, self.http_port
+        except SocketNotCreated:
             socket = create_socket('%s:%s' % (self.config.get('ip') or
                                               self.container.ip,
                                               self.http_port),

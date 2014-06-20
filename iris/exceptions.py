@@ -25,3 +25,7 @@ class ErrorReply(RpcError):
     def __init__(self, request, reply, *args, **kwargs):
         self.reply = reply
         super(ErrorReply, self).__init__(request, *args, **kwargs)
+
+
+class SocketNotCreated(Exception):
+    pass
