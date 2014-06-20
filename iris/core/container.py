@@ -11,7 +11,7 @@ import six
 import sys
 import zmq.green as zmq
 
-from iris.exceptions import RegistrationFailure
+from iris.exceptions import RegistrationFailure, SocketNotCreated
 from iris.core.connection import Connection
 from iris.core.channels import RequestChannel, ReplyChannel
 from iris.core.events import Event
@@ -101,7 +101,10 @@ class ServiceContainer(object):
 
     def get_shared_socket_fd(self, port):
         fds = json.loads(os.environ.get('IRIS_SHARED_SOCKET_FDS', '{}'))
-        return fds[str(port)]
+        try:
+            return fds[str(port)]
+        except KeyError:
+            raise SocketNotCreated
 
     def bind(self, max_retries=2, retry_delay=0):
         if self.bound:
