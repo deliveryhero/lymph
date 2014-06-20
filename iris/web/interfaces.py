@@ -16,7 +16,16 @@ class WebServiceInterface(Interface):
 
     def on_start(self):
         super(WebServiceInterface, self).on_start()
-        self.http_socket = create_socket('fd://%s' % self.container.get_shared_socket_fd(self.http_port))
+        try:
+            socket_fd = self.container.get_shared_socket_fd(self.http_port)
+        except KeyError:
+            print self.container.ip, self.http_port
+            socket = create_socket('%s:%s' % (self.config.get('ip') or
+                                              self.container.ip,
+                                              self.http_port),
+                                   inheritable=True)
+            socket_fd = socket.fileno()
+        self.http_socket = create_socket('fd://%s' % socket_fd)
         self.wsgi_server = WSGIServer(self.http_socket, Request.application(self.dispatch_request))
         self.wsgi_server.start()
 
