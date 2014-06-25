@@ -22,7 +22,7 @@ def setup_logging(args, config):
     global zmqpub_log_handler
     zmqpub_log_handler = PubLogHandler(config.get('container.log_endpoint', 'tcp://%s' % config.get('container.ip')))
 
-    logconf = config.get('logging', {}).copy()
+    logconf = dict(config.get('logging', {}))
     logconf.setdefault('version', 1)
     formatters = logconf.setdefault('formatters', {})
     formatters.setdefault('_trace', {

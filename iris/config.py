@@ -21,6 +21,9 @@ class ConfigView(collections.Mapping):
     def set(self, key, value):
         return self.root.set('%s.%s' % (self.path, key), value)
 
+    def setdefault(self, key, value):
+        return self.root.setdefault('%s.%s' % (self.path, key), value)
+
     def __iter__(self):
         return iter(self.root.get_raw(self.path))
 
