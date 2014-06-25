@@ -66,6 +66,6 @@ class DatedEventIndex(EventIndex):
         return '%s-%s' % (self.index_name, dt.strftime('%Y.%m.%d'))
 
     def index(self, event, index_name=None):
-        super('DatedEventIndex', self).index(event, self.get_index_name(
-            datetime.now()))
+        index_name = self.get_index_name(datetime.now())
+        super(DatedEventIndex, self).index(event, index_name)
 
