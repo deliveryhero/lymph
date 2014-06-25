@@ -4,11 +4,11 @@ Service Configuration Files
 .. code-block:: yaml
 
     registry:
-        class: iris.discovery.zookeeper:ZookeeperServiceRegistry
+        class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
         hosts: 127.0.0.1:2181
     
     event_system:
-        class: iris.events.kombu:KombuEventSystem
+        class: lymph.events.kombu:KombuEventSystem
         transport: amqp
         hostname: 127.0.0.1
 
@@ -20,21 +20,21 @@ Container Configuration
 
 .. describe:: container:ip:
 
-    use this IP address. The :option:`--ip <iris --ip>` option for 
-    :program:`iris` takes precedence. Default: ``127.0.0.1``.
+    use this IP address. The :option:`--ip <lymph --ip>` option for 
+    :program:`lymph` takes precedence. Default: ``127.0.0.1``.
 
 
 .. describe:: container:port:
 
-    Use this port for the service endpoint. The :option:`--port <iris --port>` 
-    option for :program:`iris` takes precedence. If no port is configured, iris
+    Use this port for the service endpoint. The :option:`--port <lymph --port>` 
+    option for :program:`lymph` takes precedence. If no port is configured, lymph
     will pick a random port.
 
 
 .. describe:: container:class:
 
     the container implementation. You probably don't have to change this.
-    Default: ``iris.core.container:Container``
+    Default: ``lymph.core.container:Container``
 
 .. _config-container-log_endpoint:
 
@@ -52,24 +52,24 @@ Interface Configuration
 .. describe:: interfaces:<name>
 
     Mapping from service name to instance configuration that will be passed to
-    the implementation's :meth:`iris.Service.apply_config()` method.
+    the implementation's :meth:`lymph.Service.apply_config()` method.
     
 .. describe:: interfaces:<name>:class:
 
-    The class that implements this interface, e.g. a subclass of :class:`iris.Service`.
+    The class that implements this interface, e.g. a subclass of :class:`lymph.Service`.
 
 Registry Configuration
 ----------------------
 
 .. describe:: registry:class:
 
-Defaults to ``iris.discovery.zookeeper:ZookeeperServiceRegistry``
+Defaults to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``
 
 
 ZooKeeper
 ~~~~~~~~~
 
-To use `ZooKeeper`_ for serivce discovery set ``class`` to ``iris.discovery.zookeeper:ZookeeperServiceRegistry``.
+To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``.
 
 
 .. describe:: registry:hosts: 127.0.0.1:2181
@@ -77,9 +77,9 @@ To use `ZooKeeper`_ for serivce discovery set ``class`` to ``iris.discovery.zook
     A comma separated sequence of ZooKeeper hosts.
 
 
-.. describe:: registry:chroot: /iris
+.. describe:: registry:chroot: /lymph
 
-    A path that will be used as a prefix for all znodes managed by iris.
+    A path that will be used as a prefix for all znodes managed by lymph.
 
 
 .. _ZooKeeper: http://zookeeper.apache.org/
@@ -88,24 +88,24 @@ To use `ZooKeeper`_ for serivce discovery set ``class`` to ``iris.discovery.zook
 Simple
 ~~~~~~
 
-To use the builtin serivce discovery mechanism set ``class`` to ``iris.discovery.service:IrisCoordinatorServiceRegistry``.
+To use the builtin serivce discovery mechanism set ``class`` to ``lymph.discovery.service:lymphCoordinatorServiceRegistry``.
 
 .. describe:: registry:coordinator_endpoint:
 
-    Endpoint of the coordinator service (``iris.services.coordinator:Coordinator``).
+    Endpoint of the coordinator service (``lymph.services.coordinator:Coordinator``).
     The environment variable :envvar:`IRIS_COORDINATOR` takes precedence.
 
 
 Event Configuration
 -------------------
 
-.. describe:: event_system:class: iris.events.kombu:KombuEventSystem
+.. describe:: event_system:class: lymph.events.kombu:KombuEventSystem
 
 
 Kombu
 ~~~~~
 
-To use the `kombu`_ backend set ``class`` to ``iris.events.kombu:KombuEventSystem``.
+To use the `kombu`_ backend set ``class`` to ``lymph.events.kombu:KombuEventSystem``.
 All other keys will be passed as keyword arguments to the kombu `Connection <http://kombu.readthedocs.org/en/latest/userguide/connections.html#keyword-arguments>`_.
 
 
@@ -114,12 +114,12 @@ All other keys will be passed as keyword arguments to the kombu `Connection <htt
 Simple
 ~~~~~~
 
-To use the builtin broker service for event transport set ``class`` to ``iris.events.simple:SimpleEventSystem``.
+To use the builtin broker service for event transport set ``class`` to ``lymph.events.simple:SimpleEventSystem``.
 
 Null
 ~~~~
 
-The null backend doesn't transport any events. Set ``class`` to ``iris.events.null.NullEventSystem`` if that is what you want.
+The null backend doesn't transport any events. Set ``class`` to ``lymph.events.null.NullEventSystem`` if that is what you want.
 
 
 Logging Configuration

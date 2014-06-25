@@ -20,7 +20,7 @@ before_script:
 script:
     - mkdir -p tmp
     - pushd tmp
-    - nosetests --with-iris iris
+    - nosetests --with-lymph lymph
     - popd
 
 notifications:

@@ -1,14 +1,14 @@
-import iris
+import lymph
 
 
-class EchoService(iris.Interface):
+class EchoService(lymph.Interface):
     service_type = 'echo'
 
-    @iris.rpc()
+    @lymph.rpc()
     def echo(self, channel, text=None):
         channel.reply(text)
 
-    @iris.rpc()
+    @lymph.rpc()
     def upper(self, channel, text=None):
         channel.reply(text.upper())
         self.emit('uppercase_transform_finished', {'text': text})

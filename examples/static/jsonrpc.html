@@ -7,10 +7,10 @@
     <script type="text/javascript" src="/static/jquery.json.js"></script>
     <script type="text/javascript" src="/static/jquery.jsonrpcclient.js"></script>
     <script type="text/javascript">
-        IrisClient = function(serviceType){
+        LymphClient = function(serviceType){
             this.jsonrpc = new $.JsonRpcClient({ajaxUrl: '/api/jsonrpc/' + serviceType + '/'});
         };
-        IrisClient.prototype.call = function(method, args, callback){
+        LymphClient.prototype.call = function(method, args, callback){
             this.jsonrpc.call(method, [args], callback || console.log, function(){});
         };
     </script>

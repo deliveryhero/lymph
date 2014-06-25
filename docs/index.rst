@@ -1,8 +1,8 @@
 
-Welcome to iris's documentation!
+Welcome to lymph's documentation!
 ================================
 
-.. figure:: _static/iris.svg
+.. figure:: _static/lymph.svg
     :align: right
 
 
