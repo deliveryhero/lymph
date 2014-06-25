@@ -93,6 +93,7 @@ class ServiceContainer(object):
     def stats(self):
         s = {
             'endpoint': self.endpoint,
+            'identity': self.identity,
             'connections': [c.stats() for c in self.connections.values()],
         }
         for name, interface in six.iteritems(self.installed_services):
