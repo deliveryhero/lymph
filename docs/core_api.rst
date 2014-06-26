@@ -1,4 +1,4 @@
-.. currentmodule:: iris.core.container
+.. currentmodule:: lymph.core.container
 
 
 Core API
@@ -15,17 +15,17 @@ Core API
 
     .. method:: send_message(address, msg)
 
-        :param address: the address for this message; either a ZeroMQ endpoint or an iris:// url
-        :param msg: the :class:`iris.core.messages.Message` object that will be sent
-        :return: :class:`iris.core.channels.ReplyChannel`
+        :param address: the address for this message; either a ZeroMQ endpoint or an lymph:// url
+        :param msg: the :class:`lymph.core.messages.Message` object that will be sent
+        :return: :class:`lymph.core.channels.ReplyChannel`
 
     .. method:: lookup(address)
 
-        :param address: an iris address
-        :return: :class:`iris.core.services.Service` or :class:`iris.core.services.ServiceInstance`
+        :param address: an lymph address
+        :return: :class:`lymph.core.services.Service` or :class:`lymph.core.services.ServiceInstance`
 
 
-.. currentmodule:: iris.core.channels
+.. currentmodule:: lymph.core.channels
 
 .. class:: RequestChannel()
 
@@ -42,13 +42,13 @@ Core API
 
     .. method:: get(timeout=1)
 
-        :return: :class:`iris.core.messages.Message`
+        :return: :class:`lymph.core.messages.Message`
 
         returns the next reply message from this channel. Blocks until the reply
-        is available. Raises :class:`Timeout <iris.exceptions.Timeout>` after ``timeout`` seconds.
+        is available. Raises :class:`Timeout <lymph.exceptions.Timeout>` after ``timeout`` seconds.
 
 
-.. currentmodule:: iris.core.messages
+.. currentmodule:: lymph.core.messages
 
 .. class:: Message
 
@@ -63,17 +63,17 @@ Core API
     .. attribute:: packed_body
 
 
-.. currentmodule:: iris.core.services
+.. currentmodule:: lymph.core.services
 
 
 .. class:: Service()
 
-    Normally created by :meth:`ServiceContainer.lookup() <iris.core.container.ServiceContainer.lookup()>`.
-    Service objects represent iris services.
+    Normally created by :meth:`ServiceContainer.lookup() <lymph.core.container.ServiceContainer.lookup()>`.
+    Service objects represent lymph services.
 
     .. method:: connect()
 
-        :return: :class:`iris.core.connection.Connection` to an instance of this service.
+        :return: :class:`lymph.core.connection.Connection` to an instance of this service.
 
     .. method:: disconnect()
 
@@ -90,26 +90,26 @@ Core API
 
 .. class:: ServiceInstance()
 
-    Normally created by :meth:`ServiceContainer.lookup() <iris.core.container.ServiceContainer.lookup()>`
+    Normally created by :meth:`ServiceContainer.lookup() <lymph.core.container.ServiceContainer.lookup()>`
 
     .. method:: connect()
 
-        :return: :class:`iris.core.connection.Connection` to this service instance
+        :return: :class:`lymph.core.connection.Connection` to this service instance
 
     .. method:: disconnect()
 
         Disconnects from this service instance.
 
 
-.. currentmodule:: iris.core.connections
+.. currentmodule:: lymph.core.connections
 
 .. class:: Connection
 
-    You can attain a connection to an iris service instance directly from :meth:`iris.core.container.ServiceContainer.connect`, or
-    from the higher-level API in :mod:`iris.core.services`.
+    You can attain a connection to an lymph service instance directly from :meth:`lymph.core.container.ServiceContainer.connect`, or
+    from the higher-level API in :mod:`lymph.core.services`.
     For ZeroMQ endpoint addresses the following to statements are roughly equivalent::
 
         container.connect(address)  # only works for tcp://… addresses
-        container.lookup(address).connect()  # will also work for iris://… addresses
+        container.lookup(address).connect()  # will also work for lymph://… addresses
 
 

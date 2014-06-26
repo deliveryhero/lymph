@@ -1,13 +1,13 @@
 Command Line Interface
 ======================
 
-Many iris commands produce unicode output. Therefore, you'll have to set your
+Many lymph commands produce unicode output. Therefore, you'll have to set your
 locale (LC_ALL or LC_CTYPE) to UTF-8.
 
-If you want to pipe iris commands with python2, you might have to set 
+If you want to pipe lymph commands with python2, you might have to set 
 PYTHONIOENCODING to UTF-8 as well.
 
-.. program:: iris
+.. program:: lymph
 
 The following options apply to all subcommands:
 
@@ -20,35 +20,35 @@ The following options apply to all subcommands:
 .. cmdoption:: -c <file>, --config <file>
 
     Read the configuration from <file>. This can also be specified as an environment
-    variable :envvar:`IRIS_CONFIG`. The default value is ``.iris.yml``.
+    variable :envvar:`IRIS_CONFIG`. The default value is ``.lymph.yml``.
 
 .. cmdoption:: --loglevel <level>
 
 .. cmdoption:: --logfile <file>
 
 
-.. _cli-iris-discover:
+.. _cli-lymph-discover:
 
-.. program:: iris discover
+.. program:: lymph discover
 
-``iris discover``
+``lymph discover``
 ~~~~~~~~~~~~~~~~~
 
 
-.. _cli-iris-inspect:
+.. _cli-lymph-inspect:
 
-.. program:: iris inspect
+.. program:: lymph inspect
 
-``iris inspect``
+``lymph inspect``
 ~~~~~~~~~~~~~~~~
 
 
 
-.. _cli-iris-instance:
+.. _cli-lymph-instance:
 
-.. program:: iris instance
+.. program:: lymph instance
 
-``iris instance``
+``lymph instance``
 ~~~~~~~~~~~~~~~~~
 
 .. cmdoption:: -i, --isolated
@@ -56,19 +56,19 @@ The following options apply to all subcommands:
     Isolated instances don't register with the service registry.
 
 
-.. _cli-iris-node:
+.. _cli-lymph-node:
 
-.. program:: iris node
+.. program:: lymph node
 
-``iris node``
+``lymph node``
 ~~~~~~~~~~~~~
 
 
-.. _cli-iris-request:
+.. _cli-lymph-request:
 
-.. program:: iris request
+.. program:: lymph request
 
-``iris request``
+``lymph request``
 ~~~~~~~~~~~~~~~~
 
 

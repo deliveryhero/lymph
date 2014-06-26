@@ -1,4 +1,4 @@
-The Iris RPC Protocol
+The Lymph RPC Protocol
 ======================
 
 Message format:

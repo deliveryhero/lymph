@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# iris documentation build configuration file, created by
+# lymph documentation build configuration file, created by
 # sphinx-quickstart on Thu Nov 21 15:41:28 2013.
 #
 # This file is execfile()d with the current directory set to its
@@ -39,7 +39,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'iris'
+project = u'lymph'
 copyright = u'2013–2014, Delivery Hero Holding GmbH'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -176,7 +176,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'irisdoc'
+htmlhelp_basename = 'lymphdoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------
@@ -196,7 +196,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-  ('index', 'iris.tex', u'iris Documentation',
+  ('index', 'lymph.tex', u'lymph Documentation',
    u'deliveryhero', 'manual'),
 ]
 
@@ -226,7 +226,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'iris', u'iris Documentation',
+    ('index', 'lymph', u'lymph Documentation',
      [u'deliveryhero'], 1)
 ]
 
@@ -240,8 +240,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'iris', u'iris Documentation',
-   u'deliveryhero', 'iris', 'One line description of project.',
+  ('index', 'lymph', u'lymph Documentation',
+   u'deliveryhero', 'lymph', 'One line description of project.',
    'Miscellaneous'),
 ]
 

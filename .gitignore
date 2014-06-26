@@ -1,10 +1,10 @@
 .tox
 .coverage
 .coverage-report
-.iris.yml
+.lymph.yml
 *.pyc
 /env/
-/iris.egg-info/
+/lymph.egg-info/
 /docs/_build/
 /logs/
 /lib/

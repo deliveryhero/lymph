@@ -1,7 +1,7 @@
-import iris
+import lymph
 import json
 
-from iris.web.interfaces import WebServiceInterface
+from lymph.web.interfaces import WebServiceInterface
 
 from werkzeug.routing import Map, Rule
 from werkzeug.wrappers import Response
@@ -26,5 +26,5 @@ class JsonrpcGateway(WebServiceInterface):
     def jsonrpc(self, request, service_type):
         req = json.load(request.stream)
         args = req['params'][0]
-        result = self.request('iris://%s' % service_type, str(req['method']), args)
+        result = self.request('lymph://%s' % service_type, str(req['method']), args)
         return Response(json.dumps({'result': {'result': result.body, 'gateway': self.container.endpoint}, 'error': None, 'id': req['id']}), content_type='application/json')

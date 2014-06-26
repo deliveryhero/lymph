@@ -1,21 +1,21 @@
 registry:
-    class: iris.discovery.service:IrisCoordinatorServiceRegistry
+    class: lymph.discovery.service:LymphCoordinatorServiceRegistry
     coordinator_endpoint: tcp://127.0.0.1:42400
 
 
 event_system:
-    class: iris.events.simple:SimpleEventSystem
+    class: lymph.events.simple:SimpleEventSystem
 
 
 instances:
     broker:
-        command: iris instance --config=conf/simple-node.yml --interface=iris.services.broker:Broker
+        command: lymph instance --config=conf/simple-node.yml --interface=lymph.services.broker:Broker
     
     coordinator:
-        command: iris instance --config=conf/simple-node.yml --interface=iris.services.coordinator:Coordinator --port=42400
+        command: lymph instance --config=conf/simple-node.yml --interface=lymph.services.coordinator:Coordinator --port=42400
     
     echo:
-        command: iris instance --config=conf/echo.yml
+        command: lymph instance --config=conf/echo.yml
 
     demo:
-        command: iris instance --config=conf/demo.yml
+        command: lymph instance --config=conf/demo.yml

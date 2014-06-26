@@ -1,7 +1,7 @@
 Getting Started
 ================
 
-Install iris
+Install lymph
 ~~~~~~~~~~~~
 
 .. code:: bash
@@ -16,13 +16,13 @@ Create a module called ``echo`` in your Python path.
 
 .. code:: python
 
-    import iris
+    import lymph
 
 
-    class Echo(iris.Interface):
+    class Echo(lymph.Interface):
         service_type = 'echo'
 
-        @iris.rpc()
+        @lymph.rpc()
         def echo(self, channel, text=None):
             channel.reply(text)
 
@@ -32,5 +32,5 @@ Run the service
 
 .. code:: bash
 
-    $ iris instance echo:Echo
+    $ lymph instance echo:Echo
     

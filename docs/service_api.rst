@@ -1,26 +1,26 @@
-.. currentmodule:: iris
+.. currentmodule:: lymph
 
 Service API
 ===========
 
 ::
 
-    import iris
+    import lymph
 
 
-    class Echo(iris.Interface):
+    class Echo(lymph.Interface):
         service_type = 'echo'
 
-        @iris.rpc()
+        @lymph.rpc()
         def echo(self, channel, text=None):
             channel.reply(text)
 
-        @iris.rpc()
+        @lymph.rpc()
         def upper(self, channel, text=None):
             channel.reply(text.upper())
             self.emit('uppercase_transform_finished', {'text': text})
 
-        @iris.event('uppercase_transform_finished')
+        @lymph.event('uppercase_transform_finished')
         def on_uppercase(self, text=None):
             print "done", text
 
@@ -51,7 +51,7 @@ Service API
 
     .. method:: request(address, method, body)
 
-        :param address: the address where the request is sent to; either a ZeroMQ endpoint or an iris:// url
+        :param address: the address where the request is sent to; either a ZeroMQ endpoint or an lymph:// url
         :param method: the remote method that will be called
         :param body: JSON serializable dict of parameters for the remote method
 
@@ -63,11 +63,11 @@ Service API
 
         .. code-block:: python
 
-            echo = self.proxy('iris://echo')
+            echo = self.proxy('lymph://echo')
             result = echo.upper(text='foo')
             assert result == 'FOO'
 
-        This is equivalent to ``self.request('iris://echo', 'echo.upper', text='foo')``.
+        This is equivalent to ``self.request('lymph://echo', 'echo.upper', text='foo')``.
 
 
     .. method:: emit(event_type, payload)
