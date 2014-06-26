@@ -2,10 +2,6 @@
 Welcome to lymph's documentation!
 ================================
 
-.. figure:: _static/lymph.svg
-    :align: right
-
-
 Contents:
 
 .. toctree::
