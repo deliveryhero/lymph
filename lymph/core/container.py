@@ -91,9 +91,22 @@ class ServiceContainer(object):
         self.installed_plugins.append(plugin)
 
     def stats(self):
+        hub = gevent.get_hub()
+        threadpool, loop = hub.threadpool, hub.loop
         s = {
             'endpoint': self.endpoint,
             'identity': self.identity,
+            'greenlets': len(self.pool),
+            'gevent': {
+                'threadpool': {
+                    'size': threadpool.size,
+                    'maxsize': threadpool.maxsize,
+                },
+                'active': loop.activecnt,
+                'pending': loop.pendingcnt,
+                'iteration': loop.iteration,
+                'depth': loop.depth,
+            },
             'connections': [c.stats() for c in self.connections.values()],
         }
         for name, interface in six.iteritems(self.installed_services):
