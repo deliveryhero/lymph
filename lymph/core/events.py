@@ -14,6 +14,9 @@ class Event(object):
     def __iter__(self):
         return iter(self.body)
 
+    def __repr__(self):
+        return '<Event type=%r body=%r>' % (self.evt_type, self.body)
+
     @classmethod
     def deserialize(cls, data):
         return cls(data.get('type'), data.get('body', {}), source=data.get('source'))
