@@ -1,3 +1,4 @@
+import collections
 import errno
 import json
 import gevent
@@ -48,6 +49,8 @@ class ServiceContainer(object):
         self.endpoint = None
         self.bound = False
 
+        self.request_counts = collections.Counter()
+
         self.recv_loop_greenlet = None
         self.channels = {}
         self.connections = {}
@@ -90,6 +93,13 @@ class ServiceContainer(object):
         plugin = cls(self, **kwargs)
         self.installed_plugins.append(plugin)
 
+    def rpc_stats(self):
+        stats = {
+            'requests': dict(self.request_counts),
+        }
+        self.request_counts.clear()
+        return stats
+
     def stats(self):
         hub = gevent.get_hub()
         threadpool, loop = hub.threadpool, hub.loop
@@ -107,6 +117,7 @@ class ServiceContainer(object):
                 'iteration': loop.iteration,
                 'depth': loop.depth,
             },
+            'rpc': self.rpc_stats(),
             'connections': [c.stats() for c in self.connections.values()],
         }
         for name, interface in six.iteritems(self.installed_services):
@@ -279,6 +290,7 @@ class ServiceContainer(object):
         return reply_msg
 
     def dispatch_request(self, msg):
+        self.request_counts[msg.subject] += 1
         channel = RequestChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
         try:
