@@ -67,21 +67,17 @@ class MockStorage(object):
 
 class GetInstanceTest(unittest.TestCase):
 
+    config = Configuration({
+        "storage": {
+            "class": "lymph.tests.test_config:MockStorage",
+        }
+    })
+
     def test_creates_instance_based_on_configuration(self):
-        config = Configuration({
-            "storage": {
-                "class": "lymph.tests.test_config:MockStorage",
-            }
-        })
-        instance = config.get_instance("storage")
+        instance = self.config.get_instance("storage")
         self.assertIsInstance(instance, MockStorage)
 
     def test_returns_the_same_instance_on_multiple_invocations(self):
-        config = Configuration({
-            "storage": {
-                "class": "lymph.tests.test_config:MockStorage",
-            }
-        })
-        instance_1 = config.get_instance("storage")
-        instance_2 = config.get_instance("storage")
+        instance_1 = self.config.get_instance("storage")
+        instance_2 = self.config.get_instance("storage")
         self.assertIs(instance_1, instance_2)
