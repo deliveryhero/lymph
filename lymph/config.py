@@ -1,5 +1,4 @@
 import collections
-import weakref
 
 import six
 import yaml
@@ -34,7 +33,7 @@ class ConfigView(collections.Mapping):
 class Configuration(object):
     def __init__(self, values=None):
         self.values = values or {}
-        self._instances_cache = weakref.WeakValueDictionary()
+        self._instances_cache = {}
 
     def load_file(self, filename, sections=None):
         with open(filename, 'r') as f:
