@@ -74,6 +74,9 @@ class GetInstanceTest(unittest.TestCase):
     })
 
     def test_creates_instance_based_on_configuration(self):
+        # TODO: Avoiding hickups with Travis run
+        from lymph.tests.test_config import MockStorage
+
         instance = self.config.get_instance("storage")
         self.assertIsInstance(instance, MockStorage)
 
