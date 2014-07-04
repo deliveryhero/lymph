@@ -1,6 +1,8 @@
+import collections
+
 import six
 import yaml
-import collections
+
 from lymph.utils import import_object
 
 
@@ -31,6 +33,7 @@ class ConfigView(collections.Mapping):
 class Configuration(object):
     def __init__(self, values=None):
         self.values = values or {}
+        self._instances_cache = {}
 
     def load_file(self, filename, sections=None):
         with open(filename, 'r') as f:
@@ -68,6 +71,14 @@ class Configuration(object):
         path = config.get('class', default_class)
         cls = import_object(path)
         return cls.from_config(config, **kwargs)
+
+    def get_instance(self, key, default_class=None, **kwargs):
+        instance = self._instances_cache.get(key)
+        if not instance:
+            instance = self.create_instance(
+                key, default_class=default_class, **kwargs)
+            self._instances_cache[key] = instance
+        return instance
 
     def get_raw(self, key, default=None):
         path = key.split('.')
