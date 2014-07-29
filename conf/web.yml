@@ -1,0 +1,6 @@
+container:
+    service_name: web
+
+interfaces:
+    web:
+        class: web:JsonrpcGateway
