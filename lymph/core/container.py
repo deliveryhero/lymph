@@ -1,6 +1,7 @@
 import collections
 import errno
 import json
+import gc
 import gevent
 import gevent.queue
 import gevent.pool
@@ -40,13 +41,14 @@ def create_container(config):
 
 
 class ServiceContainer(object):
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None):
+    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None):
         self.zctx = zmq.Context.instance()
         self.ip = ip
         self.port = port
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.endpoint = None
+        self.service_name = service_name
         self.bound = False
 
         self.request_counts = collections.Counter()
@@ -107,6 +109,7 @@ class ServiceContainer(object):
             'endpoint': self.endpoint,
             'identity': self.identity,
             'greenlets': len(self.pool),
+            'service': self.service_name,
             'gevent': {
                 'threadpool': {
                     'size': threadpool.size,
@@ -116,6 +119,10 @@ class ServiceContainer(object):
                 'pending': loop.pendingcnt,
                 'iteration': loop.iteration,
                 'depth': loop.depth,
+            },
+            'gc': {
+                'garbage': len(gc.garbage),
+                'collections': gc.get_count(),
             },
             'rpc': self.rpc_stats(),
             'connections': [c.stats() for c in self.connections.values()],
