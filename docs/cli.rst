@@ -72,3 +72,13 @@ The following options apply to all subcommands:
 ~~~~~~~~~~~~~~~~
 
 
+.. _cli-lymph-shell:
+
+``lymph shell``
+~~~~~~~~~~~~~~~
+
+Starts an interactive Python shell. The following objects will be available in the global namespace:
+
+``client``
+    a configured :class:`lymph.client.Client` instance
+

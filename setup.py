@@ -50,6 +50,7 @@ setup(
             'inspect = lymph.cli.request:InspectCommand',
             'subscribe = lymph.cli.request:SubscribeCommand',
             'emit = lymph.cli.request:EmitCommand',
+            'shell = lymph.cli.shell:ShellCommand',
         ],
         'nose.plugins.0.10': ['lymph = lymph.testing.nose:LymphPlugin'],
         'pytest11': ['lymph = lymph.testing.pytest'],
