@@ -43,6 +43,7 @@ class ListCommandTests(CliTestMixin, unittest.TestCase):
             subscribe         Prints events to stdout.
             instance          Run a single service instance (one process).
             node              Run a node service that manages a group of processes on the same machine.
+            shell             Open an interactive Python shell.
         """, config=False)
 
 
