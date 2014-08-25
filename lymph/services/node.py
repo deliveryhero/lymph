@@ -117,7 +117,7 @@ class Node(Interface):
         while True:
             for process in self.processes:
                 try:
-                    status = process._process.status
+                    status = process._process.status()
                 except psutil.NoSuchProcess:
                     if self.running:
                         process.start()
