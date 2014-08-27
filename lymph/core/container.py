@@ -175,8 +175,8 @@ class ServiceContainer(object):
     def service_types(self):
         return self.installed_services.keys()
 
-    def subscribe(self, event_type):
-        self.event_system.subscribe(self, event_type)
+    def subscribe(self, event_type, **kwargs):
+        self.event_system.subscribe(self, event_type, **kwargs)
 
     def start(self, register=True):
         self.running = True
@@ -202,7 +202,7 @@ class ServiceContainer(object):
 
         for interface in six.itervalues(self.installed_services):
             for pattern, handler in type(interface).event_dispatcher:
-                self.subscribe(pattern)
+                self.subscribe(pattern, **handler._event_args)
 
     def stop(self):
         self.running = False
@@ -357,7 +357,7 @@ class ServiceContainer(object):
         if not event.evt_type:
             logger.warning("dropping event without type: %r", event)
             return
-        self.spawn(self.dispatch_event, event)
+        self.dispatch_event(event)
 
     def dispatch_event(self, event):
         handled = False

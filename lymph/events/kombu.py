@@ -21,10 +21,11 @@ DEFAULT_EXCHANGE = 'lymph'
 
 
 class EventConsumer(kombu.mixins.ConsumerMixin):
-    def __init__(self, connection, queue, container):
+    def __init__(self, connection, queue, container, sequential=False):
         self.connection = connection
         self.queue = queue
         self.container = container
+        self.sequential = sequential
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_kombu_message])]
@@ -34,13 +35,19 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
 
     def on_kombu_message(self, body, message):
         logger.debug("received kombu message %r", body)
-        event = Event.deserialize(body)
-        try:
-            self.container.handle_event(event)
-        except:
-            raise
+
+        def message_handler():
+            event = Event.deserialize(body)
+            try:
+                self.container.handle_event(event)
+            except:
+                raise
+            else:
+                message.ack()
+        if self.sequential:
+            message_handler()
         else:
-            message.ack()
+            self.container.spawn(message_handler)
 
     def start(self):
         self.should_stop = False
@@ -70,14 +77,14 @@ class KombuEventSystem(BaseEventSystem):
         connection = kombu.Connection(**config)
         return cls(connection, exchange_name, serializer=serializer, **kwargs)
 
-    def subscribe(self, container, event_type):
+    def subscribe(self, container, event_type, sequential=False):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
             queue_name = '-'.join(container.service_types)
             queue = kombu.Queue(queue_name, self.exchange, durable=True)
             queue(conn).declare()
             queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
-        consumer = EventConsumer(self.connection, queue, container)
+        consumer = EventConsumer(self.connection, queue, container, sequential=sequential)
         self.consumers.add(consumer)
         consumer.start()
 

@@ -5,10 +5,12 @@ def rpc():
     return decorator
 
 
-def event(event_type):
+def event(event_type, **kwargs):
     def decorator(func):
-        if not hasattr(func, '_event_types'):
+        if not hasattr(func, '_event_args'):
+            func._event_args = {}
             func._event_types = set()
+        func._event_args.update(**kwargs)
         func._event_types.add(event_type)
         return func
     return decorator
