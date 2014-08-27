@@ -32,7 +32,7 @@ The following options apply to all subcommands:
 .. program:: lymph discover
 
 ``lymph discover``
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 
 .. _cli-lymph-inspect:
@@ -40,7 +40,7 @@ The following options apply to all subcommands:
 .. program:: lymph inspect
 
 ``lymph inspect``
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 
 
@@ -49,7 +49,7 @@ The following options apply to all subcommands:
 .. program:: lymph instance
 
 ``lymph instance``
-~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 .. cmdoption:: -i, --isolated
 
@@ -61,7 +61,7 @@ The following options apply to all subcommands:
 .. program:: lymph node
 
 ``lymph node``
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 
 .. _cli-lymph-request:
@@ -69,7 +69,7 @@ The following options apply to all subcommands:
 .. program:: lymph request
 
 ``lymph request``
-~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~
 
 
 .. _cli-lymph-shell:

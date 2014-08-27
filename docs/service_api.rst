@@ -76,15 +76,39 @@ Service API
         :param payload: a dict of JSON serializable data structures
 
 
-.. decorator:: rpc( )
+.. decorator:: rpc()
 
-    marks the decorated method as remotely callable
+    Marks the decorated interface method as an RPC method.
+    
+    .. code::
+    
+        import lymph
+    
+        class Example(lymph.Interface):
+            @lymph.rpc()
+            def do_something(self, channel, message):
+                assert isinstance(channel, lymph.core.channels.ReplyChannel)
+                assert isinstance(message, lymph.core.messages.Message)
+                channel.ack()
 
 
-.. decorator:: event(event_type)
+.. decorator:: event(event_type, sequential=False)
 
-    the decorated method will be called when the service receives an event of the given ``event_type``.
-    The ``payload`` dict that was passed to :meth:`Service.emit()` will be passed as keyword arguments.
+    :param event_type: may contain wildcards, e.g. ``'subject.*'``
+    :param sequential: force sequential event consumption
+
+    Marks the decorated interface method as an event handler.
+    The service container will automatically subscribe to given ``event_type``.
+    If ``sequential=True``, events will be not be consumed in parallel, but one by one.
+    
+    .. code::
+    
+        import lymph
+        
+        class Example(lymph.Interface):
+            @lymph.event('task_done')
+            def on_task_done(self, event):
+                assert isinstance(event, lymph.core.events.Event)
 
 
 .. class:: Proxy(container, address, namespace=None, timeout=1)

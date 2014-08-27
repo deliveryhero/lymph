@@ -112,4 +112,3 @@ Core API
         container.connect(address)  # only works for tcp://… addresses
         container.lookup(address).connect()  # will also work for lymph://… addresses
 
-
