@@ -87,8 +87,6 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         return list(result.get())
 
     def lookup(self, container, service, watch=True, timeout=1):
-        def child_watch(event):
-            print(event)
         service_type = service.service_type
         result = self.client.get_children_async(
             path='%s/services/%s' % (self.chroot, service_type),
