@@ -2,7 +2,7 @@ Getting Started
 ================
 
 Install lymph
-~~~~~~~~~~~~
+~~~~~~~~~~~~µ
 
 .. code:: bash
 

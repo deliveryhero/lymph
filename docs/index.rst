@@ -1,6 +1,6 @@
 
 Welcome to lymph's documentation!
-================================
+=================================
 
 Contents:
 
