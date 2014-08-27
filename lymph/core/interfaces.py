@@ -11,21 +11,21 @@ from lymph.exceptions import ErrorReply
 class InterfaceBase(type):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
-        event_dispatcher = EventDispatcher()
+        static_event_handlers = []
         for base in bases:
             if isinstance(base, InterfaceBase):
                 methods.update(base.methods)
-                event_dispatcher.update(base.event_dispatcher)
+                static_event_handlers += base.static_event_handlers
         for name, value in six.iteritems(attrs):
             if callable(value):
                 if getattr(value, '_rpc', False):
                     methods[name] = value
                 for event_type in getattr(value, '_event_types', ()):
-                    event_dispatcher.register(event_type, value)
+                    static_event_handlers.append((event_type, value))
         attrs.setdefault('service_type', clsname.lower())
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
-        new_cls.event_dispatcher = event_dispatcher
+        new_cls.static_event_handlers = static_event_handlers
         return new_cls
 
 
@@ -67,6 +67,7 @@ class Interface(object):
     def __init__(self, container):
         self.container = container
         self.config = {}
+        self.event_dispatcher = EventDispatcher(self.static_event_handlers)
 
     def apply_config(self, config):
         pass
@@ -78,7 +79,7 @@ class Interface(object):
         self.methods[func_name](self, channel, **channel.request.body)
 
     def dispatch_event(self, event):
-        return self.event_dispatcher(event)
+        return self.event_dispatcher(self, event)
 
     def request(self, address, subject, body, timeout=None):
         channel = self.container.send_request(address, subject, body)

@@ -201,7 +201,7 @@ class ServiceContainer(object):
                     self.stop()
 
         for interface in six.itervalues(self.installed_services):
-            for pattern, handler in type(interface).event_dispatcher:
+            for pattern, handler in interface.event_dispatcher:
                 self.subscribe(pattern, **handler._event_args)
 
     def stop(self):

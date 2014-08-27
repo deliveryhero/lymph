@@ -36,7 +36,8 @@ class EventDispatcher(object):
     }
 
     def __init__(self, patterns=()):
-        self.patterns = list(patterns)
+        self.patterns = []
+        self.update(patterns)
 
     def compile(self, key):
         words = (self.wildcards.get(word, re.escape(word)) for word in key.split('.'))
@@ -69,9 +70,4 @@ class EventDispatcher(object):
                 handlers.add(handler)
                 handler(obj, event)
         return bool(handlers)
-
-    def __get__(self, obj, cls):
-        if obj is None:
-            return self
-        return functools.partial(self, obj)
 

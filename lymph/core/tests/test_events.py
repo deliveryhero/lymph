@@ -71,19 +71,3 @@ class EventDispatcherTest(unittest.TestCase):
 
         self.assert_dispatched_handlers_equal('foo', {'foo', 'base_foo', 'hash'})
         self.assert_dispatched_handlers_equal('bar', {'hash', 'bar'})
-
-    def test_method_descriptor(self):
-        self.dispatcher.register('foo', self.make_handler('foo'))
-        self.dispatcher.register('#', self.make_handler('hash'))
-
-        class StubInterface(object):
-            dispatcher = self.dispatcher
-
-        stub = StubInterface()
-        event = Event('foo', {'x': 42})
-        stub.dispatcher(event)
-
-        self.assertEqual(set(self.handler_log), {
-            ('foo', (stub, event)),
-            ('hash', (stub, event)),
-        })
