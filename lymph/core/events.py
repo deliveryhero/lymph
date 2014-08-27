@@ -63,11 +63,11 @@ class EventDispatcher(object):
             if regex.match(evt_type):
                 yield pattern, handler
 
-    def __call__(self, obj, event):
+    def __call__(self, event):
         handlers = set()
         for pattern, handler in self.dispatch(event.evt_type):
             if handler not in handlers:
                 handlers.add(handler)
-                handler(obj, event)
+                handler(event)
         return bool(handlers)
 
