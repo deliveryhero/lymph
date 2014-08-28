@@ -74,6 +74,18 @@ Service API
 
         :param event_type: str
         :param payload: a dict of JSON serializable data structures
+        
+    .. decorator:: subscribe(*event_types, sequential=True)
+    
+        Behaves like :func:`lymph.event`, but can be used at runtime
+        
+        .. code::
+        
+            class Example(lymph.Service):
+                def on_start(self):
+                    @self.subscribe('dynamic_event_type')
+                    def on_event(event):
+                        assert isinstance(event, lymph.core.events.Event)
 
 
 .. decorator:: rpc()
@@ -92,13 +104,13 @@ Service API
                 channel.ack()
 
 
-.. decorator:: event(event_type, sequential=False)
+.. decorator:: event(*event_types, sequential=False)
 
-    :param event_type: may contain wildcards, e.g. ``'subject.*'``
+    :param event_types: may contain wildcards, e.g. ``'subject.*'``
     :param sequential: force sequential event consumption
 
     Marks the decorated interface method as an event handler.
-    The service container will automatically subscribe to given ``event_type``.
+    The service container will automatically subscribe to given ``event_types``.
     If ``sequential=True``, events will be not be consumed in parallel, but one by one.
     
     .. code::
