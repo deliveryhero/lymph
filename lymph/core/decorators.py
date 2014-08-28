@@ -1,3 +1,6 @@
+from lymph.core.events import EventHandler
+
+
 def rpc():
     def decorator(func):
         func._rpc = True
@@ -5,12 +8,9 @@ def rpc():
     return decorator
 
 
-def event(event_type, **kwargs):
+def event(*event_types, **kwargs):
     def decorator(func):
-        if not hasattr(func, '_event_args'):
-            func._event_args = {}
-            func._event_types = set()
-        func._event_args.update(**kwargs)
-        func._event_types.add(event_type)
-        return func
+        if isinstance(func, EventHandler):
+            raise TypeError('lymph.event() decorators cannot be stacked')
+        return EventHandler(func, event_types, **kwargs)
     return decorator

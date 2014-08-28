@@ -21,11 +21,11 @@ DEFAULT_EXCHANGE = 'lymph'
 
 
 class EventConsumer(kombu.mixins.ConsumerMixin):
-    def __init__(self, connection, queue, container, sequential=False):
+    def __init__(self, connection, queue, handler, spawn=gevent.spawn):
         self.connection = connection
         self.queue = queue
-        self.container = container
-        self.sequential = sequential
+        self.handler = handler
+        self.spawn = spawn
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_kombu_message])]
@@ -39,19 +39,19 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
         def message_handler():
             event = Event.deserialize(body)
             try:
-                self.container.handle_event(event)
+                self.handler(event)
             except:
                 raise
             else:
                 message.ack()
-        if self.sequential:
+        if self.handler.sequential:
             message_handler()
         else:
-            self.container.spawn(message_handler)
+            self.spawn(message_handler)
 
     def start(self):
         self.should_stop = False
-        self.greenlet = self.container.spawn(self.run)
+        self.greenlet = self.spawn(self.run)
 
     def stop(self):
         self.should_stop = True
@@ -77,18 +77,18 @@ class KombuEventSystem(BaseEventSystem):
         connection = kombu.Connection(**config)
         return cls(connection, exchange_name, serializer=serializer, **kwargs)
 
-    def subscribe(self, container, event_type, sequential=False):
+    def subscribe(self, container, handler):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
-            queue_name = '-'.join(container.service_types)
-            queue = kombu.Queue(queue_name, self.exchange, durable=True)
+            queue = kombu.Queue(handler.queue_name, self.exchange, durable=True)
             queue(conn).declare()
-            queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
-        consumer = EventConsumer(self.connection, queue, container, sequential=sequential)
+            for event_type in handler.event_types:
+                queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
+        consumer = EventConsumer(self.connection, queue, handler, spawn=self.greenlets.spawn)
         self.consumers.add(consumer)
         consumer.start()
 
-    def unsubscribe(self, container, event_type):
+    def unsubscribe(self, container, handler):
         pass
 
     @contextmanager

@@ -1,6 +1,6 @@
 import unittest
 
-from lymph.core.events import EventDispatcher, Event
+from lymph.core.events import EventDispatcher
 
 
 class EventDispatcherTest(unittest.TestCase):
@@ -12,8 +12,10 @@ class EventDispatcherTest(unittest.TestCase):
     def make_handler(self, name):
         if name in self.handlers:
             return self.handlers[name]
+
         def handler(*args):
             self.handler_log.append((name, args))
+
         handler.__name__ = name
         self.handlers[name] = handler
         return handler

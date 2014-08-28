@@ -17,10 +17,10 @@ class BaseEventSystem(object):
     def on_stop(self):
         pass
 
-    def subscribe(self, container, event_type):
+    def subscribe(self, container, handler):
         raise NotImplementedError
 
-    def unsubscribe(self, container, event_type):
+    def unsubscribe(self, container, handler):
         raise NotImplementedError
 
     @abstractmethod

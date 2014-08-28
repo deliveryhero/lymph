@@ -4,24 +4,23 @@ import functools
 import six
 
 from lymph.core.decorators import rpc
-from lymph.core.events import EventDispatcher
+from lymph.core.events import EventHandler
 from lymph.exceptions import ErrorReply
 
 
 class InterfaceBase(type):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
-        static_event_handlers = []
+        static_event_handlers = set()
         for base in bases:
             if isinstance(base, InterfaceBase):
                 methods.update(base.methods)
-                static_event_handlers += base.static_event_handlers
+                static_event_handlers.update(base.static_event_handlers)
         for name, value in six.iteritems(attrs):
-            if callable(value):
-                if getattr(value, '_rpc', False):
-                    methods[name] = value
-                if hasattr(value, '_event_types'):
-                    static_event_handlers.append(name)
+            if isinstance(value, EventHandler):
+                static_event_handlers.add(value)
+            elif callable(value) and getattr(value, '_rpc', False):
+                methods[name] = value
         attrs.setdefault('service_type', clsname.lower())
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
@@ -67,11 +66,9 @@ class Interface(object):
     def __init__(self, container):
         self.container = container
         self.config = {}
-        self.event_dispatcher = EventDispatcher()
-        for name in self.static_event_handlers:
-            handler = getattr(self, name)
-            for event_type in handler._event_types:
-                self.event_dispatcher.register(event_type, handler)
+        self.event_handlers = set()
+        for handler in self.static_event_handlers:
+            self.event_handlers.add(handler.bind(self))
 
     def apply_config(self, config):
         pass
@@ -94,6 +91,13 @@ class Interface(object):
 
     def proxy(self, address, namespace=None, **kwargs):
         return Proxy(self.container, address, namespace=namespace, **kwargs)
+
+    def subscribe(self, *event_types, **kwargs):
+        def decorator(func):
+            handler = EventHandler(func, event_types, **kwargs)
+            self.container.subscribe(handler)
+            return handler
+        return decorator
 
     def on_start(self):
         pass

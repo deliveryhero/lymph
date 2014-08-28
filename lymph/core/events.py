@@ -29,6 +29,27 @@ class Event(object):
         }
 
 
+class EventHandler(object):
+    def __init__(self, func, event_types, sequential=False, queue_name=None):
+        self.func = func
+        self.event_types = event_types
+        self.sequential = sequential
+        self.queue_name = queue_name or func.__name__
+
+    def bind(self, interface):
+        func = functools.partial(self.func, interface)
+        queue_name = '%s-%s' % (interface.service_type, self.queue_name)
+        return EventHandler(func, self.event_types, sequential=self.sequential, queue_name=queue_name)
+
+    def __get__(self, interface, cls):
+        if interface is None:
+            return self
+        return self.bind(interface)
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+
 class EventDispatcher(object):
     wildcards = {
         '#': r'[\w.]*(?=\.|$)',

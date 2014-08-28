@@ -175,8 +175,8 @@ class ServiceContainer(object):
     def service_types(self):
         return self.installed_services.keys()
 
-    def subscribe(self, event_type, **kwargs):
-        self.event_system.subscribe(self, event_type, **kwargs)
+    def subscribe(self, handler):
+        self.event_system.subscribe(self, handler)
 
     def start(self, register=True):
         self.running = True
@@ -201,8 +201,8 @@ class ServiceContainer(object):
                     self.stop()
 
         for interface in six.itervalues(self.installed_services):
-            for pattern, handler in interface.event_dispatcher:
-                self.subscribe(pattern, **handler._event_args)
+            for handler in interface.event_handlers:
+                self.subscribe(handler)
 
     def stop(self):
         self.running = False

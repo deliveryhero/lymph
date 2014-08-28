@@ -1,17 +1,18 @@
+from lymph.core.events import EventDispatcher
 from lymph.events.base import BaseEventSystem
 
 
 class LocalEventSystem(BaseEventSystem):
     def __init__(self, **kwargs):
         super(LocalEventSystem, self).__init__(**kwargs)
-        self.subscriptions = {}
+        self.dispatcher = EventDispatcher()
 
-    def subscribe(self, container, event_type):
-        self.subscriptions.setdefault(event_type, []).append(container)
+    def subscribe(self, container, handler):
+        for event_type in handler.event_types:
+            self.dispatcher.register(event_type, handler)
 
-    def unsubscribe(self, container, event_type):
-        self.subscriptions[event_type].remove(container)
+    def unsubscribe(self, container, handler):
+        raise NotImplementedError()
 
     def emit(self, container, event):
-        for container in self.subscriptions.get(event.evt_type, ()):
-            container.handle_event(event)
+        self.dispatcher(event)
