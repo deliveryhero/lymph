@@ -64,11 +64,12 @@ class KombuEventSystem(BaseEventSystem):
         self.exchange = kombu.Exchange(exchange_name, 'topic', durable=True)
         self.greenlets = gevent.pool.Group()
         self.serializer = serializer
-        self.consumers = set()
+        self.consumers_by_queue = {}
 
     def on_stop(self):
-        for consumer in self.consumers:
+        for consumer in self.consumers_by_queue.values():
             consumer.stop()
+        self.consumers_by_queue.clear()
 
     @classmethod
     def from_config(cls, config, **kwargs):
@@ -78,6 +79,8 @@ class KombuEventSystem(BaseEventSystem):
         return cls(connection, exchange_name, serializer=serializer, **kwargs)
 
     def subscribe(self, container, handler):
+        if handler.queue_name in self.consumers_by_queue:
+            raise RuntimeError('cannot subscribe to queue %r more than once' % handler.queue_name)
         with self._get_connection() as conn:
             self.exchange(conn).declare()
             queue = kombu.Queue(handler.queue_name, self.exchange, durable=True)
@@ -85,11 +88,19 @@ class KombuEventSystem(BaseEventSystem):
             for event_type in handler.event_types:
                 queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
         consumer = EventConsumer(self.connection, queue, handler, spawn=self.greenlets.spawn)
-        self.consumers.add(consumer)
+        self.consumers_by_queue[handler.queue_name] = consumer
         consumer.start()
 
     def unsubscribe(self, container, handler):
-        pass
+        queue_name = handler.queue_name
+        try:
+            consumer = self.consumers_by_queue[queue_name]
+        except KeyError:
+            raise KeyError('there is no subscription for %r' % queue_name)
+        if consumer.handler != handler:
+            raise KeyError('%s is not subscribed to %r' % (handler, queue_name))
+        consumer.stop()
+        del self.consumers_by_queue[queue_name]
 
     @contextmanager
     def _get_connection(self):
