@@ -178,6 +178,9 @@ class ServiceContainer(object):
     def subscribe(self, handler):
         self.event_system.subscribe(self, handler)
 
+    def unsubscribe(self, handler):
+        self.event_system.unsubscribe(self, handler)
+
     def start(self, register=True):
         self.running = True
         logger.info('starting %s at %s (pid=%s)', ', '.join(self.service_types), self.endpoint, os.getpid())
