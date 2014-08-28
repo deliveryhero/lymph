@@ -1,12 +1,7 @@
 # -*- coding: utf-8 -*-
-import json
-import textwrap
-import sys
 import logging
 
-import lymph
 from lymph.client import Client
-from lymph.exceptions import LookupFailure
 from lymph.cli.base import Command
 
 
