@@ -111,10 +111,6 @@ All other keys will be passed as keyword arguments to the kombu `Connection <htt
 
 .. _kombu: kombu.readthedocs.org/
 
-Simple
-~~~~~~
-
-To use the builtin broker service for event transport set ``class`` to ``lymph.events.simple:SimpleEventSystem``.
 
 Null
 ~~~~
