@@ -30,11 +30,12 @@ class Event(object):
 
 
 class EventHandler(object):
-    def __init__(self, func, event_types, sequential=False, queue_name=None):
+    def __init__(self, func, event_types, sequential=False, queue_name=None, active=False):
         self.func = func
         self.event_types = event_types
         self.sequential = sequential
         self.queue_name = queue_name or func.__name__
+        self.active = active
 
     def bind(self, interface):
         func = functools.partial(self.func, interface)

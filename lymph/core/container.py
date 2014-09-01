@@ -175,8 +175,8 @@ class ServiceContainer(object):
     def service_types(self):
         return self.installed_services.keys()
 
-    def subscribe(self, handler):
-        self.event_system.subscribe(self, handler)
+    def subscribe(self, handler, **kwargs):
+        return self.event_system.subscribe(self, handler, **kwargs)
 
     def unsubscribe(self, handler):
         self.event_system.unsubscribe(self, handler)

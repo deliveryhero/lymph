@@ -26,6 +26,7 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
         self.queue = queue
         self.handler = handler
         self.spawn = spawn
+        self.greenlet = None
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_kombu_message])]
@@ -50,12 +51,17 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
             self.spawn(message_handler)
 
     def start(self):
+        if self.greenlet:
+            return
         self.should_stop = False
         self.greenlet = self.spawn(self.run)
 
     def stop(self):
+        if not self.greenlet:
+            return
         self.should_stop = True
         self.greenlet.join()
+        self.greenlet = None
 
 
 class KombuEventSystem(BaseEventSystem):
@@ -78,9 +84,7 @@ class KombuEventSystem(BaseEventSystem):
         connection = kombu.Connection(**config)
         return cls(connection, exchange_name, serializer=serializer, **kwargs)
 
-    def subscribe(self, container, handler):
-        if handler.queue_name in self.consumers_by_queue:
-            raise RuntimeError('cannot subscribe to queue %r more than once' % handler.queue_name)
+    def setup_consumer(self, container, handler):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
             queue = kombu.Queue(handler.queue_name, self.exchange, durable=True)
@@ -89,7 +93,19 @@ class KombuEventSystem(BaseEventSystem):
                 queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
         consumer = EventConsumer(self.connection, queue, handler, spawn=self.greenlets.spawn)
         self.consumers_by_queue[handler.queue_name] = consumer
-        consumer.start()
+        return consumer
+
+    def subscribe(self, container, handler, consume=True):
+        try:
+            consumer = self.consumers_by_queue[handler.queue_name]
+        except KeyError:
+            consumer = self.setup_consumer(container, handler)
+        else:
+            if consumer.handler != handler:
+                raise RuntimeError('cannot subscribe to queue %r more than once' % handler.queue_name)
+        if consume:
+            consumer.start()
+        return consumer
 
     def unsubscribe(self, container, handler):
         queue_name = handler.queue_name
