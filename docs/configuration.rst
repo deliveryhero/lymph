@@ -1,5 +1,5 @@
-Service Configuration Files
-===========================
+Configuration
+=============
 
 .. code-block:: yaml
 
@@ -52,11 +52,14 @@ Interface Configuration
 .. describe:: interfaces:<name>
 
     Mapping from service name to instance configuration that will be passed to
-    the implementation's :meth:`lymph.Service.apply_config()` method.
+    the implementation's :meth:`lymph.Interface.apply_config()` method.
     
 .. describe:: interfaces:<name>:class:
 
-    The class that implements this interface, e.g. a subclass of :class:`lymph.Service`.
+    The class that implements this interface, e.g. a subclass of :class:`lymph.Interface`.
+
+
+.. _registry-config:
 
 Registry Configuration
 ----------------------
@@ -85,16 +88,7 @@ To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zoo
 .. _ZooKeeper: http://zookeeper.apache.org/
 
 
-Simple
-~~~~~~
-
-To use the builtin serivce discovery mechanism set ``class`` to ``lymph.discovery.service:lymphCoordinatorServiceRegistry``.
-
-.. describe:: registry:coordinator_endpoint:
-
-    Endpoint of the coordinator service (``lymph.services.coordinator:Coordinator``).
-    The environment variable :envvar:`LYMPH_COORDINATOR` takes precedence.
-
+.. _event-config:
 
 Event Configuration
 -------------------
@@ -116,6 +110,7 @@ Null
 ~~~~
 
 The null backend doesn't transport any events. Set ``class`` to ``lymph.events.null.NullEventSystem`` if that is what you want.
+
 
 
 Logging Configuration

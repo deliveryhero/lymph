@@ -2,7 +2,7 @@ Getting Started
 ================
 
 Install lymph
-~~~~~~~~~~~~µ
+~~~~~~~~~~~~~
 
 .. code:: bash
 
@@ -20,11 +20,18 @@ Create a module called ``echo`` in your Python path.
 
 
     class Echo(lymph.Interface):
-        service_type = 'echo'
-
         @lymph.rpc()
         def echo(self, channel, text=None):
             channel.reply(text)
+
+
+Create a config file for this service (``echo.yml``)::
+
+.. code:: yaml
+
+    interfaces:
+        echo:
+            class: echo:Echo
 
 
 Run the service
@@ -32,5 +39,5 @@ Run the service
 
 .. code:: bash
 
-    $ lymph instance echo:Echo
+    $ lymph instance --config=echo.yml
     
