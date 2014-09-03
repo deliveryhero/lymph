@@ -87,7 +87,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         try:
             return list(result.get())
         except NoNodeError:
-            return list()
+            return []
 
     def lookup(self, container, service, watch=True, timeout=1):
         service_type = service.service_type
