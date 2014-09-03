@@ -61,6 +61,8 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             if event.type == EventType.CHILD:
                 # FIXME: figure out proper retry strategy
                 self.client.retry(self.lookup, service.container, service)
+        except LookupFailure:
+            pass
         except Exception:
             logger.exception('error in service type watcher')
 
