@@ -100,7 +100,7 @@ class DiscoverCommand(Command):
         if services:
             for service_type in sorted(services):
                 p = client.container.lookup('lymph://%s' % service_type)
-                print("%s [%s]" % (self.terminal.red(service_type), len(p)))
+                print(u"%s [%s]" % (self.terminal.red(service_type), len(p)))
                 if self.args.get('--instances'):
                     instances = sorted(p, key=lambda d: d.identity)
                     for i, d in enumerate(p):
