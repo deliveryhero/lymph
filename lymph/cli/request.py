@@ -107,7 +107,7 @@ class DiscoverCommand(Command):
                         prefix = u'└─' if i == len(instances) - 1 else u'├─'
                         print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
         else:
-            print "No registered services found"
+            print(u"No registered services found")
 
 
 class SubscribeCommand(Command):
