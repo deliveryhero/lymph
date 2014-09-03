@@ -2,6 +2,7 @@
 .coverage
 .coverage-report
 .lymph.yml
+.DS_Store
 *.pyc
 /env/
 /lymph.egg-info/

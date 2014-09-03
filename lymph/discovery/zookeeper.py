@@ -84,7 +84,10 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         result = self.client.get_children_async(
             path='%s/services' % self.chroot,
         )
-        return list(result.get())
+        try:
+            return list(result.get())
+        except NoNodeError:
+            return list()
 
     def lookup(self, container, service, watch=True, timeout=1):
         service_type = service.service_type

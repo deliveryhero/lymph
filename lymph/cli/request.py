@@ -96,14 +96,18 @@ class DiscoverCommand(Command):
 
     def run(self):
         client = Client.from_config(self.config)
-        for service_type in sorted(client.container.discover()):
-            p = client.container.lookup('lymph://%s' % service_type)
-            print("%s [%s]" % (self.terminal.red(service_type), len(p)))
-            if self.args.get('--instances'):
-                instances = sorted(p, key=lambda d: d.identity)
-                for i, d in enumerate(p):
-                    prefix = u'└─' if i == len(instances) - 1 else u'├─'
-                    print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
+        services = client.container.discover()
+        if services:
+            for service_type in sorted(services):
+                p = client.container.lookup('lymph://%s' % service_type)
+                print("%s [%s]" % (self.terminal.red(service_type), len(p)))
+                if self.args.get('--instances'):
+                    instances = sorted(p, key=lambda d: d.identity)
+                    for i, d in enumerate(p):
+                        prefix = u'└─' if i == len(instances) - 1 else u'├─'
+                        print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
+        else:
+            print "No registered services found"
 
 
 class SubscribeCommand(Command):
