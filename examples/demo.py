@@ -11,6 +11,7 @@ class Client(lymph.Interface):
     delay = .1
 
     def on_start(self):
+        super(Client, self).on_start()
         gevent.spawn(self.loop)
 
     @lymph.event('uppercase_transform_finished')
@@ -25,7 +26,7 @@ class Client(lymph.Interface):
         i = 0
         echo = self.proxy('lymph://echo', timeout=2)
         while True:
-            gevent.sleep(.1)
+            gevent.sleep(1)
             trace.set_id()
             try:
                 result = echo.upper(text='foo_%s' % i)

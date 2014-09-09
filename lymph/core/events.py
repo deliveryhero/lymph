@@ -1,5 +1,6 @@
-import functools
 import re
+
+from lymph.core.interfaces import Component
 
 
 class Event(object):
@@ -29,26 +30,20 @@ class Event(object):
         }
 
 
-class EventHandler(object):
-    def __init__(self, func, event_types, sequential=False, queue_name=None, active=False):
+class EventHandler(Component):
+    def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True):
         self.func = func
         self.event_types = event_types
         self.sequential = sequential
-        self.queue_name = queue_name or func.__name__
         self.active = active
+        self.interface = interface
+        self.queue_name = '%s-%s' % (interface.service_type, queue_name or func.__name__)
 
-    def bind(self, interface):
-        func = functools.partial(self.func, interface)
-        queue_name = '%s-%s' % (interface.service_type, self.queue_name)
-        return EventHandler(func, self.event_types, sequential=self.sequential, queue_name=queue_name)
-
-    def __get__(self, interface, cls):
-        if interface is None:
-            return self
-        return self.bind(interface)
+    def on_start(self):
+        self.interface.container.subscribe(self, consume=self.active)
 
     def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+        return self.func(self.interface, *args, **kwargs)
 
 
 class EventDispatcher(object):

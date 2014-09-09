@@ -4,27 +4,36 @@ import functools
 import six
 
 from lymph.core.decorators import rpc
-from lymph.core.events import EventHandler
 from lymph.exceptions import ErrorReply
+from lymph.core.declarations import Declaration
+
+
+class Component(object):
+    def on_start(self):
+        pass
+
+    def on_stop(self):
+        pass
 
 
 class InterfaceBase(type):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
-        static_event_handlers = set()
+        declarations = set()
         for base in bases:
             if isinstance(base, InterfaceBase):
                 methods.update(base.methods)
-                static_event_handlers.update(base.static_event_handlers)
+                declarations.update(base.declarations)
         for name, value in six.iteritems(attrs):
-            if isinstance(value, EventHandler):
-                static_event_handlers.add(value)
+            if isinstance(value, Declaration):
+                value.name = name
+                declarations.add(value)
             elif callable(value) and getattr(value, '_rpc', False):
                 methods[name] = value
         attrs.setdefault('service_type', clsname.lower())
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
-        new_cls.static_event_handlers = static_event_handlers
+        new_cls.declarations = declarations
         return new_cls
 
 
@@ -66,9 +75,12 @@ class Interface(object):
     def __init__(self, container):
         self.container = container
         self.config = {}
-        self.event_handlers = set()
-        for handler in self.static_event_handlers:
-            self.event_handlers.add(handler.bind(self))
+        self.components = {}
+        for declaration in self.declarations:
+            declaration.install(self)
+
+    def install(self, factory):
+        self.components[factory] = factory(self)
 
     def apply_config(self, config):
         pass
@@ -94,16 +106,19 @@ class Interface(object):
 
     def subscribe(self, *event_types, **kwargs):
         def decorator(func):
+            from lymph.core.events import EventHandler
             handler = EventHandler(func, event_types, **kwargs)
             self.container.subscribe(handler)
             return handler
         return decorator
 
     def on_start(self):
-        pass
+        for component in self.components.values():
+            component.on_start()
 
     def on_stop(self):
-        pass
+        for component in self.components.values():
+            component.on_stop()
 
     def on_connect(self, endpoint):
         pass

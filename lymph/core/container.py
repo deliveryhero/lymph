@@ -203,10 +203,6 @@ class ServiceContainer(object):
                     logger.info("registration failed %s, %s", service_type, service)
                     self.stop()
 
-        for interface in six.itervalues(self.installed_services):
-            for handler in interface.event_handlers:
-                self.subscribe(handler)
-
     def stop(self):
         self.running = False
         for service in six.itervalues(self.installed_services):
