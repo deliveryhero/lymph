@@ -11,7 +11,9 @@ class Declaration(object):
         self.kwargs = kwargs
 
     def install(self, interface):
-        interface.components[self] = self.factory(interface, *self.args, **self.kwargs)
+        component = self.factory(interface, *self.args, **self.kwargs)
+        interface.components[self] = component
+        return component
 
     def __get__(self, interface, cls):
         if interface is None:
