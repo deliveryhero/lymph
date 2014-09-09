@@ -7,7 +7,7 @@ class LocalEventSystem(BaseEventSystem):
         super(LocalEventSystem, self).__init__(**kwargs)
         self.dispatcher = EventDispatcher()
 
-    def subscribe(self, container, handler):
+    def subscribe(self, container, handler, **kwargs):
         for event_type in handler.event_types:
             self.dispatcher.register(event_type, handler)
 
