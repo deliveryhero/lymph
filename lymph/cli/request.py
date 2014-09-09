@@ -112,7 +112,7 @@ class DiscoverCommand(Command):
 
 class SubscribeCommand(Command):
     """
-    Usage: lymph subscribe <event-type> [options]
+    Usage: lymph subscribe <event-type>... [options]
 
     {COMMON_OPTIONS}
     """
@@ -123,7 +123,7 @@ class SubscribeCommand(Command):
         event_type = self.args.get('<event-type>')
 
         class Subscriber(lymph.Interface):
-            @lymph.event(event_type)
+            @lymph.event(*event_type)
             def on_event(self, event):
                 print('%s: %r' % (event.evt_type, event.body))
 
