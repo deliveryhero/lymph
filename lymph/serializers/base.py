@@ -53,6 +53,7 @@ class LossyTransformSerializer(ExtensionTypeSerializer):
 
 _extension_type_serializers = {}
 
+
 def register_serializer(t, serializer):
     name = t.__name__
     if name in _extension_type_serializers:
@@ -62,7 +63,7 @@ def register_serializer(t, serializer):
 
 register_serializer(datetime.datetime, DatetimeSerializer('%Y-%m-%dT%H:%I:%SZ'))
 register_serializer(datetime.date, DatetimeSerializer('%Y-%m-%d'))
-register_serializer(datetime.time, DatetimeSerializer('%H:%I:%S'))
+register_serializer(datetime.time, DatetimeSerializer('%H:%I:%SZ'))
 register_serializer(decimal.Decimal, StrSerializer(decimal.Decimal))
 register_serializer(set, LossyTransformSerializer(list))
 
