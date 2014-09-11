@@ -13,6 +13,7 @@ Contents:
    cli
    service_api
    core_api
+   patterns_api
    protocol
 
 

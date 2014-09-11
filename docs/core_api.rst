@@ -63,6 +63,17 @@ Core API
     .. attribute:: packed_body
 
 
+.. currentmodule:: lymph.core.events
+
+.. class:: Event
+
+    .. attribute:: body
+
+    .. method:: __getitem__(name)
+    
+        gets an event parameter from the body
+
+
 .. currentmodule:: lymph.core.services
 
 
