@@ -40,15 +40,12 @@ class StrSerializer(ExtensionTypeSerializer):
         return self.factory(obj)
 
 
-class LossyTransformSerializer(ExtensionTypeSerializer):
-    def __init__(self, transform):
-        self.transform = transform
-
+class SetSerializer(ExtensionTypeSerializer):
     def serialize(self, obj):
-        return self.transform(obj)
+        return list(obj)
 
     def deserialize(self, obj):
-        return obj
+        return set(obj)
 
 
 _extension_type_serializers = {}
@@ -65,7 +62,7 @@ register_serializer(datetime.datetime, DatetimeSerializer('%Y-%m-%dT%H:%I:%SZ'))
 register_serializer(datetime.date, DatetimeSerializer('%Y-%m-%d'))
 register_serializer(datetime.time, DatetimeSerializer('%H:%I:%SZ'))
 register_serializer(decimal.Decimal, StrSerializer(decimal.Decimal))
-register_serializer(set, LossyTransformSerializer(list))
+register_serializer(set, SetSerializer())
 
 
 class BaseSerializer(object):
