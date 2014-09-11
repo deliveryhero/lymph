@@ -176,10 +176,17 @@ class ServiceContainer(object):
         return self.installed_services.keys()
 
     def subscribe(self, handler, **kwargs):
-        return self.event_system.subscribe(self, handler, **kwargs)
+        return self.event_system.subscribe(handler, **kwargs)
 
     def unsubscribe(self, handler):
         self.event_system.unsubscribe(self, handler)
+
+    def get_instance_description(self, service_type=None):
+        return {
+            'endpoint': self.endpoint,
+            'identity': self.identity,
+            'log_endpoint': self.log_endpoint,
+        }
 
     def start(self, register=True):
         self.running = True
@@ -198,7 +205,7 @@ class ServiceContainer(object):
                 if not service.register_with_coordinator:
                     continue
                 try:
-                    self.service_registry.register(self, service_type)
+                    self.service_registry.register(service_type)
                 except RegistrationFailure:
                     logger.info("registration failed %s, %s", service_type, service)
                     self.stop()
@@ -246,11 +253,11 @@ class ServiceContainer(object):
     def lookup(self, address):
         if address.startswith('lymph://'):
             service_type = address[8:]
-            return self.service_registry.get(self, service_type)
+            return self.service_registry.get(service_type)
         return ServiceInstance(self, address)
 
     def discover(self):
-        return self.service_registry.discover(self)
+        return self.service_registry.discover()
 
     def send_message(self, address, msg):
         if not self.running:
@@ -350,7 +357,7 @@ class ServiceContainer(object):
 
     def emit_event(self, event_type, payload):
         event = Event(event_type, payload, source=self.identity)
-        self.event_system.emit(self, event)
+        self.event_system.emit(event)
 
     def handle_event(self, event):
         if not event.evt_type:

@@ -2,5 +2,5 @@ from lymph.events.base import BaseEventSystem
 
 
 class NullEventSystem(BaseEventSystem):
-    def emit(self, container, event):
+    def emit(self, event):
         pass

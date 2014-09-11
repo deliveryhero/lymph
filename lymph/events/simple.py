@@ -25,16 +25,17 @@ class SimpleBrokerClient(Interface):
 
 class SimpleEventSystem(BaseEventSystem):
     def install(self, container):
+        self.container = container
         container.install(SimpleBrokerClient)
 
-    def subscribe(self, container, event_type):
+    def subscribe(self, event_type):
         pass
 
-    def unsubscribe(self, container, event_type):
+    def unsubscribe(self, event_type):
         pass
 
-    def emit(self, container, event, timeout=1):
-        channel = container.send_request('lymph://broker', 'broker.broadcast', {
+    def emit(self, event, timeout=1):
+        channel = self.container.send_request('lymph://broker', 'broker.broadcast', {
             'event_type': event.evt_type,
             'payload': event.body,
         })

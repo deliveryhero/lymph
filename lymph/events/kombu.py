@@ -84,7 +84,7 @@ class KombuEventSystem(BaseEventSystem):
         connection = kombu.Connection(**config)
         return cls(connection, exchange_name, serializer=serializer, **kwargs)
 
-    def setup_consumer(self, container, handler):
+    def setup_consumer(self, handler):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
             queue = kombu.Queue(handler.queue_name, self.exchange, durable=True)
@@ -95,11 +95,11 @@ class KombuEventSystem(BaseEventSystem):
         self.consumers_by_queue[handler.queue_name] = consumer
         return consumer
 
-    def subscribe(self, container, handler, consume=True):
+    def subscribe(self, handler, consume=True):
         try:
             consumer = self.consumers_by_queue[handler.queue_name]
         except KeyError:
-            consumer = self.setup_consumer(container, handler)
+            consumer = self.setup_consumer(handler)
         else:
             if consumer.handler != handler:
                 raise RuntimeError('cannot subscribe to queue %r more than once' % handler.queue_name)
@@ -107,7 +107,7 @@ class KombuEventSystem(BaseEventSystem):
             consumer.start()
         return consumer
 
-    def unsubscribe(self, container, handler):
+    def unsubscribe(self, handler):
         queue_name = handler.queue_name
         try:
             consumer = self.consumers_by_queue[queue_name]
@@ -123,7 +123,7 @@ class KombuEventSystem(BaseEventSystem):
         with kombu.pools.connections[self.connection].acquire(block=True) as conn:
             yield conn
 
-    def emit(self, container, event):
+    def emit(self, event):
         with self._get_connection() as conn:
             producer = conn.Producer(serializer=self.serializer)
             producer.publish(event.serialize(), routing_key=event.evt_type, exchange=self.exchange, declare=[self.exchange])
