@@ -3,9 +3,9 @@
 Pattern API
 ===========
 
-.. currentmodule:: lymph.patterns.partitioned_event
+.. currentmodule:: lymph.patterns.serial_events
 
-.. decorator:: partitioned_event(*event_types, partition_count=12, key=None)
+.. decorator:: serial_event(*event_types, partition_count=12, key=None)
 
     :param event_types: event types that should be partitioned
     :param partition_count: number of queues that should be used to partition the events

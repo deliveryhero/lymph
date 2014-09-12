@@ -13,16 +13,16 @@ from lymph.core.interfaces import Component
 logger = logging.getLogger(__name__)
 
 
-def partitioned_event(*event_types, **kwargs):
+def serial_event(*event_types, **kwargs):
     def decorator(func):
         @declaration()
         def factory(interface):
-            return PartitionedQueue(interface, func, event_types, **kwargs)
+            return SerialEventHandler(interface, func, event_types, **kwargs)
         return factory
     return decorator
 
 
-class PartitionedQueue(Component):
+class SerialEventHandler(Component):
     def __init__(self, interface, func, event_types, key=None, partition_count=12):
         self.zk = interface.container.service_registry.client
         self.interface = interface
