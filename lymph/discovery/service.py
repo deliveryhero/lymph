@@ -12,7 +12,7 @@ class SimpleCoordinatorClient(Interface):
 
 
 class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
-    def __init__(self, coordinator_endpoint, container=None):
+    def __init__(self, coordinator_endpoint):
         super(LymphCoordinatorServiceRegistry, self).__init__()
         self.coordinator_endpoint = coordinator_endpoint
 
