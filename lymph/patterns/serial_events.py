@@ -24,7 +24,7 @@ def serial_event(*event_types, **kwargs):
 
 class SerialEventHandler(Component):
     def __init__(self, interface, func, event_types, key=None, partition_count=12):
-        self.zk = interface.container.service_registry.client
+        self.zk = interface.container.service_registry.client  # FIXME
         self.interface = interface
         self.partition_count = partition_count
         self.key_func = key
@@ -61,7 +61,7 @@ class SerialEventHandler(Component):
         while True:
             logger.info('starting partitioner')
             partitioner = self.zk.SetPartitioner(
-                path='/lymph/serializer',
+                path='/lymph/serial_event_partitions/%s' % self.interface.service_type,
                 set=self.consumers.keys(),
                 time_boundary=1,
             )
@@ -93,9 +93,7 @@ class SerialEventHandler(Component):
         self.partition = partition
 
     def start_consuming(self, handler):
-        logger.debug("SUBSCRIBE %s %s %s", self.interface.container.identity[:10], handler.queue_name, id(self.consumers[handler]))
         self.consumers[handler].start()
 
     def stop_consuming(self, handler):
-        logger.debug("UNSUBSCRIBE %s %s %s", self.interface.container.identity[:10], handler.queue_name, id(self.consumers[handler]))
         self.consumers[handler].stop()
