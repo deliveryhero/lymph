@@ -61,11 +61,13 @@ class SetSerializer(ExtensionTypeSerializer):
         return set(obj)
 
 
-_extension_type_serializers = {datetime.datetime.__name__: DatetimeSerializer(),
-                               datetime.date.__name__: DateSerializer(),
-                               datetime.time.__name__: TimeSerializer(),
-                               decimal.Decimal.__name__: StrSerializer(decimal.Decimal),
-                               set.__name__: SetSerializer()}
+_extension_type_serializers = {
+    'datetime': DatetimeSerializer(),
+    'date': DateSerializer(),
+    'time': TimeSerializer(),
+    'Decimal': StrSerializer(decimal.Decimal),
+    'set': SetSerializer()
+}
 
 
 class BaseSerializer(object):
@@ -113,4 +115,3 @@ msgpack_serializer = BaseSerializer(
 )
 
 json_serializer = BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
-
