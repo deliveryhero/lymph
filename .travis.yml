@@ -7,10 +7,10 @@ python:
 
 before_install:
     - sudo apt-get update
-    - pip install cython
 
 install:
     - sudo apt-get install zookeeper
+    - pip install "cython==0.20.1"
     - pip install -r requirements/base.txt
     - pip install .
 

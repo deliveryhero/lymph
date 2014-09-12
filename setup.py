@@ -18,12 +18,9 @@ setup(
     maintainer_email=u'johannes.dollinger@deliveryhero.com',
     long_description=description,
     include_package_data=True,
-    setup_requires=[
-        'Cython>=0.20.1',
-    ],
     install_requires=[
         'docopt>=0.6.1',
-        'gevent>=1.1-dev',
+        'gevent',
         'kazoo>=1.3.1',
         'kombu>=3.0.16',
         'monotime>=1.0', # FIXME: only for Python 2
