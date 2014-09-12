@@ -19,14 +19,27 @@ class ExtensionTypeSerializer(object):
 
 
 class DatetimeSerializer(ExtensionTypeSerializer):
-    def __init__(self, format):
-        self.format = format
+    format = '%Y-%m-%dT%H:%M:%SZ'
 
     def serialize(self, obj):
         return obj.strftime(self.format)
 
     def deserialize(self, obj):
         return datetime.datetime.strptime(obj, self.format)
+
+
+class DateSerializer(DatetimeSerializer):
+    format = '%Y-%m-%d'
+
+    def deserialize(self, obj):
+        return super(DateSerializer, self).deserialize(obj).date()
+
+
+class TimeSerializer(DatetimeSerializer):
+    format = '%H:%M:%SZ'
+
+    def deserialize(self, obj):
+        return super(TimeSerializer, self).deserialize(obj).time()
 
 
 class StrSerializer(ExtensionTypeSerializer):
@@ -48,21 +61,11 @@ class SetSerializer(ExtensionTypeSerializer):
         return set(obj)
 
 
-_extension_type_serializers = {}
-
-
-def register_serializer(t, serializer):
-    name = t.__name__
-    if name in _extension_type_serializers:
-        raise RuntimeError('Serializer for %r already registered.' % t)
-    _extension_type_serializers[name] = serializer
-
-
-register_serializer(datetime.datetime, DatetimeSerializer('%Y-%m-%dT%H:%I:%SZ'))
-register_serializer(datetime.date, DatetimeSerializer('%Y-%m-%d'))
-register_serializer(datetime.time, DatetimeSerializer('%H:%I:%SZ'))
-register_serializer(decimal.Decimal, StrSerializer(decimal.Decimal))
-register_serializer(set, SetSerializer())
+_extension_type_serializers = {datetime.datetime.__name__: DatetimeSerializer(),
+                               datetime.date.__name__: DateSerializer(),
+                               datetime.time.__name__: TimeSerializer(),
+                               decimal.Decimal.__name__: StrSerializer(decimal.Decimal),
+                               set.__name__: SetSerializer()}
 
 
 class BaseSerializer(object):
