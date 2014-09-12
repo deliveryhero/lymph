@@ -60,7 +60,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         try:
             if event.type == EventType.CHILD:
                 # FIXME: figure out proper retry strategy
-                self.client.retry(self.lookup, service.container, service)
+                self.client.retry(self.lookup, service)
         except LookupFailure:
             pass
         except Exception:
@@ -82,7 +82,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         items = six.iteritems(json.loads(value.decode('utf-8')))
         return {str(k): str(v) for k, v in items}
 
-    def discover(self, container):
+    def discover(self):
         result = self.client.get_children_async(
             path='%s/services' % self.chroot,
         )
@@ -91,7 +91,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         except NoNodeError:
             return []
 
-    def lookup(self, container, service, watch=True, timeout=1):
+    def lookup(self, service, watch=True, timeout=1):
         service_type = service.service_type
         result = self.client.get_children_async(
             path='%s/services/%s' % (self.chroot, service_type),
@@ -118,13 +118,9 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def _get_zk_path(self, service_type, identity):
         return '%s/services/%s/%s' % (self.chroot, service_type, identity)
 
-    def register(self, container, service_type, timeout=1):
-        path = self._get_zk_path(service_type, container.identity)
-        value = json.dumps({
-            'endpoint': container.endpoint,
-            'identity': container.identity,
-            'log_endpoint': container.log_endpoint,
-        })
+    def register(self, service_type, timeout=1):
+        path = self._get_zk_path(service_type, self.container.identity)
+        value = json.dumps(self.container.get_instance_description())
         result = self.client.create_async(
             path,
             value.encode('utf-8'),
@@ -132,8 +128,8 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         # FIXME: result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
 
-    def unregister(self, container, service_type, timeout=1):
-        path = self._get_zk_path(service_type, container.identity)
+    def unregister(self, service_type, timeout=1):
+        path = self._get_zk_path(service_type, self.container.identity)
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)

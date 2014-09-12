@@ -7,12 +7,12 @@ class LocalEventSystem(BaseEventSystem):
         super(LocalEventSystem, self).__init__(**kwargs)
         self.dispatcher = EventDispatcher()
 
-    def subscribe(self, container, handler):
+    def subscribe(self, handler, **kwargs):
         for event_type in handler.event_types:
             self.dispatcher.register(event_type, handler)
 
-    def unsubscribe(self, container, handler):
+    def unsubscribe(self, handler):
         raise NotImplementedError()
 
-    def emit(self, container, event):
+    def emit(self, event):
         self.dispatcher(event)

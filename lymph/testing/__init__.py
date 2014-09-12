@@ -7,7 +7,7 @@ from kazoo.testing.harness import KazooTestHarness
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
 from lymph.core.interfaces import Interface
-from lymph.discovery.static import StaticServiceRegistry
+from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.client import Client
 from lymph.services.coordinator import Coordinator
@@ -17,14 +17,15 @@ class MockServiceNetwork(object):
     def __init__(self):
         self.service_containers = {}
         self.next_port = 0
-        self.registry = StaticServiceRegistry({})
+        self.discovery_hub = StaticServiceRegistryHub({})
         self.events = LocalEventSystem()
 
     def add_service(self, cls, **kwargs):
         kwargs.setdefault('ip', '300.0.0.1')
         kwargs.setdefault('port', self.next_port)
         self.next_port += 1
-        container = MockServiceContainer(registry=self.registry, events=self.events, **kwargs)
+        registry = self.discovery_hub.create_registry()
+        container = MockServiceContainer(registry=registry, events=self.events, **kwargs)
         container.install(cls)
         self.service_containers[container.endpoint] = container
         container._mock_network = self

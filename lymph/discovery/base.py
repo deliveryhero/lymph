@@ -15,17 +15,17 @@ class BaseServiceRegistry(object):
     def on_stop(self):
         pass
 
-    def get(self, container, service_type, **kwargs):
+    def get(self, service_type, **kwargs):
         try:
             service = self.cache[service_type]
         except KeyError:
-            service = Service(container, service_type)
-            self.lookup(container, service, **kwargs)
+            service = Service(self.container, service_type)
+            self.lookup(service, **kwargs)
             self.cache[service_type] = service
         return service
 
     def install(self, container):
-        pass
+        self.container = container
 
     @abstractmethod
     def discover(self, container):
