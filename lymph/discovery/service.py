@@ -18,7 +18,7 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
 
     @classmethod
     def from_config(cls, config, **kwargs):
-        coordinator_endpoint = config.get('coordinator_endpoint', os.environ.get('IRIS_COORDINATOR', None))
+        coordinator_endpoint = config.get('coordinator_endpoint', os.environ.get('LYMPH_COORDINATOR', None))
         return cls(coordinator_endpoint=coordinator_endpoint)
 
     def install(self, container):

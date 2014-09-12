@@ -20,7 +20,7 @@ The following options apply to all subcommands:
 .. cmdoption:: -c <file>, --config <file>
 
     Read the configuration from <file>. This can also be specified as an environment
-    variable :envvar:`IRIS_CONFIG`. The default value is ``.lymph.yml``.
+    variable :envvar:`LYMPH_CONFIG`. The default value is ``.lymph.yml``.
 
 .. cmdoption:: --loglevel <level>
 

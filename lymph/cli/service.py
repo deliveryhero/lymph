@@ -103,6 +103,6 @@ class NodeCommand(InstanceCommand):
                 },
             }
         })
-        os.environ['IRIS_NODE_CONFIG'] = self.config.source
+        os.environ['LYMPH_NODE_CONFIG'] = self.config.source
         super(NodeCommand, self).run()
 

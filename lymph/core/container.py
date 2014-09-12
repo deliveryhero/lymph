@@ -80,7 +80,7 @@ class ServiceContainer(object):
     def from_config(cls, config, **explicit_kwargs):
         kwargs = dict(config)
         kwargs.pop('class', None)
-        kwargs.setdefault('node_endpoint', os.environ.get('IRIS_NODE'))
+        kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
                 kwargs[key] = value
@@ -132,7 +132,7 @@ class ServiceContainer(object):
         return s
 
     def get_shared_socket_fd(self, port):
-        fds = json.loads(os.environ.get('IRIS_SHARED_SOCKET_FDS', '{}'))
+        fds = json.loads(os.environ.get('LYMPH_SHARED_SOCKET_FDS', '{}'))
         try:
             return fds[str(port)]
         except KeyError:

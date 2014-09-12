@@ -93,7 +93,7 @@ To use the builtin serivce discovery mechanism set ``class`` to ``lymph.discover
 .. describe:: registry:coordinator_endpoint:
 
     Endpoint of the coordinator service (``lymph.services.coordinator:Coordinator``).
-    The environment variable :envvar:`IRIS_COORDINATOR` takes precedence.
+    The environment variable :envvar:`LYMPH_COORDINATOR` takes precedence.
 
 
 Event Configuration

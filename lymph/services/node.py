@@ -86,9 +86,9 @@ class Node(Interface):
         shared_fds = json.dumps({port: s.fileno() for port, s in six.iteritems(self.sockets)})
         for service_type, cmd, num in self._services:
             env = os.environ.copy()
-            env['IRIS_NODE'] = self.container.endpoint
-            env['IRIS_NODE_IP'] = self.container.ip
-            env['IRIS_SHARED_SOCKET_FDS'] = shared_fds
+            env['LYMPH_NODE'] = self.container.endpoint
+            env['LYMPH_NODE_IP'] = self.container.ip
+            env['LYMPH_SHARED_SOCKET_FDS'] = shared_fds
             for i in range(num):
                 p = Process(cmd.split(' '), env=env)
                 self.processes.append(p)

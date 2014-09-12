@@ -68,14 +68,14 @@ def setup_config(args):
         'container': {}
     })
 
-    if 'IRIS_NODE_CONFIG' in os.environ:
-        config.load_file(os.environ['IRIS_NODE_CONFIG'], sections=['registry', 'event_system', 'plugins'])
+    if 'LYMPH_NODE_CONFIG' in os.environ:
+        config.load_file(os.environ['LYMPH_NODE_CONFIG'], sections=['registry', 'event_system', 'plugins'])
 
     config_file = args.get('--config') or '.lymph.yml'
     config.load_file(config_file)
     config.source = config_file
 
-    config.setdefault('container.ip', os.environ.get('IRIS_NODE_IP', '127.0.0.1'))
+    config.setdefault('container.ip', os.environ.get('LYMPH_NODE_IP', '127.0.0.1'))
     ip = args.get('--ip')
     if args.get('--guess-external-ip'):
         if ip:
