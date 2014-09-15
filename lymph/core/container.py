@@ -283,10 +283,10 @@ class ServiceContainer(object):
             source=self.endpoint,
             headers=self.prepare_headers(headers),
         )
-        reply_channel = ReplyChannel(msg, self)
-        self.channels[msg.id] = reply_channel
+        channel = RequestChannel(msg, self)
+        self.channels[msg.id] = channel
         self.send_message(address, msg)
-        return reply_channel
+        return channel
 
     def send_reply(self, msg, body, msg_type=Message.REP, headers=None):
         reply_msg = Message(
@@ -301,7 +301,7 @@ class ServiceContainer(object):
 
     def dispatch_request(self, msg):
         self.request_counts[msg.subject] += 1
-        channel = RequestChannel(msg, self)
+        channel = ReplyChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
         try:
             service = self.installed_services[service_name]

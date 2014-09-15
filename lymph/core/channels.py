@@ -11,9 +11,9 @@ class Channel(object):
         self.container = container
 
 
-class ReplyChannel(Channel):
+class RequestChannel(Channel):
     def __init__(self, request, container):
-        super(ReplyChannel, self).__init__(request, container)
+        super(RequestChannel, self).__init__(request, container)
         self.queue = gevent.queue.Queue()
 
     def recv(self, msg):
@@ -35,9 +35,9 @@ class ReplyChannel(Channel):
         del self.container.channels[self.request.id]
 
 
-class RequestChannel(Channel):
+class ReplyChannel(Channel):
     def __init__(self, request, container):
-        super(RequestChannel, self).__init__(request, container)
+        super(ReplyChannel, self).__init__(request, container)
         self._sent_reply = False
 
     def reply(self, body):
