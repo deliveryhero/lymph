@@ -251,9 +251,8 @@ class ServiceContainer(object):
             service.on_disconnect(endpoint)
 
     def lookup(self, address):
-        if address.startswith('lymph://'):
-            service_type = address[8:]
-            return self.service_registry.get(service_type)
+        if '://' not in address:
+            return self.service_registry.get(address)
         return ServiceInstance(self, address)
 
     def discover(self):

@@ -16,7 +16,7 @@ class Client(lymph.Interface):
 
     @lymph.event('uppercase_transform_finished')
     def on_uppercase(self, event):
-        echo = self.proxy('lymph://echo', timeout=2)
+        echo = self.proxy('echo', timeout=2)
         print(echo.echo(text="DONE"), event.body)
 
     def apply_config(self, config):
@@ -24,7 +24,7 @@ class Client(lymph.Interface):
 
     def loop(self):
         i = 0
-        echo = self.proxy('lymph://echo', timeout=2)
+        echo = self.proxy('echo', timeout=2)
         while True:
             gevent.sleep(1)
             trace.set_id()
