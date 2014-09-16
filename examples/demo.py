@@ -10,26 +10,26 @@ class Client(lymph.Interface):
     service_type = 'demo'
     delay = .1
 
+    echo = lymph.proxy('echo', timeout=2)
+
     def on_start(self):
         super(Client, self).on_start()
         gevent.spawn(self.loop)
 
     @lymph.event('uppercase_transform_finished')
     def on_uppercase(self, event):
-        echo = self.proxy('echo', timeout=2)
-        print(echo.echo(text="DONE"), event.body)
+        print(self.echo.echo(text="DONE"), event.body)
 
     def apply_config(self, config):
         self.delay = config.get('delay', .1)
 
     def loop(self):
         i = 0
-        echo = self.proxy('echo', timeout=2)
         while True:
-            gevent.sleep(1)
+            gevent.sleep(self.delay)
             trace.set_id()
             try:
-                result = echo.upper(text='foo_%s' % i)
+                result = self.echo.upper(text='foo_%s' % i)
             except lymph.RpcError:
                 continue
             print("result = %s" % result)

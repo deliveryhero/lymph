@@ -23,8 +23,9 @@ def _export():
     from lymph.exceptions import RpcError, LookupFailure, Timeout
     from lymph.core.decorators import rpc, event
     from lymph.core.interfaces import Interface
+    from lymph.core.declarations import proxy
 
-    for obj in (RpcError, LookupFailure, Timeout, rpc, event, Interface):
+    for obj in (RpcError, LookupFailure, Timeout, rpc, event, Interface, proxy):
         setattr(lymph, obj.__name__, obj)
 
 

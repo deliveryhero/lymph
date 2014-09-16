@@ -19,3 +19,11 @@ class Declaration(object):
         if interface is None:
             return self
         return interface.components[self]
+
+
+def proxy(*args, **kwargs):
+    @declaration()
+    def factory(interface):
+        from lymph.core.interfaces import Proxy
+        return Proxy(interface.container, *args, **kwargs)
+    return factory
