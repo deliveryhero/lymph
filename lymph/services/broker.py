@@ -22,8 +22,8 @@ class Broker(Interface):
     def configure(self, config):
         super(Broker, self).configure(config)
         self.config['broadcast_map'] = {
-            'alarm': set(['lymph://echo']),
-            'uppercase_transform_finished': set(['lymph://demo']),
+            'alarm': set(['echo']),
+            'uppercase_transform_finished': set(['demo']),
         }
 
     def on_start(self):

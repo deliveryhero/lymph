@@ -35,7 +35,7 @@ class SimpleEventSystem(BaseEventSystem):
         pass
 
     def emit(self, event, timeout=1):
-        channel = self.container.send_request('lymph://broker', 'broker.broadcast', {
+        channel = self.container.send_request('broker', 'broker.broadcast', {
             'event_type': event.evt_type,
             'payload': event.body,
         })
