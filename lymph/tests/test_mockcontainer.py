@@ -93,7 +93,7 @@ class BasicMockTest(unittest.TestCase):
         self.assertEqual(proxy.upper(text='foo'), 'FOO')
 
     def test_inspect(self):
-        proxy = self.client.proxy('upper', 'lymph')
+        proxy = self.client.proxy('upper', namespace='lymph')
         methods = proxy.inspect()['methods']
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
