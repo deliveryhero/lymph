@@ -7,7 +7,7 @@ from lymph.serializers import base
 
 
 class SerializerBaseTest(unittest.TestCase):
-    def test_DatetimeSerializer_erialize(self):
+    def test_DatetimeSerializer_serialize(self):
         serializer = base.DatetimeSerializer()
         self.assertEqual(
             serializer.serialize(datetime.datetime(1900, 1, 1, 0, 0, 0, 1)),
@@ -15,7 +15,6 @@ class SerializerBaseTest(unittest.TestCase):
         self.assertEqual(
             serializer.serialize(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
             "2014-09-12T08:33:12Z")
-        self.assertRaises(ValueError, serializer.serialize, datetime.datetime(1815, 3, 23, 12, 32, 41))
 
     def test_DatetimeSerializer_deserialize(self):
         serializer = base.DatetimeSerializer()
@@ -33,7 +32,6 @@ class SerializerBaseTest(unittest.TestCase):
             serializer.serialize(datetime.date(1900, 1, 1)), "1900-01-01")
         self.assertEqual(
             serializer.serialize(datetime.date(2014, 9, 12)), "2014-09-12")
-        self.assertRaises(ValueError, serializer.serialize, datetime.date(1815, 3, 23))
 
     def test_DateSerializer_deserialize(self):
         serializer = base.DateSerializer()
@@ -73,13 +71,13 @@ class SerializerBaseTest(unittest.TestCase):
         self.assertEqual(serializer.deserialize("Infinity"), decimal.Decimal('Infinity'))
         self.assertRaises(decimal.InvalidOperation, serializer.deserialize, "foo")
 
-    def test_LossyTransformSerializer_serialize(self):
+    def test_SetSerializer_serialize(self):
         serializer = base.SetSerializer()
         self.assertEqual(
-            serializer.serialize(set(["as", "this", "is", "a", "set"])),
-            ['this', 'a', 'as', 'set', 'is'])
+            set(serializer.serialize(set(["as", "this", "is", "a", "set"]))),
+            set(['this', 'a', 'as', 'set', 'is']))
 
-    def test_LossyTransformSerializer_deserialize(self):
+    def test_SetSerializer_deserialize(self):
         serializer = base.SetSerializer()
         self.assertEqual(serializer.deserialize(["as", "this", "is", "a", "set"]),
                          set(["as", "this", "is", "a", "set"]))
@@ -92,8 +90,6 @@ class SerializerBaseTest(unittest.TestCase):
                          {'__type__': 'date', '_': '2014-09-12'})
         self.assertEqual(serializer.dump_object(decimal.Decimal('3.1415')),
                          {'__type__': 'Decimal', '_': '3.1415'})
-        self.assertEqual(serializer.dump_object(set(["as", "this", "is", "a", "set"])),
-                         {'__type__': 'set', '_': ['this', 'a', 'as', 'set', 'is']})
 
     def test_BaseSerializer_dump(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
@@ -101,14 +97,10 @@ class SerializerBaseTest(unittest.TestCase):
                          '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}')
         self.assertEqual(serializer.dumps(decimal.Decimal('NaN')),
                          '{"__type__": "Decimal", "_": "NaN"}')
-        self.assertEqual(serializer.dumps(set(["as", "this", "is", "a", "set"])),
-                         '{"__type__": "set", "_": ["this", "a", "as", "set", "is"]}')
         self.assertEqual(serializer.dumps(
-                         set([datetime.datetime(2014, 9, 12, 8, 33, 12, 34),
-                              datetime.datetime(2015, 9, 12, 8, 33, 12, 34)])),
+                         set([datetime.datetime(2014, 9, 12, 8, 33, 12, 34)])),
                          '{"__type__": "set", "_": ['
-                         '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}, '
-                         '{"__type__": "datetime", "_": "2015-09-12T08:33:12Z"}'
+                         '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}'
                          ']}')
 
     def test_BaseSerializer_load_object(self):
