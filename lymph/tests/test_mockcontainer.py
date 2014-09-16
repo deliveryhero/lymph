@@ -54,11 +54,11 @@ class BasicMockTest(unittest.TestCase):
         self.network.join()
 
     def test_upper(self):
-        reply = self.client.request('lymph://upper', 'upper.upper', {'text': 'foo'})
+        reply = self.client.request('upper', 'upper.upper', {'text': 'foo'})
         self.assertEqual(reply.body, 'FOO')
 
     def test_ping(self):
-        reply = self.client.request('lymph://upper', 'lymph.ping', {'payload': 42})
+        reply = self.client.request('upper', 'lymph.ping', {'payload': 42})
         self.assertEqual(reply.body, 42)
 
     def test_status(self):
@@ -89,11 +89,11 @@ class BasicMockTest(unittest.TestCase):
         self.assertEqual(log, [('foo', {'arg': 42}), ('foo', {'arg': 43})])
 
     def test_proxy(self):
-        proxy = self.client.proxy('lymph://upper')
+        proxy = self.client.proxy('upper')
         self.assertEqual(proxy.upper(text='foo'), 'FOO')
 
     def test_inspect(self):
-        proxy = self.client.proxy('lymph://upper', 'lymph')
+        proxy = self.client.proxy('upper', 'lymph')
         methods = proxy.inspect()['methods']
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
