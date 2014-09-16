@@ -123,3 +123,12 @@ Core API
         container.connect(address)  # only works for tcp://… addresses
         container.lookup(address).connect()  # will also work for service names
 
+
+.. currentmodule:: lymph.core.interfaces
+
+.. class:: Proxy(container, address, namespace=None, timeout=1)
+
+    .. method:: __getattr__(self, name)
+
+        Returns a callable that will execute the RPC method with the given name.
+

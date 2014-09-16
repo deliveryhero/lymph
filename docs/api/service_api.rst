@@ -74,13 +74,13 @@ Service API
 
         :param event_type: str
         :param payload: a dict of JSON serializable data structures
-        
+
     .. decorator:: subscribe(*event_types, sequential=True)
-    
+
         Behaves like :func:`lymph.event`, but can be used at runtime
-        
+
         .. code::
-        
+
             class Example(lymph.Service):
                 def on_start(self):
                     @self.subscribe('dynamic_event_type')
@@ -91,11 +91,11 @@ Service API
 .. decorator:: rpc()
 
     Marks the decorated interface method as an RPC method.
-    
+
     .. code::
-    
+
         import lymph
-    
+
         class Example(lymph.Interface):
             @lymph.rpc()
             def do_something(self, channel, message):
@@ -112,11 +112,11 @@ Service API
     Marks the decorated interface method as an event handler.
     The service container will automatically subscribe to given ``event_types``.
     If ``sequential=True``, events will be not be consumed in parallel, but one by one.
-    
+
     .. code::
-    
+
         import lymph
-        
+
         class Example(lymph.Interface):
             @lymph.event('task_done')
             def on_task_done(self, event):
