@@ -32,7 +32,7 @@ class BasicIntegrationTest(LymphIntegrationTestCase):
         self.coordinator.join()
 
     def test_lookup(self):
-        service = self.client.container.lookup('lymph://upper')
+        service = self.client.container.lookup('upper')
         self.assertEqual(len(service), 1)
         self.assertEqual(next(iter(service)).endpoint, 'tcp://127.0.0.1:42223')
 

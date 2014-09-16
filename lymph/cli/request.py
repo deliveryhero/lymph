@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 class RequestCommand(Command):
     """
-    Usage: lymph request [options] [--ip=<address> | --guess-external-ip | -g] <address> <func> <params>
+    Usage: lymph request [options] [--ip=<address> | --guess-external-ip | -g] <subject> <params>
 
     Description:
         Sends a single RPC request to <address>. Parameters have to be JSON encoded.
@@ -25,6 +25,7 @@ class RequestCommand(Command):
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
       --timeout=<seconds>          RPC timeout. [default: 2.0]
+      --address=<addr>             Send the request to the given instance.
 
     {COMMON_OPTIONS}
     """
@@ -39,7 +40,16 @@ class RequestCommand(Command):
         except ValueError:
             print("--timeout requires a number number (e.g. --timeout=0.42)")
             return 1
-        response = client.request(self.args['<address>'], self.args['<func>'], body, timeout=timeout)
+        subject = self.args['<subject>']
+        address = self.args.get('--address')
+        if not address:
+            address = subject.split('.', 1)[0]
+        response = client.request(
+            address,
+            subject,
+            body,
+            timeout=timeout
+        )
         print(response.body)
 
 
@@ -62,7 +72,7 @@ class InspectCommand(Command):
         client = Client.from_config(self.config)
         address = self.args['<address>']
         try:
-            result = client.request(address, 'lymph.inspect', {}).body
+            result = client.request(address, 'lymph.inspect', {}, timeout=5).body
         except LookupFailure:
             logger.error("cannot resolve %s", address)
             sys.exit(1)
@@ -99,7 +109,7 @@ class DiscoverCommand(Command):
         services = client.container.discover()
         if services:
             for service_type in sorted(services):
-                p = client.container.lookup('lymph://%s' % service_type)
+                p = client.container.lookup(service_type)
                 print(u"%s [%s]" % (self.terminal.red(service_type), len(p)))
                 if self.args.get('--instances'):
                     instances = sorted(p, key=lambda d: d.identity)

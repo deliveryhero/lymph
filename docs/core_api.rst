@@ -15,7 +15,7 @@ Core API
 
     .. method:: send_message(address, msg)
 
-        :param address: the address for this message; either a ZeroMQ endpoint or an lymph:// url
+        :param address: the address for this message; either a ZeroMQ endpoint a service name
         :param msg: the :class:`lymph.core.messages.Message` object that will be sent
         :return: :class:`lymph.core.channels.ReplyChannel`
 
@@ -121,5 +121,5 @@ Core API
     For ZeroMQ endpoint addresses the following to statements are roughly equivalent::
 
         container.connect(address)  # only works for tcp://… addresses
-        container.lookup(address).connect()  # will also work for lymph://… addresses
+        container.lookup(address).connect()  # will also work for service names
 

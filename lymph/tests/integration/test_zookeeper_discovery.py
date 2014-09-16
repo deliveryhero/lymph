@@ -32,7 +32,7 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         super(ZookeeperIntegrationTest, self).tearDown()
 
     def test_lookup(self):
-        service = self.lymph_client.container.lookup('lymph://upper')
+        service = self.lymph_client.container.lookup('upper')
         self.assertEqual(len(service), 1)
         self.assertEqual(next(iter(service)).endpoint, self.upper_container.endpoint)
 

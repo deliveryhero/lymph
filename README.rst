@@ -62,11 +62,11 @@ You can then discover running services::
 
 and send requests to them from the commandline::
 
-    $ lymph request lymph://echo echo.upper '{"text": "transform me"}'
+    $ lymph request echo.upper '{"text": "transform me"}'
 
 To see the log output of a running service, try::
 
-    $ lymph tail lymph://echo -l DEBUG
+    $ lymph tail echo -l DEBUG
 
 
 .. _ZooKeeper: http://zookeeper.apache.org

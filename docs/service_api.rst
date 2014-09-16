@@ -51,7 +51,7 @@ Service API
 
     .. method:: request(address, method, body)
 
-        :param address: the address where the request is sent to; either a ZeroMQ endpoint or an lymph:// url
+        :param address: the address where the request is sent to; either a ZeroMQ endpoint or a service name
         :param method: the remote method that will be called
         :param body: JSON serializable dict of parameters for the remote method
 
@@ -63,11 +63,11 @@ Service API
 
         .. code-block:: python
 
-            echo = self.proxy('lymph://echo')
+            echo = self.proxy('echo')
             result = echo.upper(text='foo')
             assert result == 'FOO'
 
-        This is equivalent to ``self.request('lymph://echo', 'echo.upper', text='foo')``.
+        This is equivalent to ``self.request('echo', 'echo.upper', text='foo')``.
 
 
     .. method:: emit(event_type, payload)

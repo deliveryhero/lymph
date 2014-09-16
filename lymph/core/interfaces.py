@@ -43,9 +43,7 @@ class Proxy(object):
         self._address = address
         self._method_cache = {}
         self._timeout = timeout
-        if address.startswith('lymph://') and not namespace:
-            namespace = address[8:]
-        self._namespace = namespace
+        self._namespace = namespace or address
         self._error_map = error_map or {}
 
     def _call(self, name, **kwargs):

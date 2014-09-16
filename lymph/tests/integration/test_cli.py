@@ -26,7 +26,7 @@ class RequestCommandTests(CliIntegrationTestCase):
         super(RequestCommandTests, self).tearDown()
 
     def test_request(self):
-        stdout = self.cli(['request', 'lymph://upper', 'upper.upper', '{"text":"foo"}'])
+        stdout = self.cli(['request', 'upper.upper', '{"text":"foo"}'])
         self.assertEqual(stdout, 'FOO\n')
 
 
@@ -66,7 +66,7 @@ class ServiceCommandTests(CliIntegrationTestCase):
         command_greenlet = gevent.spawn(self.cli, ['instance'])
         client = self.create_client()
         gevent.sleep(1)  # FIXME: how can we wait for the instance to register?
-        response = client.request('lymph://upper', 'upper.upper', {'text': 'hi'}, timeout=1)
+        response = client.request('upper', 'upper.upper', {'text': 'hi'}, timeout=1)
         self.assertEqual(response.body, 'HI')
         command_greenlet.kill()
         command_greenlet.join()
