@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import json
 import textwrap
-import sys
 import logging
 
 import lymph
@@ -44,12 +43,19 @@ class RequestCommand(Command):
         address = self.args.get('--address')
         if not address:
             address = subject.split('.', 1)[0]
-        response = client.request(
-            address,
-            subject,
-            body,
-            timeout=timeout
-        )
+        try:
+            response = client.request(
+                address,
+                subject,
+                body,
+                timeout=timeout
+            )
+        except lymph.exceptions.LookupFailure as e:
+            logger.error("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
+            return 1
+        except lymph.exceptions.Timeout:
+            logger.error("The request timed out. Either the service is not available or busy.")
+            return 1
         print(response.body)
 
 
@@ -75,7 +81,7 @@ class InspectCommand(Command):
             result = client.request(address, 'lymph.inspect', {}, timeout=5).body
         except LookupFailure:
             logger.error("cannot resolve %s", address)
-            sys.exit(1)
+            return 1
         print
         for method in result['methods']:
             print("rpc {name}({params})\n    {help}\n".format(
