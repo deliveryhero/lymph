@@ -7,6 +7,9 @@ from lymph.serializers import base
 
 
 class SerializerBaseTest(unittest.TestCase):
+    def assertJsonEquals(self, a, b):
+        self.assertEquals(json.loads(a), b)
+
     def test_DatetimeSerializer_serialize(self):
         serializer = base.DatetimeSerializer()
         self.assertEqual(
@@ -93,15 +96,18 @@ class SerializerBaseTest(unittest.TestCase):
 
     def test_BaseSerializer_dump(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
-        self.assertEqual(serializer.dumps(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
-                         '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}')
-        self.assertEqual(serializer.dumps(decimal.Decimal('NaN')),
-                         '{"__type__": "Decimal", "_": "NaN"}')
-        self.assertEqual(serializer.dumps(
-                         set([datetime.datetime(2014, 9, 12, 8, 33, 12, 34)])),
-                         '{"__type__": "set", "_": ['
-                         '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}'
-                         ']}')
+        self.assertJsonEquals(
+            serializer.dumps(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
+            {"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}
+        )
+        self.assertJsonEquals(
+            serializer.dumps(decimal.Decimal('NaN')),
+            {"__type__": "Decimal", "_": "NaN"}
+        )
+        self.assertJsonEquals(
+            serializer.dumps(set([datetime.datetime(2014, 9, 12, 8, 33, 12, 34)])),
+            {"__type__": "set", "_": [{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}]}
+        )
 
     def test_BaseSerializer_load_object(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
