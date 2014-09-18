@@ -1,4 +1,3 @@
-
 Overview
 ========
 
@@ -18,13 +17,13 @@ Terms
 
         Containers are :class:`ServiceContainer <lymph.core.container.ServiceContainer>` objects.
 
-    service instance
+    service instance (aka identity)
         A single process that runs a service container.
         It is usually created from the commandline with :ref:`lymph instance <cli-lymph-instance>`.
 
         Instances are described by :class:`ServiceInstance <lymph.core.services.ServiceInstance>` objects.
 
-    service
+    service (aka service type)
         A set of all service instances that exposes a common service interface is called a service.
         Though uncommon, instances may be part of more than one service.
 

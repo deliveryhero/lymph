@@ -27,7 +27,7 @@ Core API
 
 .. currentmodule:: lymph.core.channels
 
-.. class:: RequestChannel()
+.. class:: ReplyChannel()
 
     .. method:: reply(body)
 
@@ -38,7 +38,7 @@ Core API
         acknowledges the request message
 
 
-.. class:: ReplyChannel()
+.. class:: RequestChannel()
 
     .. method:: get(timeout=1)
 

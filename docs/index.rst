@@ -6,15 +6,19 @@ Contents:
 
 .. toctree::
    :maxdepth: 2
+   :glob:
    
    getting_started
+   installation
    overview
    configuration
+   start_services
    cli
-   service_api
-   core_api
-   patterns_api
-   protocol
+   api/index
+   topics/index
+   faq
+   internals/index
+   contributing
 
 
 Indices and tables
