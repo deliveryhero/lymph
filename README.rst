@@ -26,7 +26,7 @@ Installation (as a dependency)
 ::
 
     $ pip install http://py-monotime.googlecode.com/archive/5fb3eb35a8e25140204e957bd010991bfe8758e3.zip#egg=monotime
-    $ pip install https://github.com/johbo/gevent/archive/1.1-dev-20140506.tar.gz#egg=gevent-1.1-dev-20140506
+    $ pip install https://github.com/surfly/gevent.git#egg=gevent
     $ pip install https://github.com/deliveryhero/lymph.git#egg=lymph
 
 
@@ -37,7 +37,7 @@ Development (of lymph itself)
 
     $ git clone https://github.com/deliveryhero/lymph.git
     $ cd lymph
-    $ pip install cython
+    $ pip install cython==0.20.1
     $ pip install -r requirements/base.txt -r requirements/dev.txt
     $ pip install -e .
 
