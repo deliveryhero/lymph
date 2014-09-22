@@ -121,12 +121,3 @@ Service API
             @lymph.event('task_done')
             def on_task_done(self, event):
                 assert isinstance(event, lymph.core.events.Event)
-
-
-.. class:: Proxy(container, address, namespace=None, timeout=1)
-
-    .. method:: __getattr__(self, name)
-
-        Returns a callable that will execute the RPC method with the given name.
-
-
