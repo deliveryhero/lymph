@@ -1,4 +1,4 @@
-from lymph.core.declarations import declaration
+from lymph.core.declarations import Declaration
 
 
 def rpc():
@@ -14,9 +14,8 @@ def event(*event_types, **kwargs):
         if isinstance(func, EventHandler):
             raise TypeError('lymph.event() decorators cannot be stacked')
 
-        @declaration()
         def factory(interface):
             return EventHandler(interface, func, event_types, **kwargs)
-        return factory
+        return Declaration(factory)
     return decorator
 

@@ -37,7 +37,7 @@ class InterfaceBase(type):
         return new_cls
 
 
-class Proxy(object):
+class Proxy(Component):
     def __init__(self, container, address, timeout=1, namespace='', error_map=None):
         self._container = container
         self._address = address
@@ -99,8 +99,8 @@ class Interface(object):
     def emit(self, event_type, payload):
         self.container.emit_event(event_type, payload)
 
-    def proxy(self, address, namespace=None, **kwargs):
-        return Proxy(self.container, address, namespace=namespace, **kwargs)
+    def proxy(self, address, **kwargs):
+        return Proxy(self.container, address, **kwargs)
 
     def subscribe(self, *event_types, **kwargs):
         def decorator(func):

@@ -5,7 +5,7 @@ import collections
 import lymph
 import gevent
 
-from lymph.core.declarations import declaration
+from lymph.core.declarations import Declaration
 from lymph.core.events import Event
 from lymph.core.interfaces import Component
 
@@ -15,10 +15,9 @@ logger = logging.getLogger(__name__)
 
 def serial_event(*event_types, **kwargs):
     def decorator(func):
-        @declaration()
         def factory(interface):
             return SerialEventHandler(interface, func, event_types, **kwargs)
-        return factory
+        return Declaration(factory)
     return decorator
 
 
