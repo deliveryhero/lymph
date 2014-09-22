@@ -17,7 +17,7 @@ Installing lymph (from source)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to be able to install the requirements using pip, you need to have the latest
-lymph version cloned from the github repository (see `Install lymph  (from source)`_ below).
+lymph version cloned from the github repository.
 
 .. code:: bash
 

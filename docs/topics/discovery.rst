@@ -61,7 +61,7 @@ Services are registered under ``/services`` and for each service type, a new
 directory is created below. In the Lymph source, we call services "service types".
 Each service type can then have multiple instances running on the clusters. These
 instances are called "identities" in the code. (For a list of terminology, please
-refer to :doc:`getting_started`)
+refer to :doc:`../getting_started`)
 
 Then for each service type, all its identities are saved below each service type
 path.

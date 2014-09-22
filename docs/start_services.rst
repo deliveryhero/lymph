@@ -172,13 +172,13 @@ An example of such an ``instances`` configuration block:
 
 .. code::
 
-instances:
-    echo:
-        command: lymph instance --config=conf/echo.yml
-        numprocesses: 10
+    instances:
+        echo:
+            command: lymph instance --config=conf/echo.yml
+            numprocesses: 10
 
-    conf_entry_can_have_different_name_than_service:
-        command: lymph instance --config=conf/demo.yml
+        conf_entry_can_have_different_name_than_service:
+            command: lymph instance --config=conf/demo.yml
 
 The service type (i.e. in the example above the ``echo`` and ``conf_entry_can_have_different_name_than_service``
 entries) can have different names as the actual services themselves. However it is advised for orders

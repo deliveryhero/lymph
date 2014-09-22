@@ -7,6 +7,9 @@ coverage:
 docs:
 	cd docs && make html
 
+clean-docs:
+	cd docs && make clean html
+
 flakes:
 	@flake8 iris | cat
 

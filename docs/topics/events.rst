@@ -99,8 +99,9 @@ it can use
 
 .. method:: lymph.Interface.emit(self, event_type, payload)
     :noindex:
-	:param event_type: name of the event
-	:param payload: a dict of JSON serializable data structures
+
+    :param event_type: name of the event
+    :param payload: a dict of JSON serializable data structures
 
 
 to emit an event with a specific payload. You need to make sure, that your payload is actually serializable
