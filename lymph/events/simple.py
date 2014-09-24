@@ -16,7 +16,7 @@ class SimpleBrokerClient(Interface):
         """
         event = Event(event_type, payload)
         try:
-            self.container.handle_event(event)
+            self.container.dispatch_event(event)
         except:
             raise
         else:

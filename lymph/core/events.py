@@ -1,13 +1,19 @@
 import re
+import logging
 
 from lymph.core.interfaces import Component
+from lymph.core import trace
+
+logger = logging.getLogger(__name__)
 
 
 class Event(object):
-    def __init__(self, evt_type, body, source=None):
+    def __init__(self, evt_type, body, source=None, headers=None, event_id=None):
+        self.event_id = event_id
         self.evt_type = evt_type
         self.body = body
         self.source = source
+        self.headers = headers or {}
 
     def __getitem__(self, key):
         return self.body[key]
@@ -17,14 +23,18 @@ class Event(object):
 
     def __repr__(self):
         return '<Event type=%r body=%r>' % (self.evt_type, self.body)
+    
+    def __str__(self):
+        return '{type=%s id=%s}' % (self.evt_type, self.event_id)
 
     @classmethod
     def deserialize(cls, data):
-        return cls(data.get('type'), data.get('body', {}), source=data.get('source'))
+        return cls(data.get('type'), data.get('body', {}), source=data.get('source'), headers=data.get('headers'))
 
     def serialize(self):
         return {
             'type': self.evt_type,
+            'headers': self.headers,
             'body': self.body,
             'source': self.source,
         }
@@ -42,8 +52,10 @@ class EventHandler(Component):
     def on_start(self):
         self.interface.container.subscribe(self, consume=self.active)
 
-    def __call__(self, *args, **kwargs):
-        return self.func(self.interface, *args, **kwargs)
+    def __call__(self, event, *args, **kwargs):
+        trace.set_id(event.headers.get('trace_id'))
+        logger.debug('<E %s', event)
+        return self.func(self.interface, event, *args, **kwargs)
 
 
 class EventDispatcher(object):
