@@ -269,7 +269,7 @@ class ServiceContainer(object):
             return
         self.send_sock.send(connection.endpoint.encode('utf-8'), flags=zmq.SNDMORE)
         self.send_sock.send_multipart(msg.pack_frames())
-        logger.debug('-> %s to %s %r', msg, connection.endpoint, msg.headers)
+        logger.debug('-> %s to %s', msg, connection.endpoint)
         connection.on_send(msg)
 
     def prepare_headers(self, headers):
@@ -328,7 +328,7 @@ class ServiceContainer(object):
 
     def recv_message(self, msg):
         trace.set_id(msg.headers.get('trace_id'))
-        logger.debug('<- %s %r', msg, msg.headers)
+        logger.debug('<- %s', msg)
         connection = self.connect(msg.source)
         connection.on_recv(msg)
         if msg.is_request():
@@ -354,23 +354,10 @@ class ServiceContainer(object):
                 continue
             self.recv_message(msg)
 
-    def emit_event(self, event_type, payload):
-        event = Event(event_type, payload, source=self.identity)
+    def emit_event(self, event_type, payload, headers=None):
+        headers = self.prepare_headers(headers)
+        event = Event(event_type, payload, source=self.identity, headers=headers)
         self.event_system.emit(event)
-
-    def handle_event(self, event):
-        if not event.evt_type:
-            logger.warning("dropping event without type: %r", event)
-            return
-        self.dispatch_event(event)
-
-    def dispatch_event(self, event):
-        handled = False
-        for interface in six.itervalues(self.installed_services):
-            if interface.dispatch_event(event):
-                handled = True
-        if not handled:
-            logger.warning("unhandled event: %r", event)
 
     def ping(self, address):
         return self.send_request(address, 'lymph.ping', {'payload': ''})

@@ -64,10 +64,6 @@ class MockServiceContainer(ServiceContainer):
     def recv_loop(self):
         pass
 
-    def handle_event(self, event):
-        # FIXME: we dispatch events synchronously to make them recordable
-        self.dispatch_event(event)
-
 
 class LymphIntegrationTestCase(KazooTestHarness):
     use_zookeeper = False

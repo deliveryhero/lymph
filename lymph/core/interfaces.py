@@ -89,9 +89,6 @@ class Interface(object):
     def handle_request(self, func_name, channel):
         self.methods[func_name](self, channel, **channel.request.body)
 
-    def dispatch_event(self, event):
-        return self.event_dispatcher(event)
-
     def request(self, address, subject, body, timeout=None):
         channel = self.container.send_request(address, subject, body)
         return channel.get(timeout=timeout)

@@ -102,11 +102,10 @@ class Message(object):
         )
 
     def __str__(self):
-        return '{type=%s subject=%s id=%s.. body=%r}' % (
+        return '{type=%s subject=%s id=%s..}' % (
             self.type,
             self.subject,
             self.id[:10],
-            self.body,
         )
 
     def __repr__(self):
