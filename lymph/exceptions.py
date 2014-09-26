@@ -29,3 +29,7 @@ class ErrorReply(RpcError):
 
 class SocketNotCreated(Exception):
     pass
+
+
+class NotConnected(Exception):
+    pass

@@ -5,6 +5,8 @@ import random
 import six
 
 from lymph.utils import observables
+from lymph.exceptions import NotConnected
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +63,8 @@ class Service(observables.Observable):
         if not choices:
             logger.info("no live instance for %s", self.service_type)
             choices = list(self.instances.values())
+        if not choices:
+            raise NotConnected()
         instance = random.choice(choices)
         return instance.connect()
 

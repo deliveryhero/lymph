@@ -4,9 +4,9 @@ import logging
 import six
 
 from kazoo.client import KazooClient
-from kazoo.protocol.states import EventType
+from kazoo.protocol.states import EventType, KazooState
 from kazoo.handlers.gevent import SequentialGeventHandler
-from kazoo.exceptions import NoNodeError
+from kazoo.exceptions import NoNodeError, ConnectionLoss
 
 from .base import BaseServiceRegistry
 from lymph.exceptions import LookupFailure, RegistrationFailure
@@ -55,12 +55,13 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
 
     def on_kazoo_state_change(self, state):
         logger.info('kazoo connection state changed to %s', state)
+        if state == KazooState.CONNECTED:
+            for service in six.itervalues(self.cache):
+                self.container.spawn(self.lookup, service, timeout=None)
 
     def on_service_type_watch(self, service, event):
         try:
-            if event.type == EventType.CHILD:
-                # FIXME: figure out proper retry strategy
-                self.client.retry(self.lookup, service)
+            self.lookup(service)
         except LookupFailure:
             pass
         except Exception:
@@ -101,6 +102,9 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             names = result.get(timeout=timeout)
         except NoNodeError:
             raise LookupFailure(None, "failed to resolve %s" % service.service_type)
+        except ConnectionLoss:
+            logger.warning("lost zookeeper connection")
+            return service
         logger.info("lookup %s %r", service_type, names)
         identities = set(service.identities())
         for name in names:

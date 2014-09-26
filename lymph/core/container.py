@@ -13,7 +13,7 @@ import six
 import sys
 import zmq.green as zmq
 
-from lymph.exceptions import RegistrationFailure, SocketNotCreated
+from lymph.exceptions import RegistrationFailure, SocketNotCreated, NotConnected
 from lymph.core.connection import Connection
 from lymph.core.channels import RequestChannel, ReplyChannel
 from lymph.core.events import Event
@@ -265,7 +265,8 @@ class ServiceContainer(object):
         service = self.lookup(address)
         try:
             connection = service.connect()
-        except Exception:
+        except NotConnected:
+            logger.info('cannot send message (no connection): %s', msg)
             return
         self.send_sock.send(connection.endpoint.encode('utf-8'), flags=zmq.SNDMORE)
         self.send_sock.send_multipart(msg.pack_frames())
