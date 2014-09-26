@@ -3,14 +3,7 @@ registry:
     coordinator_endpoint: tcp://127.0.0.1:42400
 
 
-event_system:
-    class: lymph.events.simple:SimpleEventSystem
-
-
 instances:
-    broker:
-        command: lymph instance --config=conf/simple-node.yml --interface=lymph.services.broker:Broker
-    
     coordinator:
         command: lymph instance --config=conf/simple-node.yml --interface=lymph.services.coordinator:Coordinator --port=42400
     
