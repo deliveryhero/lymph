@@ -71,6 +71,20 @@ given instance. Multiple services however can process the same event in parallel
 Note that the same events can be processed by different services at various points in time and that there
 is no synchronization mechanism to process a given event simultaneously on a global scale.
 
+The method that is decorated with the event decorator needs to follow the following interface:
+
+.. method:: ON_EVENT_METHOD(event)
+
+	:param event: a dictionary containing the event payload and additional information
+
+The received event dictionary contains the following information:
+
+.. describe:: event
+
+	  :type: the event type / name
+	  :body: dictionary with the payload of the message 
+	  :source: id of the event source service
+
 
 Dynamically subscribing to events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
