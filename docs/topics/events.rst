@@ -75,15 +75,7 @@ The method that is decorated with the event decorator needs to follow the follow
 
 .. method:: ON_EVENT_METHOD(event)
 
-	:param event: a dictionary containing the event payload and additional information
-
-The received event dictionary contains the following information:
-
-.. describe:: event
-
-	  :type: the event type / name
-	  :body: dictionary with the payload of the message 
-	  :source: id of the event source service
+	:param event: an event object :class:`lymph.core.events.Event`
 
 
 Dynamically subscribing to events
