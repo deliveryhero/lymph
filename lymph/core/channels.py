@@ -56,7 +56,7 @@ class ReplyChannel(Channel):
         self.container.send_reply(self.request, None, msg_type=Message.NACK)
         self._sent_reply = True
 
-    def error(self, body):
+    def error(self, **body):
         self.container.send_reply(self.request, body, msg_type=Message.ERROR)
 
     def close(self):
