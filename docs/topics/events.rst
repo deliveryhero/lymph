@@ -71,6 +71,12 @@ given instance. Multiple services however can process the same event in parallel
 Note that the same events can be processed by different services at various points in time and that there
 is no synchronization mechanism to process a given event simultaneously on a global scale.
 
+The method that is decorated with the event decorator needs to follow the following interface:
+
+.. method:: ON_EVENT_METHOD(event)
+
+	:param event: an event object :class:`lymph.core.events.Event`
+
 
 Dynamically subscribing to events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

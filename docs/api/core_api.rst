@@ -67,7 +67,17 @@ Core API
 
 .. class:: Event
 
+    .. attribute:: type
+
+        the event type / name
+
     .. attribute:: body
+
+        dictionary with the payload of the message 
+
+    .. attribute:: source
+
+        id of the event source service
 
     .. method:: __getitem__(name)
     
