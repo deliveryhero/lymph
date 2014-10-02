@@ -62,7 +62,7 @@ class ServiceContainer(object):
 
         self.bind()
         self.identity = hashlib.md5(self.endpoint.encode('utf-8')).hexdigest()
-        self.installed_services = {}
+        self.installed_interfaces = {}
         self.installed_plugins = []
         self.error_hook = Hook()
 
@@ -88,7 +88,7 @@ class ServiceContainer(object):
 
     def install(self, cls, **kwargs):
         obj = cls(self, **kwargs)
-        self.installed_services[obj.service_type] = obj
+        self.installed_interfaces[obj.service_type] = obj
         return obj
 
     def install_plugin(self, cls, **kwargs):
@@ -127,7 +127,7 @@ class ServiceContainer(object):
             'rpc': self.rpc_stats(),
             'connections': [c.stats() for c in self.connections.values()],
         }
-        for name, interface in six.iteritems(self.installed_services):
+        for name, interface in six.iteritems(self.installed_interfaces):
             s[name] = interface.stats()
         return s
 
@@ -173,7 +173,7 @@ class ServiceContainer(object):
 
     @property
     def service_types(self):
-        return self.installed_services.keys()
+        return self.installed_interfaces.keys()
 
     def subscribe(self, handler, **kwargs):
         return self.event_system.subscribe(handler, **kwargs)
@@ -196,12 +196,12 @@ class ServiceContainer(object):
         self.service_registry.on_start()
         self.event_system.on_start()
 
-        for service in six.itervalues(self.installed_services):
+        for service in six.itervalues(self.installed_interfaces):
             service.on_start()
             service.configure({})
 
         if register:
-            for service_type, service in six.iteritems(self.installed_services):
+            for service_type, service in six.iteritems(self.installed_interfaces):
                 if not service.register_with_coordinator:
                     continue
                 try:
@@ -212,7 +212,7 @@ class ServiceContainer(object):
 
     def stop(self):
         self.running = False
-        for service in six.itervalues(self.installed_services):
+        for service in six.itervalues(self.installed_interfaces):
             service.on_stop()
         self.event_system.on_stop()
         self.service_registry.on_stop()
@@ -232,7 +232,7 @@ class ServiceContainer(object):
             logger.debug("connect(%s)", endpoint)
             self.connections[endpoint] = Connection(self, endpoint)
             self.send_sock.connect(endpoint)
-            for service in six.itervalues(self.installed_services):
+            for service in six.itervalues(self.installed_interfaces):
                 service.on_connect(endpoint)
             gevent.sleep(0.02)
         return self.connections[endpoint]
@@ -247,7 +247,7 @@ class ServiceContainer(object):
         logger.debug("disconnect(%s)", endpoint)
         if socket:
             self.send_sock.disconnect(endpoint)
-        for service in six.itervalues(self.installed_services):
+        for service in six.itervalues(self.installed_interfaces):
             service.on_disconnect(endpoint)
 
     def lookup(self, address):
@@ -307,7 +307,7 @@ class ServiceContainer(object):
         channel = ReplyChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
         try:
-            service = self.installed_services[service_name]
+            service = self.installed_interfaces[service_name]
         except KeyError:
             logger.warning('unsupported service type: %s', service_name)
             return

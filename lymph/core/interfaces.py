@@ -147,7 +147,7 @@ class DefaultInterface(Interface):
         Returns a description of all available rpc methods of this service
         """
         methods = []
-        for service_name, service in list(self.container.installed_services.items()):
+        for service_name, service in list(self.container.installed_interfaces.items()):
             for name, func in six.iteritems(service.methods):
                 args = inspect.getargspec(func)
                 methods.append({
