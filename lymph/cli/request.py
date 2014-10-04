@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import json
 import textwrap
 import logging
@@ -10,6 +11,10 @@ from lymph.cli.base import Command
 
 
 logger = logging.getLogger(__name__)
+
+
+class RequestError(Exception):
+    pass
 
 
 class RequestCommand(Command):
@@ -31,8 +36,22 @@ class RequestCommand(Command):
 
     short_description = 'Send a request message to some service and output the reply.'
 
-    def run(self, **kwargs):
-        client = Client.from_config(self.config, **kwargs)
+    def _request(self, address, subject, body, timeout=2.0):
+        client = Client.from_config(self.config)
+        try:
+            response = client.request(
+                address,
+                subject,
+                body,
+                timeout=timeout
+            )
+        except lymph.exceptions.LookupFailure as e:
+            raise RequestError("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
+        except lymph.exceptions.Timeout:
+            raise RequestError("The request timed out. Either the service is not available or busy.")
+        return response.body
+
+    def run(self):
         body = json.loads(self.args.get('<params>', '{}'))
         try:
             timeout = float(self.args.get('--timeout'))
@@ -44,22 +63,14 @@ class RequestCommand(Command):
         if not address:
             address = subject.split('.', 1)[0]
         try:
-            response = client.request(
-                address,
-                subject,
-                body,
-                timeout=timeout
-            )
-        except lymph.exceptions.LookupFailure as e:
-            logger.error("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
+            result = self._request(address, subject, body, timeout=timeout)
+        except RequestError as ex:
+            logger.error(str(ex))
             return 1
-        except lymph.exceptions.Timeout:
-            logger.error("The request timed out. Either the service is not available or busy.")
-            return 1
-        print(response.body)
+        print(result)
 
 
-class InspectCommand(Command):
+class InspectCommand(RequestCommand):
     """
     Usage: lymph inspect [--ip=<address> | --guess-external-ip | -g] <address> [options]
 
@@ -75,14 +86,13 @@ class InspectCommand(Command):
     short_description = 'Describe the available rpc methods of a service.'
 
     def run(self):
-        client = Client.from_config(self.config)
-        address = self.args['<address>']
         try:
-            result = client.request(address, 'lymph.inspect', {}, timeout=5).body
-        except LookupFailure:
-            logger.error("cannot resolve %s", address)
+            result = self._request(
+                self.args['<address>'], 'lymph.inspect', {}, timeout=5)
+        except RequestError as ex:
+            logger.error(str(ex))
             return 1
-        print
+        print()
         for method in sorted(result['methods'], key=lambda m: m['name']):
             print("rpc {name}({params})\n    {help}\n".format(
                 name=self.terminal.red(method['name']),
