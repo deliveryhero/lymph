@@ -83,7 +83,7 @@ class InspectCommand(Command):
             logger.error("cannot resolve %s", address)
             return 1
         print
-        for method in result['methods']:
+        for method in sorted(result['methods'], key=lambda m: m['name']):
             print("rpc {name}({params})\n    {help}\n".format(
                 name=self.terminal.red(method['name']),
                 params=', '.join(method['params']),
