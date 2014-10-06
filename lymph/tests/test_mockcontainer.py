@@ -21,7 +21,7 @@ class Upper(Interface):
 
     @lymph.rpc()
     def fail(self, channel):
-        channel.error({'errno': 42})
+        channel.error(type="RuntimeError", errno=42)
 
     @lymph.rpc()
     def just_ack(self, channel):
