@@ -26,8 +26,23 @@ class RequestCommandTests(CliIntegrationTestCase):
         super(RequestCommandTests, self).tearDown()
 
     def test_request(self):
-        stdout = self.cli(['request', 'upper.upper', '{"text":"foo"}'])
-        self.assertEqual(stdout, 'FOO\n')
+        result = self.cli(['request', 'upper.upper', '{"text":"foo"}'])
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout, 'FOO\n')
+
+    def test_negative_request(self):
+        result = self.cli(['request', 'no_exiting_container', '{}'])
+        self.assertEqual(result.returncode, 1)
+
+    def test_inspect(self):
+        # Use --no-color to facilitate string comparison.
+        result = self.cli(['inspect', '--no-color', 'upper'])
+        self.assertEqual(result.returncode, 0)
+        self.assertIn('rpc upper.upper(text)', result.stdout)
+
+    def test_negative_inspect(self):
+        result = self.cli(['inspect', 'no_existing_container'])
+        self.assertEqual(result.returncode, 1)
 
 
 class ListCommandTests(CliTestMixin, unittest.TestCase):

@@ -1,3 +1,4 @@
+import collections
 from contextlib import contextmanager
 import sys
 import os
@@ -5,7 +6,7 @@ import tempfile
 import textwrap
 
 from pkg_resources import load_entry_point
-from six import StringIO
+from six import StringIO, integer_types
 import yaml
 
 from lymph.discovery.zookeeper import ZookeeperServiceRegistry
@@ -14,16 +15,22 @@ from lymph.testing import LymphIntegrationTestCase
 
 
 @contextmanager
-def capture_stdout():
+def capture_output():
     real_stdout = sys.stdout
+    real_stderr = sys.stderr
     sys.stdout = StringIO()
+    sys.stderr = StringIO()
     try:
-        yield sys.stdout
+        yield sys.stdout, sys.stderr
     finally:
         sys.stdout = real_stdout
+        sys.stderr = real_stderr
 
 
 class CliWrapper(object):
+
+    Result = collections.namedtuple('CMDLineResult', 'returncode stdout stderr')
+
     def __init__(self, config):
         handle, self.config_file_name = tempfile.mkstemp()
         with open(self.config_file_name, 'w') as f:
@@ -34,15 +41,20 @@ class CliWrapper(object):
         os.remove(self.config_file_name)
 
     def __call__(self, cmd, config=True):
-        with capture_stdout() as stdout:
+        with capture_output() as (stdout, stderr):
             if config:
                 cmd = cmd + ['--config=%s' % self.config_file_name]
             try:
-                self.entry_point(cmd)
-            except SystemExit:
+                returncode = self.entry_point(cmd)
+            except SystemExit as ex:
                 # Docopt tries to exit on its own unfortunately
-                pass
-            return stdout.getvalue()
+                returncode = (ex.args[0] or 0) if ex.args else 0
+                if not isinstance(returncode, integer_types):
+                    # According to sys.exit doc, any other object beside
+                    # an integer or None result to an exit code equal to 1.
+                    returncode = 1
+            return self.Result(
+                returncode or 0, stdout.getvalue(), stderr.getvalue())
 
 
 class CliTestMixin(object):
@@ -64,14 +76,19 @@ class CliTestMixin(object):
 
     def assert_lines_equal(self, cmd, lines, config=True):
         expected_lines = set(line for line in textwrap.dedent(lines).splitlines() if line.strip())
-        self.assertEqual(set(self.cli(cmd, config=config).splitlines()), expected_lines)
+        result = self.cli(cmd, config=config)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(set(result.stdout.splitlines()), expected_lines)
 
     def assert_first_line_equals(self, cmd, line, config=True):
-        self.assertEqual(self.cli(cmd, config=config).splitlines()[0].strip(), line)
+        result = self.cli(cmd, config=config)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout.splitlines()[0].strip(), line)
 
     def assert_command_appears_in_command_list(self):
-        output = self.cli(['list'])
-        self.assertIn(self.command_name, output)
+        result = self.cli(['list'])
+        self.assertEqual(result.returncode, 0)
+        self.assertIn(self.command_name, result.stdout)
 
     def assert_help_contains_usage_information(self):
         output = self._get_help_output()
@@ -88,8 +105,8 @@ class CliTestMixin(object):
 
     def _get_help_output(self):
         if self._help_output is None:
-            output = self.cli([self.command_name, '--help'])
-            self._help_output = output
+            result = self.cli([self.command_name, '--help'])
+            self._help_output = result.stdout
         return self._help_output
 
 
