@@ -1,9 +1,17 @@
 import hashlib
 import logging
 import random
+
 import six
 
+from lymph.utils import observables
+
 logger = logging.getLogger(__name__)
+
+# Event types propagated by Service when instances change.
+ADDED = 'ADDED'
+REMOVED = 'REMOVED'
+UPDATED = 'UPDATED'
 
 
 class ServiceInstance(object):
@@ -31,8 +39,10 @@ class ServiceInstance(object):
         return self.connection is None or self.connection.is_alive()
 
 
-class Service(object):
+class Service(observables.Observable):
+
     def __init__(self, container, service_type=None, instances=()):
+        super(Service, self).__init__()
         self.container = container
         self.service_type = service_type
         self.instances = {i.endpoint: i for i in instances}
@@ -65,9 +75,12 @@ class Service(object):
             pass
         else:
             instance.disconnect()
+            self.notify_observers(REMOVED, instance)
 
     def update(self, identity, **info):
         if identity in self.instances:
             self.instances[identity].update(**info)
+            self.notify_observers(UPDATED, self.instances[identity])
         else:
-            self.instances[identity] = ServiceInstance(self.container, **info)
+            instance = self.instances[identity] = ServiceInstance(self.container, **info)
+            self.notify_observers(ADDED, instance)

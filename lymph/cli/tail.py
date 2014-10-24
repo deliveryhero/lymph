@@ -1,10 +1,67 @@
 import logging
+import collections
+
 import six
 import zmq.green as zmq
 
 from lymph.cli.base import Command
 from lymph.client import Client
+from lymph.core import services
 from lymph.utils.logging import get_loglevel
+
+
+class RemoteTail(collections.Iterator):
+    """Tail remotely a stream of services published messages.
+
+    Instance of this class implement the iterator protocol, which return
+    messages as published by the remote services that this instance is register
+    to.
+
+    """
+
+    Entry = collections.namedtuple('Entry', 'topic instance msg')
+
+    def __init__(self, ctx=None):
+        if ctx is None:
+            ctx = zmq.Context.instance()
+
+        self._sock = ctx.socket(zmq.SUB)
+        self._sock.setsockopt_string(zmq.SUBSCRIBE, u'')
+        self._instances = {}
+
+    def _connect(self, instance):
+        """Connect to a given service instance."""
+        self._sock.connect(instance.log_endpoint)
+        self._instances[instance.log_endpoint] = instance
+
+    def _disconnect(self, instance):
+        """Disconnect from a service instance."""
+        self._sock.disconnect(instance.log_endpoint)
+        del self._instances[instance.log_endpoint]
+
+    def subscribe_service(self, service):
+        """Subscribe to a service stream.
+
+        This is done by iterating over all instances in this service and
+        connecting to them, while keeping tabs over this service to be able
+        to connect and disconnect as instances get added or removed.
+
+        """
+        # FIXME(mouad): Make sure that service implement the Observable
+        # interface bug: GUP-126
+        service.observe(services.ADDED, self._connect)
+        service.observe(services.REMOVED, self._disconnect)
+
+        for instance in service:
+            if instance.log_endpoint:
+                self._connect(instance)
+
+    def next(self):
+        """Return an instance of :class:`RemoteTail.Entry`."""
+        topic, endpoint, msg = self._sock.recv_multipart()
+        return self.Entry(topic, self._instances[endpoint], msg)
+
+    __next__ = next  # For python3.
 
 
 class TailCommand(Command):
@@ -24,18 +81,10 @@ class TailCommand(Command):
 
     def run(self):
         client = Client.from_config(self.config)
-        instances = {}
-        for address in self.args['<address>']:
-            service = client.container.lookup(address)
-            for instance in service:
-                if instance.log_endpoint:
-                    instances[instance.log_endpoint] = instance, address
+        tail = RemoteTail()
 
-        ctx = zmq.Context.instance()
-        sock = ctx.socket(zmq.SUB)
-        sock.setsockopt_string(zmq.SUBSCRIBE, u'')
-        for instance, service_type in six.itervalues(instances):
-            sock.connect(instance.log_endpoint)
+        for address in self.args['<address>']:
+            tail.subscribe_service(client.container.lookup(address))
 
         level = get_loglevel(self.args['--level'])
         logger = logging.getLogger('lymph-tail-cli')
@@ -44,14 +93,14 @@ class TailCommand(Command):
         console.setLevel(level)
         console.setFormatter(logging.Formatter('[%(service_type)s][%(identity)s] [%(levelname)s] %(message)s'))
         logger.addHandler(console)
+
         try:
-            while True:
-                topic, endpoint, msg = sock.recv_multipart()
+            for topic, instance, msg in tail:
                 level = getattr(logging, topic)
-                instance, service_type = instances[endpoint]
-                logger.log(level, msg, extra={
+                extra = {
                     'identity': instance.identity[:10],
-                    'service_type': service_type,
-                })
+                    'service_type': instance.endpoint,
+                }
+                logger.log(level, msg, extra=extra)
         except KeyboardInterrupt:
             pass
