@@ -92,7 +92,9 @@ class InspectCommand(RequestCommand):
         except RequestError as ex:
             logger.error(str(ex))
             return 1
+
         print()
+
         for method in sorted(result['methods'], key=lambda m: m['name']):
             print("rpc {name}({params})\n    {help}\n".format(
                 name=self.terminal.red(method['name']),

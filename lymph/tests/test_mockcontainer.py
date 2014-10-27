@@ -47,7 +47,7 @@ class BasicMockTest(unittest.TestCase):
         self.upper_container = self.network.add_service(Upper)
         self.client_container = self.network.add_service(ClientInterface)
         self.network.start()
-        self.client = self.client_container.installed_services['client']
+        self.client = self.client_container.installed_interfaces['client']
 
     def tearDown(self):
         self.network.stop()
@@ -81,7 +81,7 @@ class BasicMockTest(unittest.TestCase):
         self.assertRaises(Nack, self.client.request, self.upper_container.endpoint, 'upper.auto_nack', {})
 
     def test_events(self):
-        log = self.upper_container.installed_services['upper'].eventlog
+        log = self.upper_container.installed_interfaces['upper'].eventlog
         self.assertEqual(log, [])
         self.client.emit('foo', {'arg': 42})
         self.assertEqual(log, [('foo', {'arg': 42})])

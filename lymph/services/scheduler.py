@@ -5,6 +5,7 @@ import time
 
 from lymph.core.interfaces import Interface
 from lymph.core.decorators import rpc
+from lymph.utils import make_id
 
 
 class Scheduler(Interface):
@@ -21,6 +22,7 @@ class Scheduler(Interface):
     @rpc()
     def schedule(self, channel, eta, event_type, payload):
         self.redis.zadd(self.schedule_key, eta, msgpack.dumps({
+            'id': make_id(),
             'event_type': event_type,
             'payload': payload,
         }))
@@ -29,7 +31,7 @@ class Scheduler(Interface):
     def loop(self):
         while True:
             pipe = self.redis.pipeline()
-            now = int(time.time())  # FIXME: handle timezones
+            now = int(time.time())
             pipe.zrangebyscore(self.schedule_key, 0, now)
             pipe.zremrangebyscore(self.schedule_key, 0, now)
             events, n = pipe.execute()

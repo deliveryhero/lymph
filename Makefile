@@ -1,7 +1,7 @@
 .PHONY: coverage docs flakes cloc
 	
 coverage:
-	-coverage run --timid --source=iris -m py.test iris
+	-coverage run --timid --source=lymph -m py.test lymph
 	coverage html
 
 docs:
@@ -11,8 +11,8 @@ clean-docs:
 	cd docs && make clean html
 
 flakes:
-	@flake8 iris | cat
+	@flake8 lymph | cat
 
 cloc:
-	@cloc --quiet iris
+	@cloc --quiet lymph
 

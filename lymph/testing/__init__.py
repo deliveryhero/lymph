@@ -105,11 +105,11 @@ class LymphServiceTestCase(unittest.TestCase):
         self.network = MockServiceNetwork()
         self.coordinator = self.network.add_service(Coordinator, port=42400)
         self.service_container = self.network.add_service(self.service_class)
-        self.service = self.service_container.installed_services[
+        self.service = self.service_container.installed_interfaces[
             self.service_class.service_type]
         self.service.apply_config(self.service_config)
         self.client_container = self.network.add_service(self.client_class)
-        self.client = self.client_container.installed_services[
+        self.client = self.client_container.installed_interfaces[
             self.client_class.service_type]
         self.client.apply_config(self.client_config)
         self.network.start()
