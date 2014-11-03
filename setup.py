@@ -1,10 +1,39 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup, find_packages
 
+import sys
+
 
 with open('README.rst') as f:
     description = f.read()
 
+install_requires = [
+    'docopt>=0.6.1',
+    'kazoo>=1.3.1',
+    'kombu>=3.0.16',
+    'gevent>=1.0.1',
+    'msgpack-python>=0.4.0',
+    'psutil>=2.1.1',
+    'PyYAML>=3.11',
+    'pyzmq>=14.3.0',
+    'redis>=2.9.1',
+    'setproctitle>=1.1.8',
+    'six>=1.6',
+    'Werkzeug>=0.9.4',
+    'blessings>=1.5.1'
+]
+
+dependency_links = []
+setup_requires = []
+
+if sys.version_info.major == 2:
+    install_requires.append('monotime>=1.0')
+elif sys.version_info.major == 3:
+    # Installing Cython==0.20.1 for building gevent
+    from setuptools.command.easy_install import main as easy_install
+    easy_install(['Cython==0.20.1'])
+    dependency_links.append(
+        'git+https://github.com/gevent/gevent.git#egg=gevent-1.0.1')
 
 setup(
     name='lymph',
@@ -18,22 +47,9 @@ setup(
     maintainer_email=u'johannes.dollinger@deliveryhero.com',
     long_description=description,
     include_package_data=True,
-    install_requires=[
-        'docopt>=0.6.1',
-        'gevent',
-        'kazoo>=1.3.1',
-        'kombu>=3.0.16',
-        'monotime>=1.0', # FIXME: only for Python 2
-        'msgpack-python>=0.4.0',
-        'psutil>=2.1.1',
-        'PyYAML>=3.11',
-        'pyzmq>=14.3.0',
-        'redis>=2.9.1',
-        'setproctitle>=1.1.8',
-        'six>=1.6',
-        'Werkzeug>=0.9.4',
-        'blessings>=1.5.1',
-    ],
+    install_requires=install_requires,
+    dependency_links=dependency_links,
+    setup_requires=setup_requires,
     entry_points={
         'console_scripts': ['lymph = lymph.cli.main:main'],
         'lymph.cli': [
@@ -62,5 +78,6 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Operating System :: OS Independent',
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3'
     ]
 )
