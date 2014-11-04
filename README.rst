@@ -25,8 +25,6 @@ Installation (as a dependency)
 
 ::
 
-    $ pip install http://py-monotime.googlecode.com/archive/5fb3eb35a8e25140204e957bd010991bfe8758e3.zip#egg=monotime
-    $ pip install https://github.com/surfly/gevent.git#egg=gevent
     $ pip install https://github.com/deliveryhero/lymph.git#egg=lymph
 
 
