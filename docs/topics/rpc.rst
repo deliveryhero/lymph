@@ -32,7 +32,8 @@ will be reachable with the service name ``echo``. This is the name with which ly
 the RPC messages should be sent to ``EchoService``.
 
 In order to make a method in a lymph interface class RPC callable, it is sufficient to
-add the ``@lymph.rpc()`` decorator in front of it.
+add the :func:`@lymph.rpc()` (or :func:`@lymph.raw_rpc` for accessing the channel object) decorator in
+front of it.
 
 .. decorator:: rpc()
 
@@ -43,8 +44,8 @@ add the ``@lymph.rpc()`` decorator in front of it.
         import lymph
     
         class Example(lymph.Interface):
-            @lymph.rpc()
-            def do_something(self, channel, message):
+            @lymph.raw_rpc()
+            def do_ack(self, channel, message):
                 """
                 HERE SOME FANCE HELP TEXT
                 """
@@ -52,10 +53,35 @@ add the ``@lymph.rpc()`` decorator in front of it.
                 assert isinstance(message, lymph.core.messages.Message)
                 channel.ack()
 
+           @lymph.rpc()
+           def echo(self, message):
+               return message
+
 If a docstring is specified after the RPC method definition, it will be used as a description
 of the service and will be returned by ``lymph inspect``.
 
-The underlying method call has to have the following for:
+Difference between lymph.rpc and lymph.raw_rpc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
++++++++++
+lymph.rpc
++++++++++
+
+The :func:`lymph.rpc` decorator is easier to understand compared to :func:`lymph.raw_rpc`
+since the former work as any Python function where what ever the RPC function return will be sent
+to the caller, as for exceptions there is two cases depending on the ``raises`` argument of
+:func:`lymph.rpc` :
+
+- If the exception raised inside the RPC function is an instance of a class that is part of the
+  ``raises`` argument then the client will see a :exc:`RemoteError``.
+- Else the result will be a **NACK**.
+
+
++++++++++++++
+lymph.raw_rpc
++++++++++++++
+
+When :func:`lymph.raw_rpc` is used the underlying method call has to have the following form:
 
 .. code::
 
@@ -63,14 +89,8 @@ The underlying method call has to have the following for:
         …
 
 The ``channel`` argument takes a :class:`lymph.ReplyChannel` object which takes care of the communication
-from and to the RPC caller.
-
-
-Replying to RPC calls
-~~~~~~~~~~~~~~~~~~~~~
-
-From within the responding method, you communicate through the ``channel`` object with the
-calling party. The ``ReplyChannel`` object provides you with the following methods:
+from and to the RPC caller. From within the responding method, you communicate through the ``channel``
+object with the calling party. The ``ReplyChannel`` object provides you with the following methods:
 
 .. method:: reply(body)
 
@@ -85,7 +105,7 @@ calling party. The ``ReplyChannel`` object provides you with the following metho
         class EchoService(lymph.Interface):
             service_type = 'echo'
 
-            @lymph.rpc()
+            @lymph.raw_rpc()
             def echo(self, channel, text=None):
                 channel.reply(text)
 
@@ -140,6 +160,7 @@ variable.
 RPC calls are synchronous, i.e. program execution is halted until the RPC call returns an
 answer or it times out. If you require asynchronous communication, please refer to 
 :doc:`events`.
+
 
 Command line interface
 ~~~~~~~~~~~~~~~~~~~~~~

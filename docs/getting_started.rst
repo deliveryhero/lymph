@@ -32,8 +32,8 @@ Create a module called ``echo`` in your Python path.
 
     class Echo(lymph.Interface):
         @lymph.rpc()
-        def echo(self, channel, text=None):
-            channel.reply(text)
+        def echo(self, text=None):
+            return text
 
 
 Create a config file for this service (``echo.yml``):

@@ -1,10 +1,29 @@
+import functools
+
 from lymph.core.declarations import Declaration
 
 
-def rpc():
+def raw_rpc():
     def decorator(func):
         func._rpc = True
         return func
+    return decorator
+
+
+def rpc(raises=()):
+    def decorator(func):
+        @raw_rpc()
+        @functools.wraps(func)
+        def inner(self, channel, *args, **kwargs):
+            try:
+                ret = func(self, *args, **kwargs)
+            except raises as ex:
+                channel.error(type=ex.__class__.__name__, message=str(ex))
+            else:
+                channel.reply(ret)
+
+        inner.original = func
+        return inner
     return decorator
 
 

@@ -7,10 +7,10 @@ class Geocoder(lymph.Interface):
         self.geolocator = GoogleV3()
 
     @lymph.rpc()
-    def geocode(self, channel, address):
+    def geocode(self, address):
         matched_address, (lat, lng) = self.geolocator.geocode(address)
-        channel.reply({
+        return {
             'address': matched_address,
             'latitude': lat,
             'longitude': lng,
-        })
+        }

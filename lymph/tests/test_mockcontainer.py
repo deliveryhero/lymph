@@ -16,19 +16,19 @@ class Upper(Interface):
         self.eventlog = []
 
     @lymph.rpc()
-    def upper(self, channel, text=None):
-        channel.reply(text.upper())
+    def upper(self, text=None):
+        return text.upper()
 
-    @lymph.rpc()
-    def fail(self, channel):
-        channel.error(type="RuntimeError", errno=42)
+    @lymph.rpc(raises=(RuntimeError,))
+    def fail(self):
+        raise RuntimeError()
 
-    @lymph.rpc()
+    @lymph.raw_rpc()
     def just_ack(self, channel):
         channel.ack()
 
     @lymph.rpc()
-    def auto_nack(self, channel):
+    def auto_nack(self):
         raise ValueError('auto nack requested')
 
     @lymph.event('foo')

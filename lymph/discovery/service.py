@@ -7,7 +7,7 @@ from lymph.core.interfaces import Interface
 
 class SimpleCoordinatorClient(Interface):
     @rpc()
-    def notice(self, channel, service_type=None, instances=None):
+    def notice(self, service_type=None, instances=None):
         self.container.update_service(service_type, instances)
 
 
