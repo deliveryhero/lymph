@@ -10,8 +10,8 @@ class Upper(Interface):
     service_type = 'upper'
 
     @rpc()
-    def upper(self, channel, text=None):
-        channel.reply(text.upper())
+    def upper(self, text=None):
+        return text.upper()
 
 
 class BasicIntegrationTest(LymphIntegrationTestCase):

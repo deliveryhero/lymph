@@ -12,13 +12,13 @@ Service API
         service_type = 'echo'
 
         @lymph.rpc()
-        def echo(self, channel, text=None):
-            channel.reply(text)
+        def echo(self, text=None):
+            return text
 
         @lymph.rpc()
-        def upper(self, channel, text=None):
-            channel.reply(text.upper())
+        def upper(self, text=None):
             self.emit('uppercase_transform_finished', {'text': text})
+            return text.upper()
 
         @lymph.event('uppercase_transform_finished')
         def on_uppercase(self, text=None):
@@ -88,9 +88,31 @@ Service API
                         assert isinstance(event, lymph.core.events.Event)
 
 
+.. decorator:: raw_rpc()
+
+    Marks the decorated interface method as an RPC method. Using this decorator
+    the RPC function are expected to accept a :class:`ReplyChannel` instance
+    as a first argument.
+
+    .. code::
+
+        import lymph
+
+        class Example(lymph.Interface):
+            @lymph.raw_rpc()
+            def do_something(self, channel, message):
+                assert isinstance(channel, lymph.core.channels.ReplyChannel)
+                assert isinstance(message, lymph.core.messages.Message)
+                channel.ack()
+
 .. decorator:: rpc()
 
-    Marks the decorated interface method as an RPC method.
+    Marks the decorated interface method as an RPC method. The difference between
+    this decorator and :func:`raw_rpc` is that the RPC functions must use
+    return and raise like any normal Python function instead of using ``channel.reply``
+    and ``channel.error``.
+
+    :param raises: tuple of exception classes that the RPC function is expected to raise.
 
     .. code::
 
@@ -98,10 +120,8 @@ Service API
 
         class Example(lymph.Interface):
             @lymph.rpc()
-            def do_something(self, channel, message):
-                assert isinstance(channel, lymph.core.channels.ReplyChannel)
-                assert isinstance(message, lymph.core.messages.Message)
-                channel.ack()
+            def do_something(self, message):
+                return message
 
 
 .. decorator:: event(*event_types, sequential=False)

@@ -20,13 +20,12 @@ class Scheduler(Interface):
         self.container.spawn(self.loop)
 
     @rpc()
-    def schedule(self, channel, eta, event_type, payload):
+    def schedule(self, eta, event_type, payload):
         self.redis.zadd(self.schedule_key, eta, msgpack.dumps({
             'id': make_id(),
             'event_type': event_type,
             'payload': payload,
         }))
-        channel.ack()
 
     def loop(self):
         while True:

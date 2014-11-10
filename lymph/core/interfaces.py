@@ -130,31 +130,38 @@ class DefaultInterface(Interface):
     register_with_coordinator = False
 
     @rpc()
-    def ping(self, channel, payload=None):
-        channel.reply(payload)
+    def ping(self, payload=None):
+        return payload
 
     @rpc()
-    def status(self, channel):
-        channel.reply({
+    def status(self):
+        return {
             'endpoint': self.container.endpoint,
             'identity': self.container.identity,
             'config': self.config,
-        })
+        }
 
     @rpc()
-    def inspect(self, channel):
+    def inspect(self):
         """
         Returns a description of all available rpc methods of this service
         """
         methods = []
         for service_name, service in list(self.container.installed_interfaces.items()):
             for name, func in six.iteritems(service.methods):
-                args = inspect.getargspec(func)
+                # Using rpc decorator, we need to access the original function
+                # to get correct signature.
+                if hasattr(func, 'original'):
+                    args = inspect.getargspec(func.original)
+                    args = args.args[1:]
+                else:
+                    args = inspect.getargspec(func)
+                    args = args.args[2:]
                 methods.append({
                     'name': '%s.%s' % (service_name, name),
-                    'params': list(args.args[2:]),
+                    'params': list(args),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })
-        channel.reply({
+        return {
             'methods': methods,
-        })
+        }

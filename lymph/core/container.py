@@ -207,7 +207,7 @@ class ServiceContainer(object):
                 try:
                     self.service_registry.register(service_type)
                 except RegistrationFailure:
-                    logger.info("registration failed %s, %s", service_type, service)
+                    logger.error("registration failed %s, %s", service_type, service)
                     self.stop()
 
     def stop(self):
@@ -260,13 +260,14 @@ class ServiceContainer(object):
 
     def send_message(self, address, msg):
         if not self.running:
-            logger.info('cannot send message (container not started): %s', msg)
+            # FIXME: This should raise an Error instead of failing silently.
+            logger.error('cannot send message (container not started): %s', msg)
             return
         service = self.lookup(address)
         try:
             connection = service.connect()
         except NotConnected:
-            logger.info('cannot send message (no connection): %s', msg)
+            logger.error('cannot send message (no connection): %s', msg)
             return
         self.send_sock.send(connection.endpoint.encode('utf-8'), flags=zmq.SNDMORE)
         self.send_sock.send_multipart(msg.pack_frames())

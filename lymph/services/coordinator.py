@@ -1,7 +1,7 @@
 import logging
 
 from lymph.core.interfaces import Interface
-from lymph.core.decorators import rpc
+from lymph.core.decorators import raw_rpc, rpc
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,7 @@ class Coordinator(Interface):
         services = self.service_map.get(service_type, [])
         self.service_map[service_type] = [s for s in services if s['endpoint'] != endpoint]
 
-    @rpc()
+    @raw_rpc()
     def register(self, channel, service_type=None, endpoint=None, log_endpoint=None, identity=None):
         # FIXME: complain if service_type is None
         services = self.service_map.setdefault(service_type, [])
@@ -43,7 +43,7 @@ class Coordinator(Interface):
         for watcher in self.watchers.get(service_type, ()):
             self.request(watcher, 'lymph.notice', dict(service_type=service_type, instances=services))
 
-    @rpc()
+    @raw_rpc()
     def lookup(self, channel, service_type=None, watch=True):
         channel.reply(self.service_map.get(service_type, []))
         if watch:
@@ -51,5 +51,5 @@ class Coordinator(Interface):
             watchers.add(channel.request.source)
 
     @rpc()
-    def discover(self, channel):
-        channel.reply(list(self.service_map.keys()))
+    def discover(self):
+        return list(self.service_map.keys())
