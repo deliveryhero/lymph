@@ -35,6 +35,10 @@ class Configuration(object):
         self.values = values or {}
         self._instances_cache = {}
 
+    @property
+    def root(self):
+        return self
+
     def load_file(self, filename, sections=None):
         with open(filename, 'r') as f:
             self.load(f, sections=sections)
