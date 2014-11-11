@@ -43,7 +43,7 @@ class ClientInterface(Interface):
 class BasicMockTest(unittest.TestCase):
     def setUp(self):
         self.network = MockServiceNetwork()
-        self.coordinator = self.network.add_service(Coordinator, port=42400)
+        self.coordinator = self.network.add_service(Coordinator)
         self.upper_container = self.network.add_service(Upper)
         self.client_container = self.network.add_service(ClientInterface)
         self.network.start()

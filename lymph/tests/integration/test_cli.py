@@ -18,7 +18,7 @@ class Upper(Interface):
 class RequestCommandTests(CliIntegrationTestCase):
     def setUp(self):
         super(RequestCommandTests, self).setUp()
-        self.upper_container, interface = self.create_container(Upper, port=42223)
+        self.upper_container, interface = self.create_container(Upper)
 
     def tearDown(self):
         self.upper_container.stop()

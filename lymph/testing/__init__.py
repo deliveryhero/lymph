@@ -17,7 +17,7 @@ class MockServiceNetwork(object):
     def __init__(self):
         self.service_containers = {}
         self.next_port = 0
-        self.discovery_hub = StaticServiceRegistryHub({})
+        self.discovery_hub = StaticServiceRegistryHub()
         self.events = LocalEventSystem()
 
     def add_service(self, cls, **kwargs):
@@ -103,7 +103,7 @@ class LymphServiceTestCase(unittest.TestCase):
 
     def setUp(self):
         self.network = MockServiceNetwork()
-        self.coordinator = self.network.add_service(Coordinator, port=42400)
+        self.coordinator = self.network.add_service(Coordinator)
         self.service_container = self.network.add_service(self.service_class)
         self.service = self.service_container.installed_interfaces[
             self.service_class.service_type]

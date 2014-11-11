@@ -22,7 +22,7 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         self.events = NullEventSystem()
 
         self.upper_container, interface = self.create_container(Upper)
-        self.lymph_client = self.create_client(port=42224)
+        self.lymph_client = self.create_client()
 
     def tearDown(self):
         self.upper_container.stop()
