@@ -3,9 +3,9 @@ from lymph.exceptions import LookupFailure
 
 
 class StaticServiceRegistryHub(object):
-    def __init__(self, registry):
+    def __init__(self):
         self.containers = []
-        self.registry = registry
+        self.registry = {}
 
     def create_registry(self):
         return StaticServiceRegistry(self)
@@ -31,9 +31,9 @@ class StaticServiceRegistryHub(object):
 
 
 class StaticServiceRegistry(BaseServiceRegistry):
-    def __init__(self, hub):
+    def __init__(self, hub=None):
         super(StaticServiceRegistry, self).__init__()
-        self.hub = hub
+        self.hub = hub or StaticServiceRegistryHub()
 
     def discover(self):
         return self.hub.discover()

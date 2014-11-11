@@ -2,7 +2,7 @@ from lymph.testing import LymphIntegrationTestCase
 from lymph.core.decorators import rpc
 from lymph.core.interfaces import Interface
 from lymph.services.coordinator import Coordinator
-from lymph.discovery.service import LymphCoordinatorServiceRegistry
+from lymph.discovery.static import StaticServiceRegistry
 from lymph.events.null import NullEventSystem
 
 
@@ -16,12 +16,12 @@ class Upper(Interface):
 
 class BasicIntegrationTest(LymphIntegrationTestCase):
     def setUp(self):
-        self.registry = LymphCoordinatorServiceRegistry('tcp://127.0.0.1:42222')
+        self.registry = StaticServiceRegistry()
         self.events = NullEventSystem()
 
-        self.coordinator, interface = self.create_container(Coordinator, port=42222)
-        self.upper_container, interface = self.create_container(Upper, port=42223)
-        self.client = self.create_client(port=42224)
+        self.coordinator, interface = self.create_container(Coordinator)
+        self.upper_container, interface = self.create_container(Upper)
+        self.client = self.create_client()
 
     def tearDown(self):
         self.upper_container.stop()
@@ -34,7 +34,7 @@ class BasicIntegrationTest(LymphIntegrationTestCase):
     def test_lookup(self):
         service = self.client.container.lookup('upper')
         self.assertEqual(len(service), 1)
-        self.assertEqual(next(iter(service)).endpoint, 'tcp://127.0.0.1:42223')
+        self.assertEqual(next(iter(service)).endpoint, self.upper_container.endpoint)
 
     def test_upper(self):
         reply = self.client.request(self.upper_container.endpoint, 'upper.upper', {'text': 'foo'})
@@ -46,8 +46,5 @@ class BasicIntegrationTest(LymphIntegrationTestCase):
 
     def test_status(self):
         reply = self.client.request(self.upper_container.endpoint, 'lymph.status', {})
-        self.assertEqual(reply.body, {
-            'endpoint': 'tcp://127.0.0.1:42223',
-            'identity': 'b5cc65725b9b87d308058be8f2efc034',
-            'config': {},
-        })
+        self.assertEqual(reply.body['endpoint'], self.upper_container.endpoint)
+        self.assertEqual(reply.body['config'], {})
