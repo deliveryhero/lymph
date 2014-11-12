@@ -19,6 +19,12 @@ class Upper(Interface):
     def upper(self, text=None):
         return text.upper()
 
+    @lymph.rpc()
+    def indirect_upper(self, text=None):
+        # Method to test that it's possible to call upper method as
+        # you do normally with any method.
+        return self.upper(text)
+
     @lymph.rpc(raises=(RuntimeError,))
     def fail(self):
         raise RuntimeError()
@@ -55,6 +61,10 @@ class BasicMockTest(unittest.TestCase):
 
     def test_upper(self):
         reply = self.client.request('upper', 'upper.upper', {'text': 'foo'})
+        self.assertEqual(reply.body, 'FOO')
+
+    def test_indirect_upper(self):
+        reply = self.client.request('upper', 'upper.indirect_upper', {'text': 'foo'})
         self.assertEqual(reply.body, 'FOO')
 
     def test_ping(self):
@@ -97,5 +107,5 @@ class BasicMockTest(unittest.TestCase):
         methods = proxy.inspect()['methods']
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
-            'lymph.status', 'lymph.inspect', 'lymph.ping',
+            'lymph.status', 'lymph.inspect', 'lymph.ping', 'upper.indirect_upper'
         ]))
