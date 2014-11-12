@@ -29,7 +29,7 @@ class InterfaceBase(type):
                 declarations.add(value)
             elif isinstance(value, RPCBase):
                 methods[name] = value
-        attrs.setdefault('service_type', clsname.lower())
+        attrs.setdefault('service_type', None)
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
         new_cls.declarations = declarations
