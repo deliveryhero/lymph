@@ -1,9 +1,8 @@
-import inspect
 import textwrap
 import functools
 import six
 
-from lymph.core.decorators import rpc
+from lymph.core.decorators import rpc, RPCBase
 from lymph.exceptions import ErrorReply
 from lymph.core.declarations import Declaration
 
@@ -28,7 +27,7 @@ class InterfaceBase(type):
             if isinstance(value, Declaration):
                 value.name = name
                 declarations.add(value)
-            elif callable(value) and getattr(value, '_rpc', False):
+            elif isinstance(value, RPCBase):
                 methods[name] = value
         attrs.setdefault('service_type', clsname.lower())
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
@@ -87,7 +86,7 @@ class Interface(object):
         self.config.update(config)
 
     def handle_request(self, func_name, channel):
-        self.methods[func_name](self, channel, **channel.request.body)
+        self.methods[func_name].rpc_call(self, channel, **channel.request.body)
 
     def request(self, address, subject, body, timeout=None):
         channel = self.container.send_request(address, subject, body)
@@ -149,17 +148,9 @@ class DefaultInterface(Interface):
         methods = []
         for service_name, service in list(self.container.installed_interfaces.items()):
             for name, func in six.iteritems(service.methods):
-                # Using rpc decorator, we need to access the original function
-                # to get correct signature.
-                if hasattr(func, 'original'):
-                    args = inspect.getargspec(func.original)
-                    args = args.args[1:]
-                else:
-                    args = inspect.getargspec(func)
-                    args = args.args[2:]
                 methods.append({
                     'name': '%s.%s' % (service_name, name),
-                    'params': list(args),
+                    'params': list(func.args.args[1:]),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })
         return {
