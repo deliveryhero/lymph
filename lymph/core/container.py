@@ -86,9 +86,9 @@ class ServiceContainer(object):
                 kwargs[key] = value
         return cls(**kwargs)
 
-    def install(self, cls, **kwargs):
+    def install(self, cls, name=None, **kwargs):
         obj = cls(self, **kwargs)
-        self.installed_interfaces[obj.service_type] = obj
+        self.installed_interfaces[name or obj.service_type] = obj
         return obj
 
     def install_plugin(self, cls, **kwargs):

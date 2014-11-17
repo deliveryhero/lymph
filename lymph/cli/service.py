@@ -29,8 +29,7 @@ def install_interfaces(container, interfaces):
             print("no instance class for '%s'" % name)
             sys.exit(1)
         cls = import_object(cls_name)
-        cls.service_type = cls.service_type or name
-        instance = container.install(cls)
+        instance = container.install(cls, name=name)
         instance.apply_config(instance_config)
 
 
