@@ -11,20 +11,20 @@ class StaticServiceRegistryHub(object):
         return StaticServiceRegistry(self)
 
     def lookup(self, service, **kwargs):
-        service_type = service.service_type
+        service_name = service.service_name
         try:
-            containers = self.registry[service_type]
+            containers = self.registry[service_name]
             for container in containers:
                 service.update(container.identity, endpoint=container.endpoint)
         except KeyError:
             raise LookupFailure(None)
         return service
 
-    def register(self, service_type, container):
-        self.registry.setdefault(service_type, []).append(container)
+    def register(self, service_name, container):
+        self.registry.setdefault(service_name, []).append(container)
 
-    def unregister(self, service_type, container):
-        self.registry.get(service_type, []).remove(container)
+    def unregister(self, service_name, container):
+        self.registry.get(service_name, []).remove(container)
 
     def discover(self):
         return list(self.registry.keys())
@@ -41,8 +41,8 @@ class StaticServiceRegistry(BaseServiceRegistry):
     def lookup(self, service, **kwargs):
         return self.hub.lookup(service, **kwargs)
 
-    def register(self, service_type):
-        return self.hub.register(service_type, self.container)
+    def register(self, service_name):
+        return self.hub.register(service_name, self.container)
 
-    def unregister(self, service_type):
-        return self.hub.unregister(service_type, self.container)
+    def unregister(self, service_name):
+        return self.hub.unregister(service_name, self.container)

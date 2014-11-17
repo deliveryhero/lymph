@@ -67,21 +67,21 @@ class Proxy(Component):
 class Interface(object):
     register_with_coordinator = True
 
-    def __init__(self, container, name=None):
+    def __init__(self, container, service_name=None):
         self.container = container
         self.config = {}
         self.components = {}
-        self._name = name
+        self._service_name = service_name
         for declaration in self.declarations:
             declaration.install(self)
 
     @property
-    def name(self):
-        return self._name or self.__class__.__name__
+    def service_name(self):
+        return self._service_name or self.__class__.__name__
 
-    @name.setter
-    def name(self, value):
-        self._name = value
+    @service_name.setter
+    def service_name(self, value):
+        self._service_name = value
 
     def install(self, factory):
         self.components[factory] = factory(self)

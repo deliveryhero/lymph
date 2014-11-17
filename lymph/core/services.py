@@ -23,10 +23,10 @@ class ServiceInstance(object):
         self.update(endpoint, **info)
         self.connection = None
 
-    def update(self, endpoint, log_endpoint=None, service_type=None):
+    def update(self, endpoint, log_endpoint=None, service_name=None):
         self.endpoint = endpoint
         self.log_endpoint = log_endpoint
-        self.service_type = service_type
+        self.service_name = service_name
 
     def connect(self):
         self.connection = self.container.connect(self.endpoint)
@@ -43,10 +43,10 @@ class ServiceInstance(object):
 
 class Service(observables.Observable):
 
-    def __init__(self, container, service_type=None, instances=()):
+    def __init__(self, container, service_name=None, instances=()):
         super(Service, self).__init__()
         self.container = container
-        self.service_type = service_type
+        self.service_name = service_name
         self.instances = {i.endpoint: i for i in instances}
 
     def __iter__(self):
@@ -61,7 +61,7 @@ class Service(observables.Observable):
     def connect(self):
         choices = [i for i in self if i.is_alive()]
         if not choices:
-            logger.info("no live instance for %s", self.service_type)
+            logger.info("no live instance for %s", self.service_name)
             choices = list(self.instances.values())
         if not choices:
             raise NotConnected()

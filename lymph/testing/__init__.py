@@ -93,7 +93,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
         container = ServiceContainer(**kwargs)
         interface = None
         if interface_cls:
-            interface = container.install(interface_cls, name=interface_name)
+            interface = container.install(interface_cls, service_name=interface_name)
         container.start()
         return container, interface
 

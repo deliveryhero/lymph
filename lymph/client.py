@@ -3,7 +3,6 @@ from lymph.core.interfaces import Interface
 
 
 class ClientInterface(Interface):
-    service_type = '_client'
     register_with_coordinator = False
 
 

@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 
 
 class Coordinator(Interface):
-    service_type = 'coordinator'
     register_with_coordinator = False
 
     def __init__(self, *args, **kwargs):
@@ -21,16 +20,16 @@ class Coordinator(Interface):
         if endpoint not in self.endpoint_map:
             return
         logger.info("coordinator disconnect %s", endpoint)
-        service_type = self.endpoint_map[endpoint]
-        services = self.service_map.get(service_type, [])
-        self.service_map[service_type] = [s for s in services if s['endpoint'] != endpoint]
+        service_name = self.endpoint_map[endpoint]
+        services = self.service_map.get(service_name, [])
+        self.service_map[service_name] = [s for s in services if s['endpoint'] != endpoint]
 
     @raw_rpc()
-    def register(self, channel, service_type=None, endpoint=None, log_endpoint=None, identity=None):
-        # FIXME: complain if service_type is None
-        services = self.service_map.setdefault(service_type, [])
+    def register(self, channel, service_name=None, endpoint=None, log_endpoint=None, identity=None):
+        # FIXME: complain if service_name is None
+        services = self.service_map.setdefault(service_name, [])
         msg = channel.request
-        self.endpoint_map[endpoint] = service_type
+        self.endpoint_map[endpoint] = service_name
         info = msg.body.copy()
         info['endpoint'] = msg.source
         services.append({
@@ -40,14 +39,14 @@ class Coordinator(Interface):
         })
         logger.info('registered service %r', info)
         channel.reply({})
-        for watcher in self.watchers.get(service_type, ()):
-            self.request(watcher, 'lymph.notice', dict(service_type=service_type, instances=services))
+        for watcher in self.watchers.get(service_name, ()):
+            self.request(watcher, 'lymph.notice', dict(service_name=service_name, instances=services))
 
     @raw_rpc()
-    def lookup(self, channel, service_type=None, watch=True):
-        channel.reply(self.service_map.get(service_type, []))
+    def lookup(self, channel, service_name=None, watch=True):
+        channel.reply(self.service_map.get(service_name, []))
         if watch:
-            watchers = self.watchers.setdefault(service_type, set())
+            watchers = self.watchers.setdefault(service_name, set())
             watchers.add(channel.request.source)
 
     @rpc()
