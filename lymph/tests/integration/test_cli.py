@@ -81,7 +81,7 @@ class ServiceCommandTests(CliIntegrationTestCase):
         command_greenlet = gevent.spawn(self.cli, ['instance'])
         client = self.create_client()
         gevent.sleep(1)  # FIXME: how can we wait for the instance to register?
-        response = client.request('upper', 'upper.upper', {'text': 'hi'}, timeout=1)
+        response = client.request('echo', 'echo.upper', {'text': 'hi'}, timeout=1)
         self.assertEqual(response.body, 'HI')
         command_greenlet.kill()
         command_greenlet.join()
