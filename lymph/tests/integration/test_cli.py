@@ -8,7 +8,6 @@ from lymph.core.interfaces import Interface
 
 
 class Upper(Interface):
-    service_type = 'upper'
 
     @rpc()
     def upper(self, text=None):
@@ -18,7 +17,7 @@ class Upper(Interface):
 class RequestCommandTests(CliIntegrationTestCase):
     def setUp(self):
         super(RequestCommandTests, self).setUp()
-        self.upper_container, interface = self.create_container(Upper)
+        self.upper_container, interface = self.create_container(Upper, 'upper')
 
     def tearDown(self):
         self.upper_container.stop()

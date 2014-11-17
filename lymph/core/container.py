@@ -68,7 +68,7 @@ class ServiceContainer(object):
 
         self.monitor = Monitor(self)
 
-        self.install(DefaultInterface)
+        self.install(DefaultInterface, name='default')
         registry.install(self)
         if events:
             events.install(self)
@@ -88,7 +88,9 @@ class ServiceContainer(object):
 
     def install(self, cls, name=None, **kwargs):
         obj = cls(self, **kwargs)
-        self.installed_interfaces[name or obj.service_type] = obj
+        obj.name = name
+        print "**" * 3, obj.name, name
+        self.installed_interfaces[obj.name] = obj
         return obj
 
     def install_plugin(self, cls, **kwargs):

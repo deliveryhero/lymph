@@ -126,9 +126,9 @@ class DiscoverCommand(Command):
         client = Client.from_config(self.config)
         services = client.container.discover()
         if services:
-            for service_type in sorted(services):
-                p = client.container.lookup(service_type)
-                print(u"%s [%s]" % (self.terminal.red(service_type), len(p)))
+            for service_name in sorted(services):
+                p = client.container.lookup(service_name)
+                print(u"%s [%s]" % (self.terminal.red(service_name), len(p)))
                 if self.args.get('--instances'):
                     instances = sorted(p, key=lambda d: d.identity)
                     for i, d in enumerate(p):

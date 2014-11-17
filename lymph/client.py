@@ -10,7 +10,7 @@ class ClientInterface(Interface):
 class Client(object):
     def __init__(self, container, interface=ClientInterface):
         self.container = container
-        self.interface = container.install(interface)
+        self.interface = container.install(interface, 'client')
 
     @classmethod
     def from_config(cls, config, **kwargs):

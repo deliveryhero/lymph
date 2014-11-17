@@ -24,7 +24,7 @@ class Event(object):
 
     def __repr__(self):
         return '<Event type=%r body=%r>' % (self.evt_type, self.body)
-    
+
     def __str__(self):
         return '{type=%s id=%s}' % (self.evt_type, self.event_id)
 
@@ -48,7 +48,15 @@ class EventHandler(Component):
         self.sequential = sequential
         self.active = active
         self.interface = interface
-        self.queue_name = '%s-%s' % (interface.service_type, queue_name or func.__name__)
+        self._queue_name = queue_name or func.__name__
+
+    @property
+    def queue_name(self):
+        return '%s-%s' % (self.interface.name, self._queue_name)
+
+    @queue_name.setter
+    def queue_name(self, value):
+        self._queue_name = value
 
     def on_start(self):
         self.interface.container.subscribe(self, consume=self.active)
