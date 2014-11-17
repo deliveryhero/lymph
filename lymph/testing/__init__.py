@@ -7,6 +7,7 @@ from kazoo.testing.harness import KazooTestHarness
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
 from lymph.core.interfaces import Interface
+from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.client import Client
@@ -59,6 +60,12 @@ class MockServiceContainer(ServiceContainer):
     def send_message(self, address, msg):
         dst = self.lookup(address).connect().endpoint
         dst = self._mock_network.service_containers[dst]
+
+        # Exercise the msgpack packing and unpacking.
+        frames = msg.pack_frames()
+        frames.insert(0, self.endpoint.encode('utf-8'))
+        msg = Message.unpack_frames(frames)
+
         dst.recv_message(msg)
 
     def recv_loop(self):
