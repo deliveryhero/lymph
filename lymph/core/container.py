@@ -68,7 +68,7 @@ class ServiceContainer(object):
 
         self.monitor = Monitor(self)
 
-        self.install(DefaultInterface, name='default')
+        self.install(DefaultInterface, name='lymph')
         registry.install(self)
         if events:
             events.install(self)
@@ -89,7 +89,6 @@ class ServiceContainer(object):
     def install(self, cls, name=None, **kwargs):
         obj = cls(self, **kwargs)
         obj.name = name
-        print "**" * 3, obj.name, name
         self.installed_interfaces[obj.name] = obj
         return obj
 
