@@ -7,7 +7,6 @@ from lymph.core import trace
 
 
 class Client(lymph.Interface):
-    service_type = 'demo'
     delay = .1
 
     echo = lymph.proxy('echo', timeout=2)
