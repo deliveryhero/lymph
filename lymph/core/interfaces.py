@@ -156,7 +156,7 @@ class DefaultInterface(Interface):
             for name, func in six.iteritems(interface.methods):
                 methods.append({
                     'name': '%s.%s' % (interface_name, name),
-                    'params': list(func.args.args[1:]),
+                    'params': list(func.args.args),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })
         return {
