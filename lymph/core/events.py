@@ -52,7 +52,7 @@ class EventHandler(Component):
 
     @property
     def queue_name(self):
-        return '%s-%s' % (self.interface.service_name, self._queue_name)
+        return '%s-%s' % (self.interface.name, self._queue_name)
 
     @queue_name.setter
     def queue_name(self, value):

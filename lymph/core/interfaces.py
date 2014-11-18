@@ -67,21 +67,21 @@ class Proxy(Component):
 class Interface(object):
     register_with_coordinator = True
 
-    def __init__(self, container, service_name=None):
+    def __init__(self, container, name=None):
         self.container = container
         self.config = {}
         self.components = {}
-        self._service_name = service_name
+        self._name = name
         for declaration in self.declarations:
             declaration.install(self)
 
     @property
-    def service_name(self):
-        return self._service_name or self.__class__.__name__
+    def name(self):
+        return self._name or self.__class__.__name__
 
-    @service_name.setter
-    def service_name(self, value):
-        self._service_name = value
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     def install(self, factory):
         self.components[factory] = factory(self)
@@ -152,10 +152,10 @@ class DefaultInterface(Interface):
         Returns a description of all available rpc methods of this service
         """
         methods = []
-        for service_name, service in list(self.container.installed_interfaces.items()):
-            for name, func in six.iteritems(service.methods):
+        for interface_name, interface in list(self.container.installed_interfaces.items()):
+            for name, func in six.iteritems(interface.methods):
                 methods.append({
-                    'name': '%s.%s' % (service_name, name),
+                    'name': '%s.%s' % (interface_name, name),
                     'params': list(func.args.args[1:]),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })

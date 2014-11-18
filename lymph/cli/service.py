@@ -22,14 +22,14 @@ def install_plugins(container, plugins):
 
 
 def install_interfaces(container, interfaces):
-    for service_name, instance_config in six.iteritems(interfaces):
+    for interface_name, instance_config in six.iteritems(interfaces):
         try:
             cls_name = instance_config['class']
         except KeyError:
             print("no instance class for '%s'" % name)
             sys.exit(1)
         cls = import_object(cls_name)
-        instance = container.install(cls, service_name=service_name)
+        instance = container.install(cls, interface_name=interface_name)
         instance.apply_config(instance_config)
 
 

@@ -51,7 +51,7 @@ Interface Configuration
 
 .. describe:: interfaces:<name>
 
-    Mapping from service name to instance which will be used to send requests
+    Mapping the name to instance which will be used to send requests
     and discover this interface. 
     This name is also configuration that will be passed to the implementation's
     :meth:`lymph.Interface.apply_config()` method.

@@ -70,7 +70,7 @@ The complete directory structure is thus:
 
 .. code::
 
-	/lymph/SERVICE_NAME/IDENTITY
+	/lymph/INTERFACE_NAME/IDENTITY
 
 The identity znode holds information about its
 

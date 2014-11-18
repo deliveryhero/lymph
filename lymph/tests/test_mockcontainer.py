@@ -49,9 +49,9 @@ class ClientInterface(Interface):
 class BasicMockTest(unittest.TestCase):
     def setUp(self):
         self.network = MockServiceNetwork()
-        self.coordinator = self.network.add_service(Coordinator)
-        self.upper_container = self.network.add_service(Upper)
-        self.client_container = self.network.add_service(ClientInterface)
+        self.coordinator = self.network.add_service(Coordinator, 'coordinator')
+        self.upper_container = self.network.add_service(Upper, 'upper')
+        self.client_container = self.network.add_service(ClientInterface, 'client')
         self.network.start()
         self.client = self.client_container.installed_interfaces['client']
 

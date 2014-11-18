@@ -26,10 +26,10 @@ Service API
 
 .. class:: Interface
 
-    .. attribute:: service_name
+    .. attribute:: name
 
-        The service identifier that is used to register this service with the coordinator service.
-        ``service_name`` is usually set an instance attribute which is usually
+        The interface identifier that is used to register this service with the coordinator service.
+        ``name`` is usually set an instance attribute which is usually
         taken from the config of the interface.
 
     .. method:: on_start()

@@ -19,7 +19,7 @@ class BaseServiceRegistry(object):
         try:
             service = self.cache[service_name]
         except KeyError:
-            service = Service(self.container, service_name)
+            service = Service(self.container, name=service_name)
             self.lookup(service, **kwargs)
             self.cache[service_name] = service
         return service

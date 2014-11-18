@@ -11,7 +11,7 @@ class StaticServiceRegistryHub(object):
         return StaticServiceRegistry(self)
 
     def lookup(self, service, **kwargs):
-        service_name = service.service_name
+        service_name = service.name
         try:
             containers = self.registry[service_name]
             for container in containers:

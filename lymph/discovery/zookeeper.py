@@ -93,7 +93,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             return []
 
     def lookup(self, service, watch=True, timeout=1):
-        service_name = service.service_name
+        service_name = service.name
         result = self.client.get_children_async(
             path='%s/services/%s' % (self.chroot, service_name),
             watch=functools.partial(self.on_service_name_watch, service),
@@ -101,7 +101,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         try:
             names = result.get(timeout=timeout)
         except NoNodeError:
-            raise LookupFailure(None, "failed to resolve %s" % service.service_name)
+            raise LookupFailure(None, "failed to resolve %s" % service.name)
         except ConnectionLoss:
             logger.warning("lost zookeeper connection")
             return service

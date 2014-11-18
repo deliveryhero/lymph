@@ -47,7 +47,7 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
 
     def lookup(self, service, timeout=1):
         channel = self.container.send_request(self.coordinator_endpoint, 'coordinator.lookup', {
-            'service_name': service.service_name,
+            'service_name': service.name,
         })
         try:
             msg = channel.get()
