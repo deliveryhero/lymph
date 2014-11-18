@@ -19,7 +19,7 @@ Registering methods as RPC callable
 
 Any class inheriting from :class:`lymph.Interface` can receive RPC calls. By specifying the
 ``name`` argument when initializing the class, the lymph service will be reachable through its
-interface name ``name``. I.e. the service
+interface name ``name``.
 
 By default the service is registered under the name given when you configure
 the service.
