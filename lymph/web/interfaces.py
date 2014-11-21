@@ -26,7 +26,8 @@ class WebServiceInterface(Interface):
                                    inheritable=True)
             socket_fd = socket.fileno()
         self.http_socket = create_socket('fd://%s' % socket_fd)
-        self.wsgi_server = WSGIServer(self.http_socket, Request.application(self.dispatch_request))
+        self.application = Request.application(self.dispatch_request)
+        self.wsgi_server = WSGIServer(self.http_socket, self.application)
         self.wsgi_server.start()
 
     def on_stop(self):
@@ -51,3 +52,6 @@ class WebServiceInterface(Interface):
         except HTTPException as e:
             response = e.get_response(request.environ)
         return response
+
+    def get_wsgi_application(self):
+        return self.application

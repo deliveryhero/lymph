@@ -134,3 +134,29 @@ class LymphServiceTestCase(unittest.TestCase):
     def tearDown(self):
         self.network.stop()
         self.network.join()
+
+
+from lymph import monkey
+from werkzeug.test import Client
+from werkzeug.wrappers import BaseResponse
+class APITestCase(unittest.TestCase):
+
+    interface_name = None
+
+    def setUp(self):
+        self.msc = MockServiceNetwork()
+        container = self.msc.add_service(self.test_interface)
+        if not self.interface_name:
+            self.interface_name = self.test_interface.__name__.lower()
+
+        webinterface_object = container.installed_interfaces[self.interface_name]
+        webinterface_object.configure({'ip' : 'localhost'})
+        self.msc.start()
+
+        app = webinterface_object.get_wsgi_application()
+        monkey.patch()
+        self.client = Client(app, BaseResponse)
+        print 'setup'
+
+    def tearDown(self):
+        self.msc.stop()
