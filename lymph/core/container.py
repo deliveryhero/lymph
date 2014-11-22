@@ -2,15 +2,17 @@ import collections
 import errno
 import json
 import gc
-import gevent
-import gevent.queue
-import gevent.pool
 import hashlib
 import logging
 import random
+import time
 import os
-import six
 import sys
+
+import gevent
+import gevent.queue
+import gevent.pool
+import six
 import zmq.green as zmq
 
 from lymph.exceptions import RegistrationFailure, SocketNotCreated, NotConnected
@@ -304,6 +306,7 @@ class ServiceContainer(object):
         return reply_msg
 
     def dispatch_request(self, msg):
+        start = time.time()
         self.request_counts[msg.subject] += 1
         channel = ReplyChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
@@ -315,7 +318,7 @@ class ServiceContainer(object):
         try:
             service.handle_request(func_name, channel)
         except Exception:
-            logger.exception('')
+            logger.exception('Request error:')
             exc_info = sys.exc_info()
             try:
                 self.error_hook(exc_info)
@@ -327,6 +330,10 @@ class ServiceContainer(object):
                 channel.nack(True)
             except:
                 logger.exception('failed to send automatic NACK')
+        finally:
+            elapsed = (time.time() - start) * (10 ** 3)
+            # TODO(Mouad): Add request status i.e. ACK, ERROR, NACK .. .
+            logger.info('%s -- %s %.3fms', msg.source, msg.subject, elapsed)
 
     def recv_message(self, msg):
         trace.set_id(msg.headers.get('trace_id'))
