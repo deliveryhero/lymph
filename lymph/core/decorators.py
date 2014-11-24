@@ -39,14 +39,22 @@ class RPCBase(collections.Callable):
 
     @property
     def original(self):
+        """Return original wrapped function/method."""
         return self._original
 
     @property
     def args(self):
-        """Return original function argument spec as ``inspect.ArgSpec``."""
-        return inspect.getargspec(self._original)
+        """Return original function argument spec skipping self.
+
+        Returns:
+          ``inspect.ArgSpec``.
+        """
+        spec = inspect.getargspec(self._original)
+        return inspect.ArgSpec(spec.args[1:], *spec[1:])
 
     def __get__(self, obj, obj_type=None):
+        if obj is None:
+            return self
         return functools.partial(self._original, obj)
 
     def __call__(self, *args, **kwargs):
@@ -59,6 +67,12 @@ class RPCBase(collections.Callable):
 
 class _RawRPCDecorator(RPCBase):
 
+    @property
+    def args(self):
+        # Skip channel in the arguments spec.
+        spec = super(_RawRPCDecorator, self).args
+        return inspect.ArgSpec(spec.args[1:], *spec[1:])
+
     def rpc_call(self, interface, channel, *args, **kwargs):
         return self._original(interface, channel, *args, **kwargs)
 
@@ -68,6 +82,10 @@ class _RPCDecorator(RPCBase):
     def __init__(self, *args, **kwargs):
         self._raises = kwargs.pop('raises', ())
         super(_RPCDecorator, self).__init__(*args, **kwargs)
+
+    @property
+    def raises(self):
+        return self._raises
 
     def rpc_call(self, interface, channel, *args, **kwargs):
         try:
