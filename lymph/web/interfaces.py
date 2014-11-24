@@ -13,7 +13,12 @@ class WebServiceInterface(Interface):
 
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
+        self.application = Request.application(self.dispatch_request)
         self.wsgi_server = None
+
+    def __call__(self, *args, **kwargs):
+        # Make the object itself a WSGI app
+        return self.application(*args, **kwargs)
 
     def on_start(self):
         super(WebServiceInterface, self).on_start()
@@ -26,7 +31,6 @@ class WebServiceInterface(Interface):
                                    inheritable=True)
             socket_fd = socket.fileno()
         self.http_socket = create_socket('fd://%s' % socket_fd)
-        self.application = Request.application(self.dispatch_request)
         self.wsgi_server = WSGIServer(self.http_socket, self.application)
         self.wsgi_server.start()
 

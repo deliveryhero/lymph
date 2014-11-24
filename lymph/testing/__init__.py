@@ -153,7 +153,7 @@ class APITestCase(unittest.TestCase):
         webinterface_object.configure({'ip' : 'localhost'})
         self.msc.start()
 
-        app = webinterface_object.get_wsgi_application()
+        app = webinterface_object
         monkey.patch()
         self.client = Client(app, BaseResponse)
 
