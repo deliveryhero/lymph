@@ -21,13 +21,13 @@ class MockServiceNetwork(object):
         self.discovery_hub = StaticServiceRegistryHub()
         self.events = LocalEventSystem()
 
-    def add_service(self, cls, **kwargs):
+    def add_service(self, cls, interface_name=None, **kwargs):
         kwargs.setdefault('ip', '300.0.0.1')
         kwargs.setdefault('port', self.next_port)
         self.next_port += 1
         registry = self.discovery_hub.create_registry()
         container = MockServiceContainer(registry=registry, events=self.events, **kwargs)
-        container.install(cls)
+        container.install(cls, interface_name=interface_name)
         self.service_containers[container.endpoint] = container
         container._mock_network = self
         return container
@@ -87,13 +87,13 @@ class LymphIntegrationTestCase(KazooTestHarness):
         container, interface = self.create_container(**kwargs)
         return Client(container)
 
-    def create_container(self, interface_cls=None, **kwargs):
+    def create_container(self, interface_cls=None, interface_name=None, **kwargs):
         kwargs.setdefault('events', self.events)
         kwargs.setdefault('registry', self.registry)
         container = ServiceContainer(**kwargs)
         interface = None
         if interface_cls:
-            interface = container.install(interface_cls)
+            interface = container.install(interface_cls, interface_name=interface_name)
         container.start()
         return container, interface
 

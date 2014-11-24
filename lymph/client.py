@@ -3,14 +3,13 @@ from lymph.core.interfaces import Interface
 
 
 class ClientInterface(Interface):
-    service_type = '_client'
     register_with_coordinator = False
 
 
 class Client(object):
     def __init__(self, container, interface=ClientInterface):
         self.container = container
-        self.interface = container.install(interface)
+        self.interface = container.install(interface, '_client')
 
     @classmethod
     def from_config(cls, config, **kwargs):

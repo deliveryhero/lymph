@@ -15,13 +15,13 @@ class BaseServiceRegistry(object):
     def on_stop(self):
         pass
 
-    def get(self, service_type, **kwargs):
+    def get(self, service_name, **kwargs):
         try:
-            service = self.cache[service_type]
+            service = self.cache[service_name]
         except KeyError:
-            service = Service(self.container, service_type)
+            service = Service(self.container, name=service_name)
             self.lookup(service, **kwargs)
-            self.cache[service_type] = service
+            self.cache[service_name] = service
         return service
 
     def install(self, container):
@@ -36,9 +36,9 @@ class BaseServiceRegistry(object):
         raise NotImplementedError
 
     @abstractmethod
-    def register(self, container, service_type):
+    def register(self, container, service_name):
         raise NotImplementedError
 
     @abstractmethod
-    def unregister(self, container, service_type):
+    def unregister(self, container, service_name):
         raise NotImplementedError

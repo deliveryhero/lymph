@@ -68,7 +68,7 @@ class ServiceContainer(object):
 
         self.monitor = Monitor(self)
 
-        self.install(DefaultInterface)
+        self.install(DefaultInterface, interface_name='lymph')
         registry.install(self)
         if events:
             events.install(self)
@@ -86,9 +86,10 @@ class ServiceContainer(object):
                 kwargs[key] = value
         return cls(**kwargs)
 
-    def install(self, cls, **kwargs):
+    def install(self, cls, interface_name=None, **kwargs):
         obj = cls(self, **kwargs)
-        self.installed_interfaces[obj.service_type] = obj
+        obj.name = interface_name
+        self.installed_interfaces[obj.name] = obj
         return obj
 
     def install_plugin(self, cls, **kwargs):
@@ -201,13 +202,13 @@ class ServiceContainer(object):
             service.configure({})
 
         if register:
-            for service_type, service in six.iteritems(self.installed_interfaces):
+            for interface_name, service in six.iteritems(self.installed_interfaces):
                 if not service.register_with_coordinator:
                     continue
                 try:
-                    self.service_registry.register(service_type)
+                    self.service_registry.register(interface_name)
                 except RegistrationFailure:
-                    logger.error("registration failed %s, %s", service_type, service)
+                    logger.error("registration failed %s, %s", interface_name, service)
                     self.stop()
 
     def stop(self):

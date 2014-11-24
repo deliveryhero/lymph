@@ -60,7 +60,7 @@ class SerialEventHandler(Component):
         while True:
             logger.info('starting partitioner')
             partitioner = self.zk.SetPartitioner(
-                path='/lymph/serial_event_partitions/%s' % self.interface.service_type,
+                path='/lymph/serial_event_partitions/%s' % self.interface.name,
                 set=self.consumers.keys(),
                 time_boundary=1,
             )

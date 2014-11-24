@@ -7,8 +7,8 @@ from lymph.core.interfaces import Interface
 
 class SimpleCoordinatorClient(Interface):
     @rpc()
-    def notice(self, service_type=None, instances=None):
-        self.container.update_service(service_type, instances)
+    def notice(self, service_name=None, instances=None):
+        self.container.update_service(service_name, instances)
 
 
 class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
@@ -25,16 +25,16 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
         super(LymphCoordinatorServiceRegistry, self).install(container)
         container.install(SimpleCoordinatorClient)
 
-    def register(self, service_type, timeout=1):
+    def register(self, service_name, timeout=1):
         body = self.container.get_instance_description()
-        body['service_type'] = service_type
+        body['service_name'] = service_name
         channel = self.container.send_request(self.coordinator_endpoint, 'coordinator.register', body)
         try:
             channel.get(timeout=timeout)
         except Timeout:
             raise RegistrationFailure()
 
-    def unregister(self, service_type, timeout=1):
+    def unregister(self, service_name, timeout=1):
         pass
 
     def discover(self):
@@ -47,14 +47,14 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
 
     def lookup(self, service, timeout=1):
         channel = self.container.send_request(self.coordinator_endpoint, 'coordinator.lookup', {
-            'service_type': service.service_type,
+            'service_name': service.name,
         })
         try:
             msg = channel.get()
         except Timeout:
-            raise LookupFailure(None, "lookup of %s timed out" % service.service_type)
+            raise LookupFailure(None, "lookup of %s timed out" % service.service_name)
         if not msg.body:
-            raise LookupFailure(None, "failed to resolve %s" % service.service_type)
+            raise LookupFailure(None, "failed to resolve %s" % service.service_name)
         for info in msg.body:
             identity = info.pop('identity')
             service.update(identity, **info)

@@ -19,8 +19,8 @@ class BasicIntegrationTest(LymphIntegrationTestCase):
         self.registry = StaticServiceRegistry()
         self.events = NullEventSystem()
 
-        self.coordinator, interface = self.create_container(Coordinator)
-        self.upper_container, interface = self.create_container(Upper)
+        self.coordinator, interface = self.create_container(Coordinator, 'coordinator')
+        self.upper_container, interface = self.create_container(Upper, 'upper')
         self.client = self.create_client()
 
     def tearDown(self):

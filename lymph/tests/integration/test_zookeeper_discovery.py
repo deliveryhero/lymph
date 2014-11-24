@@ -21,7 +21,7 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         self.registry = ZookeeperServiceRegistry(self.hosts)
         self.events = NullEventSystem()
 
-        self.upper_container, interface = self.create_container(Upper)
+        self.upper_container, interface = self.create_container(Upper, 'upper')
         self.lymph_client = self.create_client()
 
     def tearDown(self):

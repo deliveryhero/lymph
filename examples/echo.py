@@ -2,7 +2,6 @@ import lymph
 
 
 class EchoService(lymph.Interface):
-    service_type = 'echo'
 
     @lymph.rpc()
     def echo(self, text=None):

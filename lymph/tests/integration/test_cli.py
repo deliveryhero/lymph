@@ -8,7 +8,6 @@ from lymph.core.interfaces import Interface
 
 
 class Upper(Interface):
-    service_type = 'upper'
 
     @rpc()
     def upper(self, text=None):
@@ -18,7 +17,7 @@ class Upper(Interface):
 class RequestCommandTests(CliIntegrationTestCase):
     def setUp(self):
         super(RequestCommandTests, self).setUp()
-        self.upper_container, interface = self.create_container(Upper)
+        self.upper_container, interface = self.create_container(Upper, 'upper')
 
     def tearDown(self):
         self.upper_container.stop()
@@ -81,7 +80,7 @@ class ServiceCommandTests(CliIntegrationTestCase):
         command_greenlet = gevent.spawn(self.cli, ['instance'])
         client = self.create_client()
         gevent.sleep(1)  # FIXME: how can we wait for the instance to register?
-        response = client.request('upper', 'upper.upper', {'text': 'hi'}, timeout=1)
+        response = client.request('echo', 'echo.upper', {'text': 'hi'}, timeout=1)
         self.assertEqual(response.body, 'HI')
         command_greenlet.kill()
         command_greenlet.join()

@@ -18,15 +18,25 @@ Registering methods as RPC callable
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Any class inheriting from :class:`lymph.Interface` can receive RPC calls. By specifying the
-``service_type`` argument in the class, the lymph service will be reachable through its
-service name ``service_type``. I.e. the service
+``name`` argument when initializing the class, the lymph service will be reachable through its
+interface name ``name``.
+
+By default the service is registered under the name given when you configure
+the service.
 
 .. code::
 
     import lymph
 
     class EchoService(lymph.Interface):
-        service_type = 'echo'
+        pass
+
+
+.. code-block:: yaml
+
+    interfaces:
+        echo:
+            class: project.interfaces:EchoService
 
 will be reachable with the service name ``echo``. This is the name with which lymph knows that
 the RPC messages should be sent to ``EchoService``.
@@ -103,7 +113,6 @@ object with the calling party. The ``ReplyChannel`` object provides you with the
         import lymph
 
         class EchoService(lymph.Interface):
-            service_type = 'echo'
 
             @lymph.raw_rpc()
             def echo(self, channel, text=None):

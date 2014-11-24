@@ -59,7 +59,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             for service in six.itervalues(self.cache):
                 self.container.spawn(self.lookup, service, timeout=None)
 
-    def on_service_type_watch(self, service, event):
+    def on_service_name_watch(self, service, event):
         try:
             self.lookup(service)
         except LookupFailure:
@@ -69,14 +69,14 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
 
     def on_service_watch(self, service, event):
         try:
-            prefix, service_type, identity = event.path.rsplit('/', 2)
+            prefix, service_name, identity = event.path.rsplit('/', 2)
             if event.type == EventType.DELETED:
                 service.remove(identity)
         except Exception:
             logger.exception('error in service watcher')
 
-    def _get_service_znode(self, service, service_type, identity):
-        path = self._get_zk_path(service_type, identity)
+    def _get_service_znode(self, service, service_name, identity):
+        path = self._get_zk_path(service_name, identity)
         result = self.client.get_async(
             path, watch=functools.partial(self.on_service_watch, service))
         value, znode = result.get()
@@ -93,22 +93,22 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             return []
 
     def lookup(self, service, watch=True, timeout=1):
-        service_type = service.service_type
+        service_name = service.name
         result = self.client.get_children_async(
-            path='%s/services/%s' % (self.chroot, service_type),
-            watch=functools.partial(self.on_service_type_watch, service),
+            path='%s/services/%s' % (self.chroot, service_name),
+            watch=functools.partial(self.on_service_name_watch, service),
         )
         try:
             names = result.get(timeout=timeout)
         except NoNodeError:
-            raise LookupFailure(None, "failed to resolve %s" % service.service_type)
+            raise LookupFailure(None, "failed to resolve %s" % service.name)
         except ConnectionLoss:
             logger.warning("lost zookeeper connection")
             return service
-        logger.info("lookup %s %r", service_type, names)
+        logger.info("lookup %s %r", service_name, names)
         identities = set(service.identities())
         for name in names:
-            kwargs = self._get_service_znode(service, service_type, name)
+            kwargs = self._get_service_znode(service, service_name, name)
             identity = kwargs.pop('identity')
             service.update(identity, **kwargs)
             try:
@@ -119,11 +119,11 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             service.remove(identity)
         return service
 
-    def _get_zk_path(self, service_type, identity):
-        return '%s/services/%s/%s' % (self.chroot, service_type, identity)
+    def _get_zk_path(self, service_name, identity):
+        return '%s/services/%s/%s' % (self.chroot, service_name, identity)
 
-    def register(self, service_type, timeout=1):
-        path = self._get_zk_path(service_type, self.container.identity)
+    def register(self, service_name, timeout=1):
+        path = self._get_zk_path(service_name, self.container.identity)
         value = json.dumps(self.container.get_instance_description())
         result = self.client.create_async(
             path,
@@ -132,8 +132,8 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         # FIXME: result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
 
-    def unregister(self, service_type, timeout=1):
-        path = self._get_zk_path(service_type, self.container.identity)
+    def unregister(self, service_name, timeout=1):
+        path = self._get_zk_path(service_name, self.container.identity)
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)

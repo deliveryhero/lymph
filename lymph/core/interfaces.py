@@ -29,7 +29,6 @@ class InterfaceBase(type):
                 declarations.add(value)
             elif isinstance(value, RPCBase):
                 methods[name] = value
-        attrs.setdefault('service_type', clsname.lower())
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
         new_cls.declarations = declarations
@@ -66,15 +65,23 @@ class Proxy(Component):
 
 @six.add_metaclass(InterfaceBase)
 class Interface(object):
-    service_type = None
     register_with_coordinator = True
 
-    def __init__(self, container):
+    def __init__(self, container, name=None):
         self.container = container
         self.config = {}
         self.components = {}
+        self._name = name
         for declaration in self.declarations:
             declaration.install(self)
+
+    @property
+    def name(self):
+        return self._name or self.__class__.__name__
+
+    @name.setter
+    def name(self, value):
+        self._name = value
 
     def install(self, factory):
         self.components[factory] = factory(self)
@@ -125,7 +132,6 @@ class Interface(object):
 
 
 class DefaultInterface(Interface):
-    service_type = 'lymph'
     register_with_coordinator = False
 
     @rpc()
@@ -146,10 +152,10 @@ class DefaultInterface(Interface):
         Returns a description of all available rpc methods of this service
         """
         methods = []
-        for service_name, service in list(self.container.installed_interfaces.items()):
-            for name, func in six.iteritems(service.methods):
+        for interface_name, interface in list(self.container.installed_interfaces.items()):
+            for name, func in six.iteritems(interface.methods):
                 methods.append({
-                    'name': '%s.%s' % (service_name, name),
+                    'name': '%s.%s' % (interface_name, name),
                     'params': list(func.args.args[1:]),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })

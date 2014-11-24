@@ -9,7 +9,6 @@ Service API
 
 
     class Echo(lymph.Interface):
-        service_type = 'echo'
 
         @lymph.rpc()
         def echo(self, text=None):
@@ -27,10 +26,12 @@ Service API
 
 .. class:: Interface
 
-    .. attribute:: service_type
+    .. attribute:: name
 
-        The service identifier that is used to register this service with the coordinator service.
-        ``service_type`` is usually set as a class attribute.
+        The interface identifier that is used to register this service with the
+        coordinator service.
+        ``name`` is an instance attribute which is taken from the config of the
+        interface taken from the config of the interface.
 
     .. method:: on_start()
 

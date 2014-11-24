@@ -126,12 +126,12 @@ class DiscoverCommand(Command):
         client = Client.from_config(self.config)
         services = client.container.discover()
         if services:
-            for service_type in sorted(services):
-                p = client.container.lookup(service_type)
-                print(u"%s [%s]" % (self.terminal.red(service_type), len(p)))
+            for interface_name in sorted(services):
+                interface_instances = client.container.lookup(interface_name)
+                print(u"%s [%s]" % (self.terminal.red(interface_name), len(interface_instances)))
                 if self.args.get('--instances'):
-                    instances = sorted(p, key=lambda d: d.identity)
-                    for i, d in enumerate(p):
+                    instances = sorted(interface_instances, key=lambda d: d.identity)
+                    for i, d in enumerate(interface_instances):
                         prefix = u'└─' if i == len(instances) - 1 else u'├─'
                         print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
         else:
