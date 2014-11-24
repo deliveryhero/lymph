@@ -144,18 +144,18 @@ class APITestCase(unittest.TestCase):
     interface_name = None
 
     def setUp(self):
-        self.msc = MockServiceNetwork()
-        container = self.msc.add_service(self.test_interface)
+        self.network = MockServiceNetwork()
+        container = self.network.add_service(self.test_interface)
         if not self.interface_name:
             self.interface_name = self.test_interface.__name__.lower()
 
         webinterface_object = container.installed_interfaces[self.interface_name]
         webinterface_object.configure({'ip' : 'localhost'})
-        self.msc.start()
+        self.network.start()
 
         app = webinterface_object
         monkey.patch()
         self.client = Client(app, BaseResponse)
 
     def tearDown(self):
-        self.msc.stop()
+        self.network.stop()
