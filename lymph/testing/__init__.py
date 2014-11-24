@@ -104,20 +104,30 @@ class ClientInterface(Interface):
 
 class LymphServiceTestCase(unittest.TestCase):
     client_class = ClientInterface
+    client_name = 'client'
     client_config = {}
     service_class = ClientInterface
+    service_name = 'client'
     service_config = {}
 
     def setUp(self):
         self.network = MockServiceNetwork()
         self.coordinator = self.network.add_service(Coordinator)
-        self.service_container = self.network.add_service(self.service_class)
+        self.service_container = self.network.add_service(
+            self.service_class,
+            interface_name=self.service_name
+        )
         self.service = self.service_container.installed_interfaces[
-            self.service_class.service_type]
+            self.service_name
+        ]
         self.service.apply_config(self.service_config)
-        self.client_container = self.network.add_service(self.client_class)
+        self.client_container = self.network.add_service(
+            self.client_class,
+            interface_name=self.client_name
+        )
         self.client = self.client_container.installed_interfaces[
-            self.client_class.service_type]
+            self.client_name
+        ]
         self.client.apply_config(self.client_config)
         self.network.start()
 
