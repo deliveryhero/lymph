@@ -14,7 +14,8 @@ from lymph.client import Client
 from lymph.services.coordinator import Coordinator
 
 from lymph import monkey
-from werkzeug.test import Client
+
+import werkzeug.test
 from werkzeug.wrappers import BaseResponse
 
 class MockServiceNetwork(object):
@@ -145,17 +146,18 @@ class APITestCase(unittest.TestCase):
 
     def setUp(self):
         self.network = MockServiceNetwork()
-        container = self.network.add_service(self.test_interface)
+
         if not self.interface_name:
             self.interface_name = self.test_interface.__name__.lower()
+
+        container = self.network.add_service(self.test_interface, interface_name = self.interface_name)
 
         webinterface_object = container.installed_interfaces[self.interface_name]
         webinterface_object.configure({'ip' : 'localhost'})
         self.network.start()
 
-        app = webinterface_object
         monkey.patch()
-        self.client = Client(app, BaseResponse)
+        self.client = werkzeug.test.Client(webinterface_object, BaseResponse)
 
     def tearDown(self):
         self.network.stop()
