@@ -44,8 +44,8 @@ class Proxy(Component):
         self._namespace = namespace or address
         self._error_map = error_map or {}
 
-    def _call(self, name, **kwargs):
-        channel = self._container.send_request(self._address, name, kwargs)
+    def _call(self, __name, **kwargs):
+        channel = self._container.send_request(self._address, __name, kwargs)
         try:
             return channel.get(timeout=self._timeout).body
         except ErrorReply as e:
