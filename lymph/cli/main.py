@@ -11,6 +11,7 @@ def _get_zmqpub_log_handler(**kwargs):
 
 
 def setup_logging(args, config):
+    print(args)
     import logging
     from logging.config import dictConfig
     from lymph.utils.logging import PubLogHandler
