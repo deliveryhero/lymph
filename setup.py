@@ -48,6 +48,9 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     dependency_links=dependency_links,
+    extras_require={
+        'sentry': ['raven'],
+    },
     entry_points={
         'console_scripts': ['lymph = lymph.cli.main:main'],
         'lymph.cli': [
