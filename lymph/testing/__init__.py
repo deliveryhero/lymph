@@ -13,8 +13,6 @@ from lymph.events.local import LocalEventSystem
 from lymph.client import Client
 from lymph.services.coordinator import Coordinator
 
-from lymph import monkey
-
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
 
@@ -156,7 +154,6 @@ class APITestCase(unittest.TestCase):
         webinterface_object.configure({'ip' : 'localhost'})
         self.network.start()
 
-        monkey.patch()
         self.client = werkzeug.test.Client(webinterface_object, BaseResponse)
 
     def tearDown(self):
