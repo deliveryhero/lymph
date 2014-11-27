@@ -13,6 +13,8 @@ from lymph.events.local import LocalEventSystem
 from lymph.client import Client
 from lymph.services.coordinator import Coordinator
 
+import werkzeug.test
+from werkzeug.wrappers import BaseResponse
 
 class MockServiceNetwork(object):
     def __init__(self):
@@ -134,3 +136,25 @@ class LymphServiceTestCase(unittest.TestCase):
     def tearDown(self):
         self.network.stop()
         self.network.join()
+
+
+class APITestCase(unittest.TestCase):
+
+    interface_name = None
+
+    def setUp(self):
+        self.network = MockServiceNetwork()
+
+        if not self.interface_name:
+            self.interface_name = self.test_interface.__name__.lower()
+
+        container = self.network.add_service(self.test_interface, interface_name = self.interface_name)
+
+        webinterface_object = container.installed_interfaces[self.interface_name]
+        webinterface_object.configure({'ip' : 'localhost'})
+        self.network.start()
+
+        self.client = werkzeug.test.Client(webinterface_object, BaseResponse)
+
+    def tearDown(self):
+        self.network.stop()
