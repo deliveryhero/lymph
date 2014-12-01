@@ -1,3 +1,6 @@
+import sys
+import logging
+
 from gevent.pywsgi import WSGIServer
 from werkzeug.wrappers import Request
 from werkzeug.exceptions import HTTPException
@@ -6,6 +9,9 @@ from lymph.core.interfaces import Interface
 from lymph.core import trace
 from lymph.exceptions import SocketNotCreated
 from lymph.utils.sockets import create_socket
+
+
+logger = logging.getLogger(__name__)
 
 
 class WebServiceInterface(Interface):
@@ -55,6 +61,16 @@ class WebServiceInterface(Interface):
                 response = handler(request, **args)
         except HTTPException as e:
             response = e.get_response(request.environ)
+        except Exception as e:
+            logger.exception('HTTP Request Error:')
+            exc_info = sys.exc_info()
+            try:
+                self.container.error_hook(exc_info)
+            except:
+                logger.exception('error hook failure')
+            finally:
+                del exc_info
+            raise
         return response
 
     def get_wsgi_application(self):
