@@ -62,7 +62,6 @@ class WebServiceInterface(Interface):
         except HTTPException as e:
             response = e.get_response(request.environ)
         except Exception as e:
-            logger.exception('HTTP Request Error:')
             exc_info = sys.exc_info()
             try:
                 self.container.error_hook(exc_info)
