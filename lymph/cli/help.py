@@ -12,36 +12,40 @@ Commands:
 """
 
 
-def _format_help(name, description, space=13, min_space=2):
+def _format_help(name, description, indent='  ', spaces=13, min_spaces=2):
     r"""Format ``name`` + ``description`` in an unified format
     that can be used to print beautiful help messages.
 
-    If the name is too long (length is greater than ``space - min_space``
+    If the name is too long (length is greater than ``spaces - min_spaces``)
     than the name and description will appear in different lines.
 
     Example:
 
-        >>> print(format_help('foo', 'foobar'))
-        foo          foobar
-        >>> print(format_help('foo', 'foobar', space=4))
-        foo
-            foobar
+        >>> print(_format_help('foo', 'foobar'))
+          foo          foobar
+        >>> print(_format_help('foo', 'foobar', spaces=4))
+          foo
+              foobar
         >>> print('\n'.join([
-        ...     format_help('help', 'Print help message'),
-        ...     format_help('shell', 'Open an interactive Python shell.')
+        ...     _format_help('help', 'Print help message'),
+        ...     _format_help('shell', 'Open an interactive Python shell.'),
+        ...     _format_help('storage-migration', 'One big name for a command option'),
         ... ]))
         ...
-        help         Print help message
-        shell        Open an interactive Python shell.
+          help         Print help message
+          shell        Open an interactive Python shell.
+          storage-migration
+                       One big name for a command option
 
 
     """
-    if space - len(name) < min_space:
+    if spaces - len(name) < min_spaces:
         return '\n'.join([
-            name, (' ' * space) + description
+            indent + name,
+            indent + (' ' * spaces) + description
         ])
     else:
-        return name + (' ' * (space - len(name))) + description
+        return indent + name + (' ' * (spaces - len(name))) + description
 
 
 class HelpCommand(Command):
@@ -59,7 +63,7 @@ class HelpCommand(Command):
             classes = get_command_classes()
             cmds = []
             for name, cls in classes.items():
-                cmds.append('  ' + _format_help(name, cls.short_description))
+                cmds.append(_format_help(name, cls.short_description))
             self._description = format_docstring(TEMPLATE % '\n'.join(cmds))
         return self._description
 
