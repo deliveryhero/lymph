@@ -43,7 +43,7 @@ def create_container(config):
 
 
 class ServiceContainer(object):
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None):
+    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False):
         self.zctx = zmq.Context.instance()
         self.ip = ip
         self.port = port
@@ -69,6 +69,7 @@ class ServiceContainer(object):
         self.error_hook = Hook()
 
         self.monitor = Monitor(self)
+        self.debug = debug
 
         self.install(DefaultInterface, interface_name='lymph')
         registry.install(self)
