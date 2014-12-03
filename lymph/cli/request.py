@@ -161,7 +161,7 @@ class SubscribeCommand(Command):
 
 class EmitCommand(Command):
     """
-    Usage: lymph emit <event-type> [<body>]
+    Usage: lymph emit <event-type> [<body>] [options]
 
     {COMMON_OPTIONS}
     """
