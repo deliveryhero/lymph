@@ -26,7 +26,7 @@ def install_interfaces(container, interfaces):
         try:
             cls_name = instance_config['class']
         except KeyError:
-            print("no instance class for '%s'" % name)
+            print("no instance class for '%s'" % interface_name)
             sys.exit(1)
         cls = import_object(cls_name)
         instance = container.install(cls, interface_name=interface_name)
@@ -47,7 +47,11 @@ class InstanceCommand(Command):
     short_description = 'Run a single service instance (one process).'
 
     def run(self):
+        debug = self.args.get('--debug')
+
         container = create_container(self.config)
+        container.debug = debug
+
         install_plugins(container, self.config.get('plugins', {}))
         install_interfaces(container, self.config.get('interfaces', {}))
 
@@ -55,7 +59,7 @@ class InstanceCommand(Command):
             cls = import_object(cls_name)
             container.install(cls)
 
-        if self.args.get('--debug'):
+        if debug:
             from gevent.backdoor import BackdoorServer
             backdoor = BackdoorServer(('127.0.0.1', 5005), locals={'container': container})
             gevent.spawn(backdoor.serve_forever)

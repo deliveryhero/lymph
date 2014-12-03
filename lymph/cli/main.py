@@ -55,6 +55,10 @@ def setup_logging(args, config):
         'handlers': ['_console', '_zmqpub'],
         'level': 'INFO',
     })
+    loggers.setdefault('werkzeug', {
+        'handlers': ['_console', '_zmqpub'],
+        'level': 'DEBUG',
+    })
     dictConfig(logconf)
 
 

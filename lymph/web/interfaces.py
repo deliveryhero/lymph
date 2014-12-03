@@ -20,6 +20,9 @@ class WebServiceInterface(Interface):
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
         self.application = Request.application(self.dispatch_request)
+        if self.container.debug:
+            from werkzeug.debug import DebuggedApplication
+            self.application = DebuggedApplication(self.application, evalex=True)
         self.wsgi_server = None
 
     def __call__(self, *args, **kwargs):

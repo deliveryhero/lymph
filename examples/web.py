@@ -1,4 +1,3 @@
-import lymph
 import json
 
 from lymph.web.interfaces import WebServiceInterface
