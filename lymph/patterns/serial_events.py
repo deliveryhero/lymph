@@ -23,12 +23,15 @@ def serial_event(*event_types, **kwargs):
 
 class SerialEventHandler(Component):
     def __init__(self, interface, func, event_types, key=None, partition_count=12):
+        if key is None:
+            raise TypeError('serial_event() handlers must receive a `key` argument')
         self.zk = interface.container.service_registry.client  # FIXME
         self.interface = interface
         self.partition_count = partition_count
         self.key_func = key
         self.consumer_func = func
         self.consumers = collections.OrderedDict()
+        self.name = '%s.%s' % (interface.name, func.__name__)
 
         def _consume(interface, event):
             self.consumer_func(self.interface, Event.deserialize(event['event']))
@@ -39,7 +42,8 @@ class SerialEventHandler(Component):
             handler = e.install(interface)
             self.consumers[handler] = interface.container.subscribe(handler, consume=False)
         self.partition = set()
-        lymph.event(*event_types)(self.push).install(interface)
+        push_queue = self.get_queue_name('push')
+        lymph.event(*event_types, queue_name=push_queue)(self.push).install(interface)
 
     def on_start(self):
         self.start()
@@ -60,7 +64,7 @@ class SerialEventHandler(Component):
         while True:
             logger.info('starting partitioner')
             partitioner = self.zk.SetPartitioner(
-                path='/lymph/serial_event_partitions/%s' % self.interface.name,
+                path='/lymph/serial_event_partitions/%s' % self.name,
                 set=self.consumers.keys(),
                 time_boundary=1,
             )
