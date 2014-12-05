@@ -3,7 +3,7 @@ import functools
 import six
 
 from lymph.core.decorators import rpc, RPCBase
-from lymph.exceptions import ErrorReply
+from lymph.exceptions import RemoteError
 from lymph.core.declarations import Declaration
 
 
@@ -48,7 +48,7 @@ class Proxy(Component):
         channel = self._container.send_request(self._address, __name, kwargs)
         try:
             return channel.get(timeout=self._timeout).body
-        except ErrorReply as e:
+        except RemoteError as e:
             error_type = e.reply.body.get('type')
             if error_type in self._error_map:
                 raise self._error_map[error_type]()

@@ -5,7 +5,7 @@ from lymph.core.interfaces import Interface
 from lymph.core.messages import Message
 from lymph.services.coordinator import Coordinator
 from lymph.testing import MockServiceNetwork
-from lymph.exceptions import ErrorReply, Nack
+from lymph.exceptions import RemoteError, Nack
 
 
 class Upper(Interface):
@@ -25,9 +25,9 @@ class Upper(Interface):
         # you do normally with any method.
         return self.upper(text)
 
-    @lymph.rpc(raises=(RuntimeError,))
+    @lymph.rpc(raises=(ValueError,))
     def fail(self):
-        raise RuntimeError()
+        raise ValueError('foobar')
 
     @lymph.raw_rpc()
     def just_ack(self, channel):
@@ -80,7 +80,12 @@ class BasicMockTest(unittest.TestCase):
         })
 
     def test_error(self):
-        self.assertRaises(ErrorReply, self.client.request, self.upper_container.endpoint, 'upper.fail', {})
+        with self.assertRaisesRegexp(RemoteError, 'foobar'):
+            self.client.request(self.upper_container.endpoint, 'upper.fail', {})
+
+    def test_exception_handling(self):
+        with self.assertRaises(RemoteError.ValueError):
+            self.client.request(self.upper_container.endpoint, 'upper.fail', {})
 
     def test_ack(self):
         reply = self.client.request(self.upper_container.endpoint, 'upper.just_ack', {})
