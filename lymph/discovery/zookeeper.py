@@ -10,6 +10,7 @@ from kazoo.exceptions import NoNodeError, ConnectionLoss
 
 from .base import BaseServiceRegistry
 from lymph.exceptions import LookupFailure, RegistrationFailure
+from lymph.utils.logging import setup_logger
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         )
 
     def on_start(self, timeout=10):
+        setup_logger('kazoo')
         self.start_count += 1
         if self.start_count > 1:
             return

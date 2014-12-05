@@ -1,65 +1,8 @@
+import logging
+
 import blessings
 
-
-zmqpub_log_handler = None
-
-
-def _get_zmqpub_log_handler(**kwargs):
-    # This function is used by the logging dictConfig to expose the ZeroMQ log
-    # handler singleton (``(): lymph.cli.main._get_zmqpub_log_handler``).
-    return zmqpub_log_handler
-
-
-def setup_logging(args, config):
-    import logging
-    from logging.config import dictConfig
-    from lymph.utils.logging import PubLogHandler
-
-    if config is None:
-        logging.basicConfig()
-        return
-
-    global zmqpub_log_handler
-    zmqpub_log_handler = PubLogHandler(config.get('container.log_endpoint', 'tcp://%s' % config.get('container.ip')))
-
-    logconf = dict(config.get('logging', {}))
-    logconf.setdefault('version', 1)
-    formatters = logconf.setdefault('formatters', {})
-    formatters.setdefault('_trace', {
-        '()': 'lymph.core.trace.TraceFormatter',
-        'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s - (trace-id:%(trace_id)s)',
-    })
-    handlers = logconf.setdefault('handlers', {})
-    handlers.setdefault('_zmqpub', {
-        '()': 'lymph.cli.main._get_zmqpub_log_handler',
-        'formatter': '_trace',
-    })
-    console_logconf = {
-        'class': 'logging.StreamHandler',
-        'formatter': '_trace',
-        'level': args['--loglevel'].upper(),
-    }
-    logfile = args['--logfile']
-    if logfile:
-        console_logconf.update({
-            'class': 'logging.FileHandler',
-            'filename': logfile
-        })
-    handlers.setdefault('_console', console_logconf)
-    loggers = logconf.setdefault('loggers', {})
-    loggers.setdefault('lymph', {
-        'handlers': ['_console', '_zmqpub'],
-        'level': 'DEBUG',
-    })
-    loggers.setdefault('kazoo', {
-        'handlers': ['_console', '_zmqpub'],
-        'level': 'INFO',
-    })
-    loggers.setdefault('werkzeug', {
-        'handlers': ['_console', '_zmqpub'],
-        'level': 'DEBUG',
-    })
-    dictConfig(logconf)
+from lymph.utils import logging as lymph_logging
 
 
 def setup_config(args):
@@ -128,9 +71,16 @@ def main(argv=None):
 
     config = setup_config(args) if command_cls.needs_config else None
 
-    setup_logging(args, config)
     if config:
-        config.set('container.log_endpoint', zmqpub_log_handler.endpoint)
+        log_endpoint = config.setdefault('container.log_endpoint', 'tcp://%s' % config.get('container.ip'))
+        logconf = dict(config.get('logging', {}))
+        loglevel = args.get('--loglevel')
+        logfile = args.get('--logfile')
+
+        lymph_logging.setup_logging(logconf, loglevel, logfile, log_endpoint)
+    else:
+        logging.basicConfig()
+
     terminal = setup_terminal(args, config)
     command = command_cls(args, config, terminal)
     return command.run()
