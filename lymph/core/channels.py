@@ -1,7 +1,7 @@
 import gevent
 import gevent.queue
 
-from lymph.exceptions import Timeout, Nack, ErrorReply
+from lymph.exceptions import Timeout, Nack, RemoteError
 from lymph.core.messages import Message
 
 
@@ -26,7 +26,7 @@ class RequestChannel(Channel):
             if msg.type == Message.NACK:
                 raise Nack(self.request)
             elif msg.type == Message.ERROR:
-                raise ErrorReply(self.request, msg)
+                raise RemoteError.from_reply(self.request, msg)
             return msg
         except gevent.queue.Empty:
             raise Timeout(self.request)
