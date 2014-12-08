@@ -84,7 +84,7 @@ class WebServiceInterface(Interface):
                 del exc_info
             if self.container.debug:
                 raise
-            return Response('', state=500)
+            return Response('', status=500)
         return response
 
     def get_wsgi_application(self):
