@@ -49,7 +49,7 @@ class Proxy(Component):
         try:
             return channel.get(timeout=self._timeout).body
         except RemoteError as e:
-            error_type = e.reply.body.get('type')
+            error_type = str(e.__class__)
             if error_type in self._error_map:
                 raise self._error_map[error_type]()
             raise
