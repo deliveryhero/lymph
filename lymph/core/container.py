@@ -334,8 +334,15 @@ class ServiceContainer(object):
                 logger.exception('failed to send automatic NACK')
         finally:
             elapsed = (time.time() - start) * (10 ** 3)
-            # TODO(Mouad): Add request status i.e. ACK, ERROR, NACK .. .
-            logger.info('%s -- %s %.3fms', msg.source, msg.subject, elapsed)
+            self._log_request(msg, elapsed)
+
+    def _log_request(self, msg, elapsed):
+        if msg.subject == 'lymph.ping':
+            log = logger.debug
+        else:
+            log = logger.info
+        # TODO(Mouad): Add request status i.e. ACK, ERROR, NACK .. .
+        log('%s -- %s %.3fms', msg.source, msg.subject, elapsed)
 
     def recv_message(self, msg):
         trace.set_id(msg.headers.get('trace_id'))
