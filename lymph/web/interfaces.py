@@ -73,18 +73,21 @@ class WebServiceInterface(Interface):
         except HTTPException as e:
             response = e.get_response(request.environ)
         except Exception as e:
-            if not self.container.debug:
-                logger.exception('uncaught exception')
-            exc_info = sys.exc_info()
-            try:
-                self.container.error_hook(exc_info)
-            except:
-                logger.exception('error hook failure')
-            finally:
-                del exc_info
-            if self.container.debug:
-                raise
-            return Response('', status=500)
+            if hasattr(e, 'to_http_response'):
+                response = e.to_http_response(request.environ)
+            else:
+                if not self.container.debug:
+                    logger.exception('uncaught exception')
+                exc_info = sys.exc_info()
+                try:
+                    self.container.error_hook(exc_info)
+                except:
+                    logger.exception('error hook failure')
+                finally:
+                    del exc_info
+                if self.container.debug:
+                    raise
+                response = Response('', status=500)
         return response
 
     def get_wsgi_application(self):
