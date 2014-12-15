@@ -38,13 +38,13 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
         logger.debug("received kombu message %r", body)
 
         def message_handler():
-            event = Event.deserialize(body)
             try:
+                event = Event.deserialize(body)
                 self.handler(event)
-            except:
-                raise
-            else:
                 message.ack()
+            except:
+                logger.exception('failed to handle event from queue %r', self.handler.queue_name)
+
         if self.handler.sequential:
             message_handler()
         else:
