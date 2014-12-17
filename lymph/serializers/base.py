@@ -5,6 +5,7 @@ import functools
 import json
 import msgpack
 import six
+import uuid
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -66,6 +67,7 @@ _extension_type_serializers = {
     'date': DateSerializer(),
     'time': TimeSerializer(),
     'Decimal': StrSerializer(decimal.Decimal),
+    'UUID': StrSerializer(uuid.UUID),
     'set': SetSerializer()
 }
 

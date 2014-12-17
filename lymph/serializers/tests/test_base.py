@@ -2,6 +2,7 @@ import datetime
 import decimal
 import json
 import unittest
+import uuid
 
 from lymph.serializers import base
 
@@ -59,14 +60,14 @@ class SerializerBaseTest(unittest.TestCase):
                          datetime.time(18, 33, 12))
         self.assertRaises(ValueError, serializer.deserialize, "25:33:12")
 
-    def test_StrSerializer_serialize(self):
+    def test_decimal_serialize(self):
         serializer = base.StrSerializer(decimal.Decimal)
         self.assertEqual(serializer.serialize(decimal.Decimal('3.1415')), "3.1415")
         self.assertEqual(serializer.serialize(decimal.Decimal('2.50')), "2.50")
         self.assertEqual(serializer.serialize(decimal.Decimal('NaN')), "NaN")
         self.assertEqual(serializer.serialize(decimal.Decimal('Infinity')), "Infinity")
 
-    def test_StrSerializer_deserialize(self):
+    def test_decimal_deserialize(self):
         serializer = base.StrSerializer(decimal.Decimal)
         self.assertEqual(serializer.deserialize("3.1415"), decimal.Decimal('3.1415'))
         self.assertEqual(serializer.deserialize("2.50"), decimal.Decimal('2.50'))
@@ -93,6 +94,10 @@ class SerializerBaseTest(unittest.TestCase):
                          {'__type__': 'date', '_': '2014-09-12'})
         self.assertEqual(serializer.dump_object(decimal.Decimal('3.1415')),
                          {'__type__': 'Decimal', '_': '3.1415'})
+        self.assertEqual(
+            serializer.dump_object(uuid.UUID('00000000-0000-4000-8000-000000000000')),
+            {'__type__': 'UUID', '_': '00000000-0000-4000-8000-000000000000'},
+        )
 
     def test_BaseSerializer_dump(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
@@ -123,9 +128,14 @@ class SerializerBaseTest(unittest.TestCase):
         self.assertEqual(serializer.load_object(
                          {'__type__': 'Decimal', '_': 'NaN'}).number_class(),
                          'NaN')
-        self.assertEqual(serializer.load_object(
-                         {'__type__': 'set', '_': ['this', 'a', 'as', 'set', 'is']}),
-                         set(['this', 'a', 'as', 'set', 'is']))
+        self.assertEqual(
+            serializer.load_object({'__type__': 'set', '_': ['this', 'a', 'as', 'set', 'is']}),
+            set(['this', 'a', 'as', 'set', 'is']),
+        )
+        self.assertEqual(
+            serializer.load_object({'__type__': 'UUID', '_': '00000000-0000-4000-8000-000000000000'}),
+            uuid.UUID('00000000-0000-4000-8000-000000000000'),
+        )
 
     def test_BaseSerializer_loads(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
