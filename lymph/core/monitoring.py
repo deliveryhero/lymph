@@ -16,12 +16,12 @@ RUSAGE_ATTRS = (
 
 
 class Monitor(object):
-    def __init__(self, container, monitor_endpoint='tcp://127.0.0.1:44044'):
+    def __init__(self, container, endpoint='tcp://127.0.0.1:44044'):
         self.container = container
         self.stats = None
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
-        self.socket.connect(monitor_endpoint)
+        self.socket.connect(endpoint)
 
     def start(self):
         self.loop_greenlet = self.container.spawn(self.loop)
