@@ -19,6 +19,7 @@ class Monitor(object):
     def __init__(self, container, endpoint='tcp://127.0.0.1:44044'):
         self.container = container
         self.stats = None
+        self.endpoint = endpoint
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
         self.socket.connect(endpoint)
