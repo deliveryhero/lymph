@@ -14,14 +14,17 @@ RUSAGE_ATTRS = (
     'nsignals', 'nvcsw', 'nivcsw',
 )
 
+DEFAULT_MONITOR_ENDPOINT = 'tcp://127.0.0.1:44044'
+
 
 class Monitor(object):
-    def __init__(self, container, monitor_endpoint='tcp://127.0.0.1:44044'):
+    def __init__(self, container, endpoint=None):
         self.container = container
         self.stats = None
+        self.endpoint = endpoint or DEFAULT_MONITOR_ENDPOINT
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
-        self.socket.connect(monitor_endpoint)
+        self.socket.connect(self.endpoint)
 
     def start(self):
         self.loop_greenlet = self.container.spawn(self.loop)

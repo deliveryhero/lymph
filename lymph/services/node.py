@@ -87,6 +87,7 @@ class Node(Interface):
         for service_type, cmd, num in self._services:
             env = os.environ.copy()
             env['LYMPH_NODE'] = self.container.endpoint
+            env['LYMPH_MONITOR'] = self.container.monitor.endpoint
             env['LYMPH_NODE_IP'] = self.container.ip
             env['LYMPH_SHARED_SOCKET_FDS'] = shared_fds
             for i in range(num):

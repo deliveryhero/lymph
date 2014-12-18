@@ -43,7 +43,7 @@ def create_container(config):
 
 
 class ServiceContainer(object):
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False):
+    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None):
         self.zctx = zmq.Context.instance()
         self.ip = ip
         self.port = port
@@ -68,7 +68,7 @@ class ServiceContainer(object):
         self.installed_plugins = []
         self.error_hook = Hook()
 
-        self.monitor = Monitor(self)
+        self.monitor = Monitor(self, endpoint=monitor_endpoint)
         self.debug = debug
 
         self.install(DefaultInterface, interface_name='lymph')
@@ -84,6 +84,7 @@ class ServiceContainer(object):
         kwargs = dict(config)
         kwargs.pop('class', None)
         kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
+        kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
                 kwargs[key] = value
