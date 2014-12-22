@@ -44,6 +44,8 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
                 message.ack()
             except:
                 logger.exception('failed to handle event from queue %r', self.handler.queue_name)
+                # FIXME: add requeue support here
+                message.reject()
 
         if self.handler.sequential:
             message_handler()
