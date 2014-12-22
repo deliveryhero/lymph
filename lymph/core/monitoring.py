@@ -1,8 +1,12 @@
-import time
-import resource
 import gevent
+import logging
 import msgpack
+import resource
+import time
 import zmq.green as zmq
+
+
+logger = logging.getLogger(__name__)
 
 
 RUSAGE_ATTRS = (
@@ -22,6 +26,7 @@ class Monitor(object):
         self.container = container
         self.stats = None
         self.endpoint = endpoint or DEFAULT_MONITOR_ENDPOINT
+        logger.info('connecting to monitor endpoint %s', self.endpoint)
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
         self.socket.connect(self.endpoint)
