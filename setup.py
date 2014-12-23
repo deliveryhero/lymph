@@ -11,7 +11,7 @@ install_requires = [
     'docopt>=0.6.1',
     'kazoo>=1.3.1',
     'kombu>=3.0.16',
-    'gevent>=1.0.1',
+    'gevent',
     'msgpack-python>=0.4.0',
     'psutil>=2.1.1',
     'PyYAML>=3.11',
