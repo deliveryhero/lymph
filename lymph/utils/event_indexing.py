@@ -33,6 +33,9 @@ class EventIndex(object):
             type_prefix = 'l'
         elif isinstance(value, (datetime, date)):
             type_prefix = 'd'
+        elif isinstance(value, uuid.UUID):
+            type_prefix = 'u'
+            value = value.hex
         else:
             raise TypeError('cannot index values of type %s' % type(value))
         return ('%s_%s' % (type_prefix, key)), value
