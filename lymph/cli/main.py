@@ -1,4 +1,5 @@
 import logging
+import sys
 
 import blessings
 
@@ -48,6 +49,11 @@ def setup_terminal(args, config):
     return blessings.Terminal(force_styling=force_color)
 
 
+def _excepthook(type, value, tb):
+    logger = logging.getLogger('lymph')
+    logger.log(logging.CRITICAL, 'Uncaught exception', exc_info=(type, value, tb))
+
+
 def main(argv=None):
     import lymph.monkey
     lymph.monkey.patch()
@@ -57,6 +63,8 @@ def main(argv=None):
     from lymph import __version__ as VERSION
     from lymph.cli.help import HELP
     from lymph.cli.base import get_command_class
+
+    sys.excepthook = _excepthook
 
     args = docopt.docopt(HELP, argv, version=VERSION, options_first=True)
     name = args.pop('<command>')
