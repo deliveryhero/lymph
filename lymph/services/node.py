@@ -88,7 +88,7 @@ class Node(Interface):
             env = os.environ.copy()
             env['LYMPH_NODE'] = self.container.endpoint
             env['LYMPH_MONITOR'] = self.container.monitor.endpoint
-            env['LYMPH_NODE_IP'] = self.container.ip
+            env['LYMPH_NODE_IP'] = self.container.server.ip
             env['LYMPH_SHARED_SOCKET_FDS'] = shared_fds
             for i in range(num):
                 p = Process(cmd.split(' '), env=env)
@@ -107,7 +107,7 @@ class Node(Interface):
     def create_shared_sockets(self):
         for name, host, port in self._sockets:
             sock = create_socket(
-                '%s:%s' % (host or self.container.ip, port), inheritable=True)
+                '%s:%s' % (host or self.container.server.ip, port), inheritable=True)
             self.sockets[port] = sock
 
     def restart_all(self):

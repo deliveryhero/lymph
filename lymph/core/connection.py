@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 class Connection(object):
-    def __init__(self, container, endpoint, heartbeat_interval=1, timeout=1, idle_timeout=10, unresponsive_disconnect=30, idle_disconnect=60):
-        self.container = container
+    def __init__(self, server, endpoint, heartbeat_interval=1, timeout=1, idle_timeout=10, unresponsive_disconnect=30, idle_disconnect=60):
+        self.server = server
         self.endpoint = endpoint
         self.timeout = timeout
         self.heartbeat_interval = heartbeat_interval
@@ -46,8 +46,8 @@ class Connection(object):
         self.received_message_count = 0
         self.sent_message_count = 0
 
-        self.heartbeat_loop_greenlet = self.container.spawn(self.heartbeat_loop)
-        self.live_check_loop_greenlet = self.container.spawn(self.live_check_loop)
+        self.heartbeat_loop_greenlet = self.server.container.spawn(self.heartbeat_loop)
+        self.live_check_loop_greenlet = self.server.container.spawn(self.live_check_loop)
 
     def __str__(self):
         return "connection to=%s last_seen=%s" % (self.endpoint, self._dt())
@@ -68,7 +68,7 @@ class Connection(object):
     def heartbeat_loop(self):
         while True:
             start = time.monotonic()
-            channel = self.container.ping(self.endpoint)
+            channel = self.server.ping(self.endpoint)
             try:
                 channel.get(timeout=self.heartbeat_interval)
             except RpcError:
@@ -109,7 +109,7 @@ class Connection(object):
         self.status = CLOSED
         self.heartbeat_loop_greenlet.kill()
         self.live_check_loop_greenlet.kill()
-        self.container.disconnect(self.endpoint)
+        self.server.disconnect(self.endpoint)
 
     def on_recv(self, msg):
         now = time.monotonic()
