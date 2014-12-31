@@ -79,8 +79,13 @@ class WebServiceInterface(Interface):
                 if not self.container.debug:
                     logger.exception('uncaught exception')
                 exc_info = sys.exc_info()
+                extra_info = {
+                    'url': request.url,
+                    'trace_id': trace.get_id(),
+                    'interface': self.__class__.__name__,
+                }
                 try:
-                    self.container.error_hook(exc_info)
+                    self.container.error_hook(exc_info, extra=extra_info)
                 except:
                     logger.exception('error hook failure')
                 finally:

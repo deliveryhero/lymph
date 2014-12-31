@@ -161,8 +161,13 @@ class ZmqRPCServer(object):
         except Exception:
             logger.exception('Request error:')
             exc_info = sys.exc_info()
+            extra_info = {
+                'service': service_name,
+                'func_name': func_name,
+                'trace_id': trace.get_id(),
+            }
             try:
-                self.container.error_hook(exc_info)
+                self.error_hook(exc_info, extra=extra_info)
             except:
                 logger.exception('error hook failure')
             finally:
