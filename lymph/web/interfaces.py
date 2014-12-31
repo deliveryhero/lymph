@@ -43,7 +43,7 @@ class WebServiceInterface(Interface):
             socket_fd = self.container.get_shared_socket_fd(self.http_port)
         except SocketNotCreated:
             socket = create_socket('%s:%s' % (self.config.get('ip') or
-                                              self.container.ip,
+                                              self.container.server.ip,
                                               self.http_port),
                                    inheritable=True)
             socket_fd = socket.fileno()

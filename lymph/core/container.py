@@ -1,27 +1,18 @@
-import collections
-import errno
 import json
 import gc
-import hashlib
 import logging
-import random
-import time
 import os
-import sys
 
 import gevent
 import gevent.queue
 import gevent.pool
 import six
-import zmq.green as zmq
 
-from lymph.exceptions import RegistrationFailure, SocketNotCreated, NotConnected
-from lymph.core.connection import Connection
-from lymph.core.channels import RequestChannel, ReplyChannel
+from lymph.exceptions import RegistrationFailure, SocketNotCreated
 from lymph.core.events import Event
-from lymph.core.messages import Message
 from lymph.core.monitoring import Monitor
 from lymph.core.services import ServiceInstance
+from lymph.core.rpc import ZmqRPCServer
 from lymph.core.interfaces import DefaultInterface
 from lymph.core.plugins import Hook
 from lymph.core import trace
@@ -43,30 +34,23 @@ def create_container(config):
 
 
 class ServiceContainer(object):
+
+    server_cls = ZmqRPCServer
+
     def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None):
-        self.zctx = zmq.Context.instance()
-        self.ip = ip
-        self.port = port
+        self.server = self.server_cls(self, ip, port)
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
-        self.endpoint = None
         self.service_name = service_name
-        self.bound = False
 
-        self.request_counts = collections.Counter()
-
-        self.recv_loop_greenlet = None
-        self.channels = {}
-        self.connections = {}
-        self.pool = trace.Group()
         self.service_registry = registry
         self.event_system = events
 
-        self.bind()
-        self.identity = hashlib.md5(self.endpoint.encode('utf-8')).hexdigest()
+        self.error_hook = Hook()
+        self.pool = trace.Group()
+
         self.installed_interfaces = {}
         self.installed_plugins = []
-        self.error_hook = Hook()
 
         self.monitor = Monitor(self, endpoint=monitor_endpoint)
         self.debug = debug
@@ -75,9 +59,6 @@ class ServiceContainer(object):
         registry.install(self)
         if events:
             events.install(self)
-
-    def spawn(self, func, *args, **kwargs):
-        return self.pool.spawn(func, *args, **kwargs)
 
     @classmethod
     def from_config(cls, config, **explicit_kwargs):
@@ -90,6 +71,17 @@ class ServiceContainer(object):
                 kwargs[key] = value
         return cls(**kwargs)
 
+    @property
+    def endpoint(self):
+        return self.server.endpoint
+
+    @property
+    def identity(self):
+        return self.server.identity
+
+    def spawn(self, func, *args, **kwargs):
+        return self.pool.spawn(func, *args, **kwargs)
+
     def install(self, cls, interface_name=None, **kwargs):
         obj = cls(self, **kwargs)
         obj.name = interface_name
@@ -100,20 +92,12 @@ class ServiceContainer(object):
         plugin = cls(self, **kwargs)
         self.installed_plugins.append(plugin)
 
-    def rpc_stats(self):
-        stats = {
-            'requests': dict(self.request_counts),
-        }
-        self.request_counts.clear()
-        return stats
-
     def stats(self):
         hub = gevent.get_hub()
         threadpool, loop = hub.threadpool, hub.loop
         s = {
             'endpoint': self.endpoint,
             'identity': self.identity,
-            'greenlets': len(self.pool),
             'service': self.service_name,
             'gevent': {
                 'threadpool': {
@@ -129,9 +113,9 @@ class ServiceContainer(object):
                 'garbage': len(gc.garbage),
                 'collections': gc.get_count(),
             },
-            'rpc': self.rpc_stats(),
-            'connections': [c.stats() for c in self.connections.values()],
+            'greenlets': len(self.pool),
         }
+        s.update(self.server.stats)
         for name, interface in six.iteritems(self.installed_interfaces):
             s[name] = interface.stats()
         return s
@@ -142,39 +126,6 @@ class ServiceContainer(object):
             return fds[str(port)]
         except KeyError:
             raise SocketNotCreated
-
-    def bind(self, max_retries=2, retry_delay=0):
-        if self.bound:
-            raise TypeError('this container is already bound (endpoint=%s)', self.endpoint)
-        self.send_sock = self.zctx.socket(zmq.ROUTER)
-        self.recv_sock = self.zctx.socket(zmq.ROUTER)
-        port = self.port
-        retries = 0
-        while True:
-            if not self.port:
-                port = random.randint(35536, 65536)
-            try:
-                self.endpoint = 'tcp://%s:%s' % (self.ip, port)
-                endpoint = self.endpoint.encode('utf-8')
-                self.recv_sock.setsockopt(zmq.IDENTITY, endpoint)
-                self.send_sock.setsockopt(zmq.IDENTITY, endpoint)
-                self.recv_sock.bind(self.endpoint)
-            except zmq.ZMQError as e:
-                if e.errno != errno.EADDRINUSE or retries >= max_retries:
-                    raise
-                logger.info('failed to bind to port %s (errno=%s), trying again.', port, e.errno)
-                retries += 1
-                if retry_delay:
-                    gevent.sleep(retry_delay)
-                continue
-            else:
-                self.port = port
-                self.bound = True
-                break
-
-    def close_sockets(self):
-        self.recv_sock.close()
-        self.send_sock.close()
 
     @property
     def service_types(self):
@@ -194,12 +145,11 @@ class ServiceContainer(object):
         }
 
     def start(self, register=True):
-        self.running = True
         logger.info('starting %s at %s (pid=%s)', ', '.join(self.service_types), self.endpoint, os.getpid())
-        self.recv_loop_greenlet = self.spawn(self.recv_loop)
         self.monitor.start()
         self.service_registry.on_start()
         self.event_system.on_start()
+        self.server.start()
 
         for service in six.itervalues(self.installed_interfaces):
             service.on_start()
@@ -216,44 +166,33 @@ class ServiceContainer(object):
                     self.stop()
 
     def stop(self):
-        self.running = False
         for service in six.itervalues(self.installed_interfaces):
             service.on_stop()
         self.event_system.on_stop()
         self.service_registry.on_stop()
         self.monitor.stop()
-        for connection in list(self.connections.values()):
-            connection.close()
-        self.recv_loop_greenlet.kill()
+        self.server.stop()
         self.pool.kill()
-        self.close_sockets()
 
     def join(self):
         self.pool.join()
-        self.recv_loop_greenlet.join()
 
     def connect(self, endpoint):
-        if endpoint not in self.connections:
-            logger.debug("connect(%s)", endpoint)
-            self.connections[endpoint] = Connection(self, endpoint)
-            self.send_sock.connect(endpoint)
-            for service in six.itervalues(self.installed_interfaces):
-                service.on_connect(endpoint)
-            gevent.sleep(0.02)
-        return self.connections[endpoint]
+        for service in six.itervalues(self.installed_interfaces):
+            service.on_connect(endpoint)
+        return self.server.connect(endpoint)
 
     def disconnect(self, endpoint, socket=False):
-        try:
-            connection = self.connections[endpoint]
-        except KeyError:
-            return
-        del self.connections[endpoint]
-        connection.close()
-        logger.debug("disconnect(%s)", endpoint)
-        if socket:
-            self.send_sock.disconnect(endpoint)
+        self.server.disconnect(endpoint, socket)
+
         for service in six.itervalues(self.installed_interfaces):
             service.on_disconnect(endpoint)
+
+    @staticmethod
+    def prepare_headers(headers):
+        headers = headers or {}
+        headers.setdefault('trace_id', trace.get_id())
+        return headers
 
     def lookup(self, address):
         if '://' not in address:
@@ -263,120 +202,10 @@ class ServiceContainer(object):
     def discover(self):
         return self.service_registry.discover()
 
-    def send_message(self, address, msg):
-        if not self.running:
-            # FIXME: This should raise an Error instead of failing silently.
-            logger.error('cannot send message (container not started): %s', msg)
-            return
-        service = self.lookup(address)
-        try:
-            connection = service.connect()
-        except NotConnected:
-            logger.error('cannot send message (no connection): %s', msg)
-            return
-        self.send_sock.send(connection.endpoint.encode('utf-8'), flags=zmq.SNDMORE)
-        self.send_sock.send_multipart(msg.pack_frames())
-        logger.debug('-> %s to %s', msg, connection.endpoint)
-        connection.on_send(msg)
-
-    def prepare_headers(self, headers):
-        headers = headers or {}
-        headers.setdefault('trace_id', trace.get_id())
-        return headers
-
-    def send_request(self, address, subject, body, headers=None):
-        msg = Message(
-            msg_type=Message.REQ,
-            subject=subject,
-            body=body,
-            source=self.endpoint,
-            headers=self.prepare_headers(headers),
-        )
-        channel = RequestChannel(msg, self)
-        self.channels[msg.id] = channel
-        self.send_message(address, msg)
-        return channel
-
-    def send_reply(self, msg, body, msg_type=Message.REP, headers=None):
-        reply_msg = Message(
-            msg_type=msg_type,
-            subject=msg.id,
-            body=body,
-            source=self.endpoint,
-            headers=self.prepare_headers(headers),
-        )
-        self.send_message(msg.source, reply_msg)
-        return reply_msg
-
-    def dispatch_request(self, msg):
-        start = time.time()
-        self.request_counts[msg.subject] += 1
-        channel = ReplyChannel(msg, self)
-        service_name, func_name = msg.subject.rsplit('.', 1)
-        try:
-            service = self.installed_interfaces[service_name]
-        except KeyError:
-            logger.warning('unsupported service type: %s', service_name)
-            return
-        try:
-            service.handle_request(func_name, channel)
-        except Exception:
-            logger.exception('Request error:')
-            exc_info = sys.exc_info()
-            try:
-                self.error_hook(exc_info)
-            except:
-                logger.exception('error hook failure')
-            finally:
-                del exc_info
-            try:
-                channel.nack(True)
-            except:
-                logger.exception('failed to send automatic NACK')
-        finally:
-            elapsed = (time.time() - start) * (10 ** 3)
-            self._log_request(msg, elapsed)
-
-    def _log_request(self, msg, elapsed):
-        if msg.subject == 'lymph.ping':
-            log = logger.debug
-        else:
-            log = logger.info
-        # TODO(Mouad): Add request status i.e. ACK, ERROR, NACK .. .
-        log('%s -- %s %.3fms', msg.source, msg.subject, elapsed)
-
-    def recv_message(self, msg):
-        trace.set_id(msg.headers.get('trace_id'))
-        logger.debug('<- %s', msg)
-        connection = self.connect(msg.source)
-        connection.on_recv(msg)
-        if msg.is_request():
-            self.spawn(self.dispatch_request, msg)
-        elif msg.is_reply():
-            try:
-                channel = self.channels[msg.subject]
-            except KeyError:
-                logger.debug('reply to unknown subject: %s (msg-id=%s)', msg.subject, msg.id)
-                return
-            channel.recv(msg)
-        else:
-            logger.warning('unknown message type: %s (msg-id=%s)', msg.type, msg.id)
-
-    def recv_loop(self):
-        while True:
-            frames = self.recv_sock.recv_multipart()
-            try:
-                msg = Message.unpack_frames(frames)
-            except ValueError as e:
-                msg_id = frames[1] if len(frames) >= 2 else None
-                logger.warning('bad message format %s: %r (msg-id=%s)', e, (frames), msg_id)
-                continue
-            self.recv_message(msg)
-
     def emit_event(self, event_type, payload, headers=None):
         headers = self.prepare_headers(headers)
         event = Event(event_type, payload, source=self.identity, headers=headers)
         self.event_system.emit(event)
 
-    def ping(self, address):
-        return self.send_request(address, 'lymph.ping', {'payload': ''})
+    def send_request(self, address, subject, body, headers=None):
+        return self.server.send_request(address, subject, body, headers=None)

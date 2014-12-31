@@ -7,6 +7,7 @@ from kazoo.testing.harness import KazooTestHarness
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
 from lymph.core.interfaces import Interface
+from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
@@ -15,6 +16,7 @@ from lymph.services.coordinator import Coordinator
 
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
+
 
 class MockServiceNetwork(object):
     def __init__(self):
@@ -47,11 +49,11 @@ class MockServiceNetwork(object):
             container.join()
 
 
-class MockServiceContainer(ServiceContainer):
-    def bind(self):
+class MockRPCServer(ZmqRPCServer):
+    def _bind(self):
         self.endpoint = 'mock://%s:%s' % (self.ip, self.port)
 
-    def close_sockets(self):
+    def _close_sockets(self):
         pass
 
     def connect(self, endpoint):
@@ -59,19 +61,23 @@ class MockServiceContainer(ServiceContainer):
             self.connections[endpoint] = Connection(self, endpoint)
         return self.connections[endpoint]
 
-    def send_message(self, address, msg):
-        dst = self.lookup(address).connect().endpoint
-        dst = self._mock_network.service_containers[dst]
+    def _send_message(self, address, msg):
+        dst = self.container.lookup(address).connect().endpoint
+        dst = self.container._mock_network.service_containers[dst]
 
         # Exercise the msgpack packing and unpacking.
         frames = msg.pack_frames()
         frames.insert(0, self.endpoint.encode('utf-8'))
         msg = Message.unpack_frames(frames)
 
-        dst.recv_message(msg)
+        dst.server.recv_message(msg)
 
-    def recv_loop(self):
+    def _recv_loop(self):
         pass
+
+
+class MockServiceContainer(ServiceContainer):
+    server_cls = MockRPCServer
 
 
 class LymphIntegrationTestCase(KazooTestHarness):
