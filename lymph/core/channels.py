@@ -22,7 +22,6 @@ class RequestChannel(Channel):
     def get(self, timeout=1):
         try:
             msg = self.queue.get(timeout=timeout)
-            self.close()
             if msg.type == Message.NACK:
                 raise Nack(self.request)
             elif msg.type == Message.ERROR:
@@ -30,6 +29,8 @@ class RequestChannel(Channel):
             return msg
         except gevent.queue.Empty:
             raise Timeout(self.request)
+        finally:
+            self.close()
 
     def close(self):
         del self.container.channels[self.request.id]
