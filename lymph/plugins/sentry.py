@@ -9,5 +9,5 @@ class SentryPlugin(Plugin):
         self.client = Client(dsn)
         self.container.error_hook.install(self.on_error)
 
-    def on_error(self, exc_info):
-        self.client.captureException(exc_info)
+    def on_error(self, exc_info, **kwargs):
+        self.client.captureException(exc_info, **kwargs)
