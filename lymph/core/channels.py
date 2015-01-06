@@ -6,14 +6,14 @@ from lymph.core.messages import Message
 
 
 class Channel(object):
-    def __init__(self, request, container):
+    def __init__(self, request, server):
         self.request = request
-        self.container = container
+        self.server = server
 
 
 class RequestChannel(Channel):
-    def __init__(self, request, container):
-        super(RequestChannel, self).__init__(request, container)
+    def __init__(self, request, server):
+        super(RequestChannel, self).__init__(request, server)
         self.queue = gevent.queue.Queue()
 
     def recv(self, msg):
@@ -33,32 +33,32 @@ class RequestChannel(Channel):
             self.close()
 
     def close(self):
-        del self.container.channels[self.request.id]
+        del self.server.channels[self.request.id]
 
 
 class ReplyChannel(Channel):
-    def __init__(self, request, container):
-        super(ReplyChannel, self).__init__(request, container)
+    def __init__(self, request, server):
+        super(ReplyChannel, self).__init__(request, server)
         self._sent_reply = False
 
     def reply(self, body):
-        self.container.send_reply(self.request, body)
+        self.server.send_reply(self.request, body)
         self._sent_reply = True
 
     def ack(self, unless_reply_sent=False):
         if unless_reply_sent and self._sent_reply:
             return
-        self.container.send_reply(self.request, None, msg_type=Message.ACK)
+        self.server.send_reply(self.request, None, msg_type=Message.ACK)
         self._sent_reply = True
 
     def nack(self, unless_reply_sent=False):
         if unless_reply_sent and self._sent_reply:
             return
-        self.container.send_reply(self.request, None, msg_type=Message.NACK)
+        self.server.send_reply(self.request, None, msg_type=Message.NACK)
         self._sent_reply = True
 
     def error(self, **body):
-        self.container.send_reply(self.request, body, msg_type=Message.ERROR)
+        self.server.send_reply(self.request, body, msg_type=Message.ERROR)
 
     def close(self):
         pass
