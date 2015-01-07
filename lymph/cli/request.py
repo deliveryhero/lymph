@@ -105,7 +105,7 @@ class InspectCommand(RequestCommand):
 
 class DiscoverCommand(Command):
     """
-    Usage: lymph discover [--instances] [--ip=<address> | --guess-external-ip | -g] [options]
+    Usage: lymph discover [--instances] [--ip=<address> | --guess-external-ip | -g] [--only-running] [options]
 
     Show available services
 
@@ -115,6 +115,7 @@ class DiscoverCommand(Command):
       --ip=<address>               Use this IP for all sockets.
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
+      --only-running               Show only running services.
 
     {COMMON_OPTIONS}
 
@@ -128,6 +129,8 @@ class DiscoverCommand(Command):
         if services:
             for interface_name in sorted(services):
                 interface_instances = client.container.lookup(interface_name)
+                if not interface_instances and self.args.get('--only-running'):
+                    continue
                 print(u"%s [%s]" % (self.terminal.red(interface_name), len(interface_instances)))
                 if self.args.get('--instances'):
                     instances = sorted(interface_instances, key=lambda d: d.identity)
