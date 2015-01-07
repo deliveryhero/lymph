@@ -1,8 +1,10 @@
-import gevent
 import logging
-import msgpack
 import resource
 import time
+import socket
+
+import gevent
+import msgpack
 import zmq.green as zmq
 
 
@@ -30,6 +32,7 @@ class Monitor(object):
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
         self.socket.connect(self.endpoint)
+        self.fqdn = socket.getfqdn()
 
     def start(self):
         self.loop_greenlet = self.container.spawn(self.loop)
@@ -56,6 +59,7 @@ class Monitor(object):
                 'dt': dt,
                 'time': time.time(),
                 'rusage': self.get_rusage_stats(ru, last_rusage),
+                'fqdn': self.fqdn,
             })
             last_rusage = ru
             last_stats += dt
