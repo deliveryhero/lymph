@@ -101,7 +101,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         try:
             names = result.get(timeout=timeout)
         except NoNodeError:
-            raise LookupFailure(None, "failed to resolve %s" % service.name)
+            raise LookupFailure("failed to resolve %s" % service.name)
         except ConnectionLoss:
             logger.warning("lost zookeeper connection")
             return service

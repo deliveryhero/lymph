@@ -42,7 +42,7 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
         try:
             msg = channel.get()
         except Timeout:
-            raise LookupFailure(None, "couldn't reach the coordinator")
+            raise LookupFailure("couldn't reach the coordinator")
         return msg.body
 
     def lookup(self, service, timeout=1):
@@ -52,9 +52,9 @@ class LymphCoordinatorServiceRegistry(BaseServiceRegistry):
         try:
             msg = channel.get()
         except Timeout:
-            raise LookupFailure(None, "lookup of %s timed out" % service.service_name)
+            raise LookupFailure("lookup of %s timed out" % service.service_name)
         if not msg.body:
-            raise LookupFailure(None, "failed to resolve %s" % service.service_name)
+            raise LookupFailure("failed to resolve %s" % service.service_name)
         for info in msg.body:
             identity = info.pop('identity')
             service.update(identity, **info)
