@@ -167,7 +167,7 @@ class ZmqRPCServer(object):
                 'trace_id': trace.get_id(),
             }
             try:
-                self.error_hook(exc_info, extra=extra_info)
+                self.container.error_hook(exc_info, extra=extra_info)
             except:
                 logger.exception('error hook failure')
             finally:
