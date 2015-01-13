@@ -1,7 +1,6 @@
 import sys
 import logging
 
-from gevent.pywsgi import WSGIServer
 from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException
 
@@ -9,17 +8,10 @@ from lymph.core.interfaces import Interface
 from lymph.core import trace
 from lymph.exceptions import SocketNotCreated
 from lymph.utils.sockets import create_socket
+from lymph.web.wsgi_server import LymphWSGIServer
 
 
 logger = logging.getLogger(__name__)
-
-
-# XXX(Mouad): Workaround to log correctly in gevent wsgi.
-# https://github.com/gevent/gevent/issues/106
-class _LoggerStream(object):
-
-    def write(self, msg):
-        logger.info(msg)
 
 
 class WebServiceInterface(Interface):
@@ -48,7 +40,7 @@ class WebServiceInterface(Interface):
                                    inheritable=True)
             socket_fd = socket.fileno()
         self.http_socket = create_socket('fd://%s' % socket_fd)
-        self.wsgi_server = WSGIServer(self.http_socket, self.application, log=_LoggerStream())
+        self.wsgi_server = LymphWSGIServer(self.http_socket, self.application)
         self.wsgi_server.start()
 
     def on_stop(self):
