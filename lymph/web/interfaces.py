@@ -1,11 +1,12 @@
-import sys
 import logging
+import sys
 
 from werkzeug.wrappers import Request, Response
 from werkzeug.exceptions import HTTPException
 
 from lymph.core.interfaces import Interface
 from lymph.core import trace
+from lymph.utils.logging import setup_logger
 from lymph.exceptions import SocketNotCreated
 from lymph.utils.sockets import create_socket
 from lymph.web.wsgi_server import LymphWSGIServer
@@ -31,6 +32,8 @@ class WebServiceInterface(Interface):
 
     def on_start(self):
         super(WebServiceInterface, self).on_start()
+        setup_logger('werkzeug')
+        setup_logger('gevent')
         try:
             socket_fd = self.container.get_shared_socket_fd(self.http_port)
         except SocketNotCreated:
