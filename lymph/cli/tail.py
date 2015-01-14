@@ -1,7 +1,6 @@
 import logging
 import collections
 
-import six
 import zmq.green as zmq
 
 from lymph.cli.base import Command
@@ -29,13 +28,18 @@ class RemoteTail(collections.Iterator):
         self._sock.setsockopt_string(zmq.SUBSCRIBE, u'')
         self._instances = {}
 
-    def _connect(self, instance):
+    def _on_status_change(self, instance, action):
         """Connect to a given service instance."""
+        if action == services.ADDED:
+            self._connect(instance)
+        elif action == services.REMOVED:
+            self._disconnect(instance)
+
+    def _connect(self, instance):
         self._sock.connect(instance.log_endpoint)
         self._instances[instance.log_endpoint] = instance
 
     def _disconnect(self, instance):
-        """Disconnect from a service instance."""
         self._sock.disconnect(instance.log_endpoint)
         del self._instances[instance.log_endpoint]
 
@@ -49,8 +53,7 @@ class RemoteTail(collections.Iterator):
         """
         # FIXME(mouad): Make sure that service implement the Observable
         # interface bug: GUP-126
-        service.observe(services.ADDED, self._connect)
-        service.observe(services.REMOVED, self._disconnect)
+        service.observe([services.ADDED, services.REMOVED], self._on_status_change)
 
         for instance in service:
             if instance.log_endpoint:
