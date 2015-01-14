@@ -51,6 +51,8 @@ class InstanceCommand(Command):
 
         container = create_container(self.config)
         container.debug = debug
+        # Set global exception hook to send unhandled exception to the container's error_hook.
+        sys.excepthook = container.excepthook
 
         install_plugins(container, self.config.get('plugins', {}))
         install_interfaces(container, self.config.get('interfaces', {}))

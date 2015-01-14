@@ -2,6 +2,7 @@ import json
 import gc
 import logging
 import os
+import sys
 
 import gevent
 import gevent.queue
@@ -71,6 +72,10 @@ class ServiceContainer(object):
                 kwargs[key] = value
         return cls(**kwargs)
 
+    def excepthook(self, type, value, traceback):
+        logger.log(logging.CRITICAL, 'Uncaught exception', exc_info=(type, value, traceback))
+        self.error_hook((type, value, traceback))
+
     @property
     def endpoint(self):
         return self.server.endpoint
@@ -80,7 +85,15 @@ class ServiceContainer(object):
         return self.server.identity
 
     def spawn(self, func, *args, **kwargs):
-        return self.pool.spawn(func, *args, **kwargs)
+        def _inner():
+            try:
+                return func(*args, **kwargs)
+            except gevent.GreenletExit:
+                raise
+            except:
+                self.error_hook(sys.exc_info())
+                raise
+        return self.pool.spawn(_inner)
 
     def install(self, cls, interface_name=None, **kwargs):
         obj = cls(self, **kwargs)
