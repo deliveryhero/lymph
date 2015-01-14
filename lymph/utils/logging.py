@@ -23,15 +23,21 @@ def setup_logger(name):
     for hdlr in lymph_logger.handlers:
         logger.addHandler(hdlr)
     logger.setLevel(lymph_logger.level)
+    # Since we are using DictConfig all logger are disabled by default first, so
+    # we are enabling any logger here !
+    logger.disabled = False
     return logger
 
 
 class PubLogHandler(logging.Handler):
-    def __init__(self, endpoint):
+    def __init__(self, endpoint, socket=None):
         super(PubLogHandler, self).__init__()
-        ctx = zmq.Context.instance()
-        self.socket = ctx.socket(zmq.PUB)
-        self.endpoint, port = bind_zmq_socket(self.socket, endpoint)
+        self.socket = socket
+        if self.socket is None:
+            ctx = zmq.Context.instance()
+            self.socket = ctx.socket(zmq.PUB)
+            endpoint, port = bind_zmq_socket(self.socket, endpoint)
+        self.endpoint = endpoint
 
     def emit(self, record):
         topic = record.levelname
@@ -47,7 +53,22 @@ class PubLogHandler(logging.Handler):
         return potentially_text
 
 
-def setup_logging(logconf, loglevel, logfile, log_endpoint):
+def setup_logging(config, loglevel, logfile):
+    """Configure 'lymph' logger handlers and level.
+
+    This function also set the container.log_endpoint in case it wasn't set.
+    """
+    logconf = dict(config.get('logging', {}))
+    log_endpoint = config.get('container.log_endpoint')
+    log_socket = None
+    # Get log_endpoint in case it wasn't set in the config.
+    if not log_endpoint:
+        ctx = zmq.Context.instance()
+        log_socket = ctx.socket(zmq.PUB)
+        log_endpoint, port = bind_zmq_socket(log_socket, config.get('container.ip'))
+
+        config.set('container.log_endpoint', log_endpoint)
+
     logconf.setdefault('version', 1)
     formatters = logconf.setdefault('formatters', {})
     formatters.setdefault('_trace', {
@@ -59,6 +80,7 @@ def setup_logging(logconf, loglevel, logfile, log_endpoint):
         'class': 'lymph.utils.logging.PubLogHandler',
         'formatter': '_trace',
         'endpoint': log_endpoint,
+        'socket': log_socket,
     })
     console_logconf = {
         'class': 'logging.StreamHandler',

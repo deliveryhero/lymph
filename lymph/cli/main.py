@@ -64,8 +64,6 @@ def main(argv=None):
     from lymph.cli.help import HELP
     from lymph.cli.base import get_command_class
 
-    sys.excepthook = _excepthook
-
     args = docopt.docopt(HELP, argv, version=VERSION, options_first=True)
     name = args.pop('<command>')
     argv = args.pop('<args>')
@@ -80,14 +78,14 @@ def main(argv=None):
     config = setup_config(args) if command_cls.needs_config else None
 
     if config:
-        log_endpoint = config.setdefault('container.log_endpoint', 'tcp://%s' % config.get('container.ip'))
-        logconf = dict(config.get('logging', {}))
         loglevel = args.get('--loglevel')
         logfile = args.get('--logfile')
 
-        lymph_logging.setup_logging(logconf, loglevel, logfile, log_endpoint)
+        lymph_logging.setup_logging(config, loglevel, logfile)
     else:
         logging.basicConfig()
+
+    sys.excepthook = _excepthook
 
     terminal = setup_terminal(args, config)
     command = command_cls(args, config, terminal)
