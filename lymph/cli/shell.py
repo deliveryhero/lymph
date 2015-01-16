@@ -22,7 +22,7 @@ class ShellCommand(Command):
 
     def run(self, **kwargs):
         client = Client.from_config(self.config, **kwargs)
-        imported_objects = {'client': client}
+        imported_objects = {'client': client, 'config': self.config}
 
         try:
             import IPython
