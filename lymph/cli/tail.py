@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import logging
 import collections
 
@@ -28,6 +30,10 @@ class RemoteTail(collections.Iterator):
         self._sock.setsockopt_string(zmq.SUBSCRIBE, u'')
         self._instances = {}
 
+    @property
+    def instances(self):
+        return self._instances
+
     def _on_status_change(self, instance, action):
         """Connect to a given service instance."""
         if action == services.ADDED:
@@ -50,14 +56,17 @@ class RemoteTail(collections.Iterator):
         connecting to them, while keeping tabs over this service to be able
         to connect and disconnect as instances get added or removed.
 
+        Return: True if subscription worked else false.
+
         """
-        # FIXME(mouad): Make sure that service implement the Observable
-        # interface bug: GUP-126
         service.observe([services.ADDED, services.REMOVED], self._on_status_change)
 
+        connected = False
         for instance in service:
             if instance.log_endpoint:
                 self._connect(instance)
+                connected = True
+        return connected
 
     def next(self):
         """Return an instance of :class:`RemoteTail.Entry`."""
@@ -87,7 +96,12 @@ class TailCommand(Command):
         tail = RemoteTail()
 
         for address in self.args['<address>']:
-            tail.subscribe_service(client.container.lookup(address))
+            connected = tail.subscribe_service(client.container.lookup(address))
+            if not connected:
+                print("Couldn't connect to log endpoint of '%s'" % address)
+
+        if not tail.instances:
+            return 1
 
         level = get_loglevel(self.args['--level'])
         logger = logging.getLogger('lymph-tail-cli')
