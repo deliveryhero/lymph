@@ -9,7 +9,7 @@ class BaseEventSystem(object):
         return cls(**kwargs)
 
     def install(self, container):
-        pass
+        self.container = container
 
     def on_start(self):
         pass
