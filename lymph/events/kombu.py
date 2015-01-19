@@ -1,10 +1,9 @@
 from __future__ import absolute_import
 
+import sys
 from contextlib import contextmanager
 
 import logging
-import gevent
-import gevent.pool
 import kombu
 import kombu.mixins
 import kombu.pools
@@ -21,12 +20,12 @@ DEFAULT_EXCHANGE = 'lymph'
 
 
 class EventConsumer(kombu.mixins.ConsumerMixin):
-    def __init__(self, connection, queue, handler, spawn=gevent.spawn):
+    def __init__(self, event_system, connection, queue, handler):
         self.connection = connection
         self.queue = queue
         self.handler = handler
-        self.spawn = spawn
         self.greenlet = None
+        self.event_system = event_system
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_kombu_message])]
@@ -46,17 +45,20 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
                 logger.exception('failed to handle event from queue %r', self.handler.queue_name)
                 # FIXME: add requeue support here
                 message.reject()
+                # Since the message handler can be run sequentially, we are catching all exception
+                # and reporting them here.
+                self.event_system.container.error_hook(sys.exc_info())
 
         if self.handler.sequential:
             message_handler()
         else:
-            self.spawn(message_handler)
+            self.event_system.container.spawn(message_handler)
 
     def start(self):
         if self.greenlet:
             return
         self.should_stop = False
-        self.greenlet = self.spawn(self.run)
+        self.greenlet = self.event_system.container.spawn(self.run)
 
     def stop(self):
         if not self.greenlet:
@@ -70,7 +72,6 @@ class KombuEventSystem(BaseEventSystem):
     def __init__(self, connection, exchange_name, serializer=DEFAULT_SERIALIZER):
         self.connection = connection
         self.exchange = kombu.Exchange(exchange_name, 'topic', durable=True)
-        self.greenlets = gevent.pool.Group()
         self.serializer = serializer
         self.consumers_by_queue = {}
 
@@ -93,7 +94,7 @@ class KombuEventSystem(BaseEventSystem):
             queue(conn).declare()
             for event_type in handler.event_types:
                 queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
-        consumer = EventConsumer(self.connection, queue, handler, spawn=self.greenlets.spawn)
+        consumer = EventConsumer(self, self.connection, queue, handler)
         self.consumers_by_queue[handler.queue_name] = consumer
         return consumer
 
