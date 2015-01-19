@@ -73,7 +73,7 @@ def setup_logging(config, loglevel, logfile):
     formatters = logconf.setdefault('formatters', {})
     formatters.setdefault('_trace', {
         '()': 'lymph.core.trace.TraceFormatter',
-        'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s - (trace-id=%(trace_id)s)',
+        'format': '%(asctime)s [%(levelname)s] %(name)s: %(message)s - trace_id="%(trace_id)s"',
     })
     handlers = logconf.setdefault('handlers', {})
     handlers.setdefault('_zmqpub', {
