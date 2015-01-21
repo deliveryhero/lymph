@@ -98,7 +98,7 @@ class Connection(object):
                 heartbeat_stats,
                 heartbeat_total_stats,
                 self.phi,
-                self.explicit_heartbeat_count / (time.monotonic() - self.created_at),
+                self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
                 self.status,
             ))
             gevent.sleep(self.timeout)
