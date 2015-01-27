@@ -50,6 +50,7 @@ setup(
     dependency_links=dependency_links,
     extras_require={
         'sentry': ['raven'],
+        'newrelic': ['newrelic'],
     },
     entry_points={
         'console_scripts': ['lymph = lymph.cli.main:main'],
