@@ -23,10 +23,11 @@ class ServiceInstance(object):
         self.update(endpoint, **info)
         self.connection = None
 
-    def update(self, endpoint, log_endpoint=None, name=None):
+    def update(self, endpoint, log_endpoint=None, name=None, fqdn=None):
         self.endpoint = endpoint
         self.log_endpoint = log_endpoint
         self.name = name
+        self.fqdn = fqdn
 
     def connect(self):
         self.connection = self.container.connect(self.endpoint)
