@@ -10,17 +10,13 @@ import logging
 from lymph.utils import SampleWindow
 from lymph.exceptions import RpcError
 
+logger = logging.getLogger(__name__)
 
 UNKNOWN = 'unknown'
 RESPONSIVE = 'responsive'
 UNRESPONSIVE = 'unresponsive'
 CLOSED = 'closed'
 IDLE = 'idle'
-
-MIN_HEARTBEAT_INTERVAL = .01
-
-
-logger = logging.getLogger(__name__)
 
 
 class Connection(object):
@@ -76,7 +72,7 @@ class Connection(object):
             else:
                 self.roundtrip_samples.add(time.monotonic() - start)
                 self.explicit_heartbeat_count += 1
-            gevent.sleep(max(self.heartbeat_interval - .001 * self.roundtrip_samples.mean, MIN_HEARTBEAT_INTERVAL))
+            gevent.sleep(self.heartbeat_interval)
 
     def live_check_loop(self):
         while True:
