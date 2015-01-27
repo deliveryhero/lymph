@@ -44,7 +44,7 @@ class ServiceContainer(object):
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.service_name = service_name
-        self.hostname = socket.getfqdn()
+        self.fqdn = socket.getfqdn()
 
         self.service_registry = registry
         self.event_system = events
@@ -157,7 +157,7 @@ class ServiceContainer(object):
             'endpoint': self.endpoint,
             'identity': self.identity,
             'log_endpoint': self.log_endpoint,
-            'hostname': self.hostname,
+            'fqdn': self.fqdn,
         }
 
     def start(self, register=True):
