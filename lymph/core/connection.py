@@ -35,7 +35,6 @@ class Connection(object):
         self.last_message = now
         self.created_at = now
         self.heartbeat_samples = SampleWindow(100, factor=1000)  # milliseconds
-        self.roundtrip_samples = SampleWindow(100, factor=1000)  # milliseconds
         self.explicit_heartbeat_count = 0
         self.status = UNKNOWN
 
@@ -70,7 +69,7 @@ class Connection(object):
             except RpcError:
                 pass
             else:
-                self.roundtrip_samples.add(time.monotonic() - start)
+                self.heartbeat_samples.add(time.monotonic() - start)
                 self.explicit_heartbeat_count += 1
             gevent.sleep(self.heartbeat_interval)
 
@@ -85,14 +84,12 @@ class Connection(object):
                     self.idle_since = now
                 else:
                     self.set_status(RESPONSIVE)
-            heartbeat_stats = 'window (mean ♡ = {mean:.1f} ms; stddev ♡ = {stddev:.1f})'.format(**self.heartbeat_samples.stats)
-            heartbeat_total_stats = 'total (mean ♡ = {mean:.1f} ms; stddev ♡ = {stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
-            roundtrip_stats = 'mean rtt = {mean:.3f} ms; stddev rtt = {stddev:.3f}'.format(**self.roundtrip_samples.stats)
-            logger.debug("pid=%s; %s; %s; %s; φ = %.3f; ping/s = %.2f; status=%s" % (
+            roundtrip_stats = 'window (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.stats)
+            roundtrip_total_stats = 'total (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
+            logger.debug("pid=%s; %s; %s; φ = %.3f; ping/s = %.2f; status=%s" % (
                 os.getpid(),
                 roundtrip_stats,
-                heartbeat_stats,
-                heartbeat_total_stats,
+                roundtrip_total_stats,
                 self.phi,
                 self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
                 self.status,
@@ -109,9 +106,6 @@ class Connection(object):
 
     def on_recv(self, msg):
         now = time.monotonic()
-        if self.last_seen:
-            self.heartbeat_samples.add(now - self.last_seen)
-        self.last_seen = now
         if not msg.is_idle_chatter():
             self.last_message = now
         self.received_message_count += 1
@@ -127,8 +121,7 @@ class Connection(object):
     def stats(self):
         return {
             'endpoint': self.endpoint,
-            'rtt': self.roundtrip_samples.stats,
-            'heartbeat': self.heartbeat_samples.stats,
+            'rtt': self.heartbeat_samples.stats,
             'phi': self.phi,
             'status': self.status,
             'sent': self.sent_message_count,
