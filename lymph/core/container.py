@@ -3,7 +3,7 @@ import gc
 import logging
 import os
 import sys
-import platform
+import socket
 
 import gevent
 import gevent.queue
@@ -44,7 +44,7 @@ class ServiceContainer(object):
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.service_name = service_name
-        self.hostname = platform.node()
+        self.hostname = socket.getfqdn()
 
         self.service_registry = registry
         self.event_system = events
