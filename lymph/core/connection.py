@@ -10,17 +10,13 @@ import logging
 from lymph.utils import SampleWindow
 from lymph.exceptions import RpcError
 
+logger = logging.getLogger(__name__)
 
 UNKNOWN = 'unknown'
 RESPONSIVE = 'responsive'
 UNRESPONSIVE = 'unresponsive'
 CLOSED = 'closed'
 IDLE = 'idle'
-
-MIN_HEARTBEAT_INTERVAL = .01
-
-
-logger = logging.getLogger(__name__)
 
 
 class Connection(object):
@@ -39,7 +35,6 @@ class Connection(object):
         self.last_message = now
         self.created_at = now
         self.heartbeat_samples = SampleWindow(100, factor=1000)  # milliseconds
-        self.roundtrip_samples = SampleWindow(100, factor=1000)  # milliseconds
         self.explicit_heartbeat_count = 0
         self.status = UNKNOWN
 
@@ -48,6 +43,8 @@ class Connection(object):
 
         self.heartbeat_loop_greenlet = self.server.container.spawn(self.heartbeat_loop)
         self.live_check_loop_greenlet = self.server.container.spawn(self.live_check_loop)
+
+        self.pid = os.getpid()
 
     def __str__(self):
         return "connection to=%s last_seen=%s" % (self.endpoint, self._dt())
@@ -74,34 +71,38 @@ class Connection(object):
             except RpcError:
                 pass
             else:
-                self.roundtrip_samples.add(time.monotonic() - start)
+                self.heartbeat_samples.add(time.monotonic() - start)
                 self.explicit_heartbeat_count += 1
-            gevent.sleep(max(self.heartbeat_interval - .001 * self.roundtrip_samples.mean, MIN_HEARTBEAT_INTERVAL))
+            gevent.sleep(self.heartbeat_interval)
 
     def live_check_loop(self):
         while True:
-            if self.last_seen:
-                now = time.monotonic()
-                if now - self.last_seen >= self.timeout:
-                    self.set_status(UNRESPONSIVE)
-                elif now - self.last_message >= self.idle_timeout:
-                    self.set_status(IDLE)
-                    self.idle_since = now
-                else:
-                    self.set_status(RESPONSIVE)
-            heartbeat_stats = 'window (mean ♡ = {mean:.1f} ms; stddev ♡ = {stddev:.1f})'.format(**self.heartbeat_samples.stats)
-            heartbeat_total_stats = 'total (mean ♡ = {mean:.1f} ms; stddev ♡ = {stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
-            roundtrip_stats = 'mean rtt = {mean:.3f} ms; stddev rtt = {stddev:.3f}'.format(**self.roundtrip_samples.stats)
-            logger.debug("pid=%s; %s; %s; %s; φ = %.3f; ping/s = %.2f; status=%s" % (
-                os.getpid(),
-                roundtrip_stats,
-                heartbeat_stats,
-                heartbeat_total_stats,
-                self.phi,
-                self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
-                self.status,
-            ))
+            self.update_status()
+            self.log_stats()
             gevent.sleep(self.timeout)
+
+    def update_status(self):
+        if self.last_seen:
+            now = time.monotonic()
+            if now - self.last_seen >= self.timeout:
+                self.set_status(UNRESPONSIVE)
+            elif now - self.last_message >= self.idle_timeout:
+                self.set_status(IDLE)
+                self.idle_since = now
+            else:
+                self.set_status(RESPONSIVE)
+
+    def log_stats(self):
+        roundtrip_stats = 'window (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.stats)
+        roundtrip_total_stats = 'total (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
+        logger.debug("pid=%s; %s; %s; phi=%.3f; ping/s=%.2f; status=%s" % (
+            self.pid,
+            roundtrip_stats,
+            roundtrip_total_stats,
+            self.phi,
+            self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
+            self.status,
+        ))
 
     def close(self):
         if self.status == CLOSED:
@@ -113,8 +114,6 @@ class Connection(object):
 
     def on_recv(self, msg):
         now = time.monotonic()
-        if self.last_seen:
-            self.heartbeat_samples.add(now - self.last_seen)
         self.last_seen = now
         if not msg.is_idle_chatter():
             self.last_message = now
@@ -131,8 +130,7 @@ class Connection(object):
     def stats(self):
         return {
             'endpoint': self.endpoint,
-            'rtt': self.roundtrip_samples.stats,
-            'heartbeat': self.heartbeat_samples.stats,
+            'rtt': self.heartbeat_samples.stats,
             'phi': self.phi,
             'status': self.status,
             'sent': self.sent_message_count,
