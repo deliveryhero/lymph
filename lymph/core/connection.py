@@ -86,7 +86,7 @@ class Connection(object):
                     self.set_status(RESPONSIVE)
             roundtrip_stats = 'window (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.stats)
             roundtrip_total_stats = 'total (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
-            logger.debug("pid=%s; %s; %s; φ = %.3f; ping/s = %.2f; status=%s" % (
+            logger.debug("pid=%s; %s; %s; phi = %.3f; ping/s = %.2f; status=%s" % (
                 os.getpid(),
                 roundtrip_stats,
                 roundtrip_total_stats,
