@@ -44,6 +44,8 @@ class Connection(object):
         self.heartbeat_loop_greenlet = self.server.container.spawn(self.heartbeat_loop)
         self.live_check_loop_greenlet = self.server.container.spawn(self.live_check_loop)
 
+        self.pid = os.getpid()
+
     def __str__(self):
         return "connection to=%s last_seen=%s" % (self.endpoint, self._dt())
 
@@ -94,7 +96,7 @@ class Connection(object):
         roundtrip_stats = 'window (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.stats)
         roundtrip_total_stats = 'total (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
         logger.debug("pid=%s; %s; %s; phi=%.3f; ping/s=%.2f; status=%s" % (
-            os.getpid(),
+            self.pid,
             roundtrip_stats,
             roundtrip_total_stats,
             self.phi,
