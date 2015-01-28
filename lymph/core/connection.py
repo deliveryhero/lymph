@@ -114,6 +114,7 @@ class Connection(object):
 
     def on_recv(self, msg):
         now = time.monotonic()
+        self.last_seen = now
         if not msg.is_idle_chatter():
             self.last_message = now
         self.received_message_count += 1
