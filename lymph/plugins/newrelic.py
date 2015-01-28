@@ -7,9 +7,10 @@ from lymph.web.interfaces import WebServiceInterface
 
 
 class NewrelicPlugin(Plugin):
-    def __init__(self, container, **kwargs):
+    def __init__(self, container, config_file=None, environment=None, **kwargs):
         self.container = container
         self.container.error_hook.install(self.on_error)
+        newrelic.agent.initialize(config_file, environment)
 
     def on_interface_installation(self, interface):
         for name, method in interface.methods.items():
