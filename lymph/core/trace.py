@@ -4,6 +4,9 @@ import uuid
 import logging
 
 
+logger = logging.getLogger(__name__)
+
+
 def get_trace(greenlet=None):
     greenlet = greenlet or gevent.getcurrent()
     if not hasattr(greenlet, '_lymph_trace'):
@@ -32,9 +35,11 @@ def trace(**kwargs):
 
 
 def set_id(trace_id=None):
-    trace_id = trace_id or uuid.uuid4().hex
-    trace(lymph_trace_id=trace_id)
-    return trace_id
+    tid = trace_id or uuid.uuid4().hex
+    trace(lymph_trace_id=tid)
+    if trace_id is None:
+        logger.info('starting trace')
+    return tid
 
 
 def get_id():

@@ -147,6 +147,8 @@ class ZmqRPCServer(object):
         return reply_msg
 
     def dispatch_request(self, msg):
+        loglevel = self._get_loglevel(msg)
+        logger.log(loglevel, '%s source=%s', msg.subject, msg.source)
         start = time.time()
         self.request_counts[msg.subject] += 1
         channel = ReplyChannel(msg, self)
@@ -178,15 +180,10 @@ class ZmqRPCServer(object):
                 logger.exception('failed to send automatic NACK')
         finally:
             elapsed = (time.time() - start) * (10 ** 3)
-            self._log_request(msg, elapsed)
+            logger.log(loglevel, '%s duration=%.3f', msg.subject, elapsed)
 
-    def _log_request(self, msg, elapsed):
-        if msg.subject == 'lymph.ping':
-            log = logger.debug
-        else:
-            log = logger.info
-        # TODO(Mouad): Add request status i.e. ACK, ERROR, NACK .. .
-        log('%s -- %s %.3fms', msg.source, msg.subject, elapsed)
+    def _get_loglevel(self, msg):
+        return logging.DEBUG if msg.subject == 'lymph.ping' else logging.INFO
 
     def recv_message(self, msg):
         trace.set_id(msg.headers.get('trace_id'))
