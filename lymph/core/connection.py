@@ -75,26 +75,32 @@ class Connection(object):
 
     def live_check_loop(self):
         while True:
-            if self.last_seen:
-                now = time.monotonic()
-                if now - self.last_seen >= self.timeout:
-                    self.set_status(UNRESPONSIVE)
-                elif now - self.last_message >= self.idle_timeout:
-                    self.set_status(IDLE)
-                    self.idle_since = now
-                else:
-                    self.set_status(RESPONSIVE)
-            roundtrip_stats = 'window (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.stats)
-            roundtrip_total_stats = 'total (mean rtt = {mean:.1f} ms; stddev rtt = {stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
-            logger.debug("pid=%s; %s; %s; phi = %.3f; ping/s = %.2f; status=%s" % (
-                os.getpid(),
-                roundtrip_stats,
-                roundtrip_total_stats,
-                self.phi,
-                self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
-                self.status,
-            ))
+            self.update_status()
+            self.log_stats()
             gevent.sleep(self.timeout)
+
+    def update_status(self):
+        if self.last_seen:
+            now = time.monotonic()
+            if now - self.last_seen >= self.timeout:
+                self.set_status(UNRESPONSIVE)
+            elif now - self.last_message >= self.idle_timeout:
+                self.set_status(IDLE)
+                self.idle_since = now
+            else:
+                self.set_status(RESPONSIVE)
+
+    def log_stats(self):
+        roundtrip_stats = 'window (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.stats)
+        roundtrip_total_stats = 'total (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
+        logger.debug("pid=%s; %s; %s; phi=%.3f; ping/s=%.2f; status=%s" % (
+            os.getpid(),
+            roundtrip_stats,
+            roundtrip_total_stats,
+            self.phi,
+            self.explicit_heartbeat_count / max(1, time.monotonic() - self.created_at),
+            self.status,
+        ))
 
     def close(self):
         if self.status == CLOSED:
