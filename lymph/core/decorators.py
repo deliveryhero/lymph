@@ -32,15 +32,12 @@ class RPCBase(collections.Callable):
     """
 
     def __init__(self, func, assigned=functools.WRAPPER_ASSIGNMENTS):
-        self._original = func
+        self.original = func
+        self._func = func
 
         functools.update_wrapper(
             self, func, assigned=functools.WRAPPER_ASSIGNMENTS)
 
-    @property
-    def original(self):
-        """Return original wrapped function/method."""
-        return self._original
 
     @property
     def args(self):
@@ -49,20 +46,23 @@ class RPCBase(collections.Callable):
         Returns:
           ``inspect.ArgSpec``.
         """
-        spec = inspect.getargspec(self._original)
+        spec = inspect.getargspec(self._func)
         return inspect.ArgSpec(spec.args[1:], *spec[1:])
 
     def __get__(self, obj, obj_type=None):
         if obj is None:
             return self
-        return functools.partial(self._original, obj)
+        return functools.partial(self._func, obj)
 
     def __call__(self, *args, **kwargs):
-        return self._original(*args, **kwargs)
+        return self._func(*args, **kwargs)
 
     @abc.abstractmethod
     def rpc_call(self, interface, channel, *args, **kwargs):
         pass
+
+    def decorate(self, decorator):
+        self._func = decorator(self._func)
 
 
 class _RawRPCDecorator(RPCBase):
@@ -74,7 +74,7 @@ class _RawRPCDecorator(RPCBase):
         return inspect.ArgSpec(spec.args[1:], *spec[1:])
 
     def rpc_call(self, interface, channel, *args, **kwargs):
-        return self._original(interface, channel, *args, **kwargs)
+        return self._func(interface, channel, *args, **kwargs)
 
 
 class _RPCDecorator(RPCBase):
@@ -89,7 +89,7 @@ class _RPCDecorator(RPCBase):
 
     def rpc_call(self, interface, channel, *args, **kwargs):
         try:
-            ret = self._original(interface, *args, **kwargs)
+            ret = self._func(interface, *args, **kwargs)
         except self._raises as ex:
             channel.error(type=ex.__class__.__name__, message=str(ex))
         else:

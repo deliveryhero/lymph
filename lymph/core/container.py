@@ -101,6 +101,8 @@ class ServiceContainer(object):
         obj = cls(self, **kwargs)
         obj.name = interface_name
         self.installed_interfaces[obj.name] = obj
+        for plugin in self.installed_plugins:
+            plugin.on_interface_installation(obj)
         return obj
 
     def install_plugin(self, cls, **kwargs):

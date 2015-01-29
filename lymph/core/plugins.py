@@ -4,6 +4,9 @@ class Plugin(object):
         self.container = container
         self.config = config
 
+    def on_interface_installation(self, interface):
+        pass
+
 
 class Hook(object):
     def __init__(self):
