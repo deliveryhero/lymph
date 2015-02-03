@@ -19,9 +19,10 @@ class RequestHandler(object):
         return [method.upper() for method in http_methods if callable(getattr(self, method))]
 
     def json(self):
-        # FIXME: should we really keep a reference to the parsed body?
-        request_is_json = "application/json" == self.request.mimetype
-        if request_is_json and self._json is None:
+        if not "application/json" == self.request.mimetype:
+            raise ValueError("The request Content-Type is not JSON")
+
+        if self._json is None:
             reader = codecs.getreader(self.request.charset)
             self._json = json.load(reader(self.request.stream))
         return self._json
