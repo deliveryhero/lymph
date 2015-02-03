@@ -1,7 +1,8 @@
 import logging
 import sys
 
-from werkzeug.wrappers import Request, Response
+from werkzeug.contrib.wrappers import DynamicCharsetRequestMixin
+from werkzeug.wrappers import Request as BaseRequest, Response
 from werkzeug.exceptions import HTTPException
 
 from lymph.core.interfaces import Interface
@@ -13,6 +14,10 @@ from lymph.web.wsgi_server import LymphWSGIServer
 
 
 logger = logging.getLogger(__name__)
+
+
+class Request(DynamicCharsetRequestMixin, BaseRequest):
+    default_charset = 'utf-8'
 
 
 class WebServiceInterface(Interface):
