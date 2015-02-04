@@ -3,28 +3,34 @@ Installation
 
 In order to use lymph, the following dependencies need to be met:
 
-- Python (2.7, 3.3, or 3.4)
+- Python (2.7, 3.4)
 - pip (>=1.5)
 - Python headers
-- `ZooKeeper`_ (for distributed service discovery)
+- `ZooKeeper`_ (for service discovery)
 - `RabbitMQ`_ (for event passing)
 
 If these are already set up, you can skip straight to the installation 
 of lymph itself, otherwise proceed with the following steps.
 
 
-Installing lymph (from source)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Installing lymph from source
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In order to be able to install the requirements using pip, you need to have the latest
 lymph version cloned from the github repository.
 
-.. code:: bash
+.. code:: console
 
+    $ # for Python 2.7
     $ git clone https://github.com/deliveryhero/lymph.git
-    $ # optionally create and activate a virtualenv
+    $ pip install -r requirements/base2.txt
+
+.. code:: console
+
+    $ # for Python 3.4
+    $ git clone https://github.com/deliveryhero/lymph.git
     $ pip install cython
-    $ pip install -r requirements/base.txt -r requirements/dev.txt
+    $ pip install -r requirements/base3.txt
     $ pip install -e .
 
 
