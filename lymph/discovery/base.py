@@ -28,7 +28,7 @@ class BaseServiceRegistry(object):
         self.container = container
 
     @abstractmethod
-    def discover(self, container):
+    def discover(self):
         raise NotImplementedError
 
     @abstractmethod
