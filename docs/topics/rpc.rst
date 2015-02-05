@@ -2,20 +2,15 @@ RPC
 ===
 
 Overview
-~~~~~~~~
+--------
 
-Synchronous communication with lymph services is realised through RPC calls. RPC messages
-are handled through ØMQ. In lymph, RPC messages are not persistent and if a RPC call fails,
-it is the responsibility of the calling code to deal with it.
-
-.. note:: 
-
-    In lymph terminology, messages are referring to synchronous RPC calls, and events are 
-    asynchronous messages as described in :doc:`events`.
+Synchronous communication with lymph services is realised through RPC. 
+RPC messages are sent via ØMQ. If a RPC call fails, it is the responsibility of 
+the calling code to deal with it.
 
 
 Registering methods as RPC callable
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+-----------------------------------
 
 Any class inheriting from :class:`lymph.Interface` can receive RPC calls. By specifying the
 ``name`` argument when initializing the class, the lymph service will be reachable through its
@@ -71,11 +66,10 @@ If a docstring is specified after the RPC method definition, it will be used as 
 of the service and will be returned by ``lymph inspect``.
 
 Difference between lymph.rpc and lymph.raw_rpc
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------------
 
-+++++++++
-lymph.rpc
-+++++++++
+``lymph.rpc``
+^^^^^^^^^^^^^
 
 The :func:`lymph.rpc` decorator is easier to understand compared to :func:`lymph.raw_rpc`
 since the former work as any Python function where what ever the RPC function return will be sent
@@ -87,9 +81,8 @@ to the caller, as for exceptions there is two cases depending on the ``raises`` 
 - Else the result will be a **NACK**.
 
 
-+++++++++++++
-lymph.raw_rpc
-+++++++++++++
+``lymph.raw_rpc``
+^^^^^^^^^^^^^^^^^
 
 When :func:`lymph.raw_rpc` is used the underlying method call has to have the following form:
 
@@ -137,8 +130,9 @@ object with the calling party. The ``ReplyChannel`` object provides you with the
 
     sends an error to the caller.
 
+
 Sending RPC calls
-~~~~~~~~~~~~~~~~~
+-----------------
 
 In order to send RPC calls from within lymph services, you need to pass the call through
 the ``proxy`` class. You can obtain the system's proxy by calling the ``proxy`` method:
@@ -172,80 +166,30 @@ answer or it times out. If you require asynchronous communication, please refer 
 
 
 Command line interface
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
-To send RPC calls from the command line to a lymph service, the following commands are
-provided:
-
-.. code:: bash
-
-    $ lymph request
-
-to send a RPC call and
-
-.. code:: bash
-
-    $ lymph inspect
-
-to list all the available RPC methods of a given service.
 
 lymph request
 ^^^^^^^^^^^^^
 
 With this command you can send a single RPC request to a given address. The
-request message has to be JSON encoded. Usage of the ``lymph request`` command
-is as follows:
+request message has to be JSON encoded. 
 
-.. code:: bash
-
-    lymph request [options] [--ip=<address> | --guess-external-ip | -g] <subject> <params>
-
-where
-
-.. code::
-
-    <subject>: the service namespace with the function to call (namespace.function)
-    <params>:  the payload
-
-    Options:
-      --ip=<address>               Use this IP for all sockets.
-      --guess-external-ip, -g      Guess the public facing IP of this machine and
-                                   use it instead of the provided address.
-      --timeout=<seconds>          RPC timeout. [default: 2.0]
-      --address=<addr>             address of the service ('tcp://service_ip:port') or
-                                   name of the service
-
-Example:
-
-.. code:: bash
+.. code:: console
 
     $ lymph request echo.upper '{"text": "foo"}'
     FOO
+
+See ``lymph request --help`` for details.
+
 
 lymph inspect
 ^^^^^^^^^^^^^
 
 With the inspect command, you can specify a service address and inspect which RPC calls are
-possible with the service. The ``lymph inspect`` command is used as follows:
+possible with the service. 
 
-.. code:: bash
-
-    Usage: lymph inspect [--ip=<address> | --guess-external-ip | -g] <address> [options]
-
-where
-
-.. code::
-
-    <address>: the address of the service ('tcp://service_ip:port')
-
-    Options:
-      --ip=<address>               Use this IP for all sockets.
-      --guess-external-ip, -g      Guess the public facing IP of this machine and
-                                   use it instead of the provided address.
-
-Example:
-
-.. code:: bash
+.. code:: console
 
     $ lymph inspect "echo"
 
@@ -265,6 +209,6 @@ Example:
     
 
 Inspect will list all the available methods of a service, together with its arguments and the short
-docstring description if provided with the ``@lymph.rpc()`` decorator.
+docstring description if provided with the :decorator:`lymph.rpc` decorator.
 
 
