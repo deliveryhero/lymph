@@ -25,7 +25,7 @@ Config API
 
     :param values: an optional initial mapping
 
-    Configuration implements the same onterface as :class:`ConfigView` in addition
+    Configuration implements the same interface as :class:`ConfigView` in addition
     to the methods described here.
     
     .. method:: load(file, sections=None)
@@ -50,7 +50,7 @@ Config API
         
         Given a config file like the following:
         
-        .. code-block:: yml
+        .. code-block:: yaml
 
             foo:
                 class: pack.age:SomeClass

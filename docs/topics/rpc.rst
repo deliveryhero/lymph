@@ -209,6 +209,6 @@ possible with the service.
     
 
 Inspect will list all the available methods of a service, together with its arguments and the short
-docstring description if provided with the :decorator:`lymph.rpc` decorator.
+docstring description if provided with the :py:decorator:`lymph.rpc` decorator.
 
 
