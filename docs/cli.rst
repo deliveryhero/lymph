@@ -4,20 +4,14 @@ Command Line Interface
 Many lymph commands produce unicode output. Therefore, you'll have to set your
 locale (LC_ALL or LC_CTYPE) to UTF-8.
 
-If you want to pipe lymph commands with python2, you might have to set 
+If you want to pipe lymph commands with Python 2, you might have to set
 PYTHONIOENCODING to UTF-8 as well.
 
 .. program:: lymph
 
 The following options apply to all subcommands:
 
-.. cmdoption:: --ip <address>
-
-.. cmdoption:: -p <port>, --port <port>
-
-.. cmdoption:: -g, --guess-external-ip
-
-.. cmdoption:: -c <file>, --config <file>
+.. cmdoption:: --config <file>, -c <file>
 
     Read the configuration from <file>. This can also be specified as an environment
     variable :envvar:`LYMPH_CONFIG`. The default value is ``.lymph.yml``.
@@ -25,6 +19,14 @@ The following options apply to all subcommands:
 .. cmdoption:: --loglevel <level>
 
 .. cmdoption:: --logfile <file>
+
+.. cmdoption:: --color
+
+    Force output coloring
+
+.. cmdoption:: --no-color
+
+    Disable output coloring
 
 
 .. _cli-lymph-discover:
@@ -51,9 +53,21 @@ The following options apply to all subcommands:
 ``lymph instance``
 ~~~~~~~~~~~~~~~~~~
 
+.. cmdoption:: --ip <address>
+
+.. cmdoption:: --port <port>, -p <port>
+
+.. cmdoption:: --guess-external-ip, -g
+
 .. cmdoption:: -i, --isolated
 
     Isolated instances don't register with the service registry.
+
+.. cmdoption:: --reload
+
+    Automatically stops the service when imported Python files in the current
+    working directory change. The process will be restarted by the node.
+    Do not use this in production.
 
 
 .. _cli-lymph-node:
@@ -62,6 +76,8 @@ The following options apply to all subcommands:
 
 ``lymph node``
 ~~~~~~~~~~~~~~
+
+This command takes the same commandline options as ``lymph instance``.
 
 
 .. _cli-lymph-request:
@@ -82,3 +98,5 @@ Starts an interactive Python shell. The following objects will be available in t
 ``client``
     a configured :class:`lymph.client.Client` instance
 
+``config``
+    a loaded :class:`lymph.config.Configuration` instance

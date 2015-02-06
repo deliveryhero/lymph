@@ -9,5 +9,6 @@ Contents:
    
     service_api
     core_api
+    config_api
     patterns_api
 
