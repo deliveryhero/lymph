@@ -10,5 +10,6 @@ Contents:
     service_api
     core_api
     config_api
+    web_api
     patterns_api
 
