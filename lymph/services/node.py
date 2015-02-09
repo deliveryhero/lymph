@@ -86,10 +86,13 @@ class Node(Interface):
         shared_fds = json.dumps({port: s.fileno() for port, s in six.iteritems(self.sockets)})
         for service_type, cmd, num in self._services:
             env = os.environ.copy()
-            env['LYMPH_NODE'] = self.container.endpoint
-            env['LYMPH_MONITOR'] = self.container.monitor.endpoint
-            env['LYMPH_NODE_IP'] = self.container.server.ip
-            env['LYMPH_SHARED_SOCKET_FDS'] = shared_fds
+            env.update({
+                'LYMPH_NODE': self.container.endpoint,
+                'LYMPH_MONITOR': self.container.monitor.endpoint,
+                'LYMPH_NODE_IP': self.container.server.ip,
+                'LYMPH_SHARED_SOCKET_FDS': shared_fds,
+                'LYMPH_SERVICE_NAME': service_type,
+            })
             for i in range(num):
                 p = Process(cmd.split(' '), env=env)
                 self.processes.append(p)

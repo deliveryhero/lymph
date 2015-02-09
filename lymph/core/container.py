@@ -69,6 +69,7 @@ class ServiceContainer(object):
         kwargs.pop('class', None)
         kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
         kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
+        kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
                 kwargs[key] = value
@@ -163,7 +164,7 @@ class ServiceContainer(object):
         }
 
     def start(self, register=True):
-        logger.info('starting %s at %s (pid=%s)', ', '.join(self.service_types), self.endpoint, os.getpid())
+        logger.info('starting %s (%s) at %s (pid=%s)', self.service_name, ', '.join(self.service_types), self.endpoint, os.getpid())
         self.monitor.start()
         self.service_registry.on_start()
         self.event_system.on_start()
