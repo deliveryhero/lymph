@@ -7,7 +7,6 @@ from werkzeug.wrappers import Response
 
 
 class JsonrpcGateway(WebServiceInterface):
-    http_port = 4080
 
     url_map = Map([
         Rule('/', endpoint='index'),

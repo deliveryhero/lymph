@@ -4,3 +4,4 @@ container:
 interfaces:
     web:
         class: web:JsonrpcGateway
+        port: 4080

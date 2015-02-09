@@ -10,5 +10,6 @@ Contents:
     discovery
     events
     rpc
+    http
     serialization
 

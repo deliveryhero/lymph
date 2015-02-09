@@ -21,7 +21,7 @@ class Request(DynamicCharsetRequestMixin, BaseRequest):
 
 
 class WebServiceInterface(Interface):
-    http_port = 80
+    default_http_port = 4080
 
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
@@ -35,6 +35,10 @@ class WebServiceInterface(Interface):
         # Make the object itself a WSGI app
         return self.application(*args, **kwargs)
 
+    def apply_config(self, config):
+        super(WebServiceInterface, self).apply_config(config)
+        self.http_port = config.get('port', self.default_http_port)
+
     def on_start(self):
         super(WebServiceInterface, self).on_start()
         setup_logger('werkzeug')
@@ -42,12 +46,11 @@ class WebServiceInterface(Interface):
         try:
             socket_fd = self.container.get_shared_socket_fd(self.http_port)
         except SocketNotCreated:
-            socket = create_socket('%s:%s' % (self.config.get('ip') or
-                                              self.container.server.ip,
-                                              self.http_port),
-                                   inheritable=True)
-            socket_fd = socket.fileno()
-        self.http_socket = create_socket('fd://%s' % socket_fd)
+            logger.warning("socket for port %s wasn't created by node, binding from instance instead", self.http_port)
+            address = '%s:%s' % (self.container.server.ip, self.http_port)
+            self.http_socket = create_socket(address)
+        else:
+            self.http_socket = create_socket('fd://%s' % socket_fd)
         self.wsgi_server = LymphWSGIServer(self.http_socket, self.application)
         self.wsgi_server.start()
 
