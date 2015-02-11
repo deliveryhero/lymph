@@ -45,25 +45,44 @@ class Proxy(Component):
         self._timeout = timeout
         self._namespace = namespace or address
         self._error_map = error_map or {}
-        #self._thread_local = local()
+        self._thread_local = local()
 
     def _call(self, __name, **kwargs):
         channel = self._container.send_request(self._address, __name, kwargs)
-        try:
-            return channel.get(timeout=self._timeout).body
-        except RemoteError as e:
-            error_type = str(e.__class__)
-            if error_type in self._error_map:
-                raise self._error_map[error_type]()
-            raise
+        if not self._thread_local.__dict__.get('is_deferred', False):
+            try:
+                return channel.get(timeout=self._timeout).body
+            except RemoteError as e:
+                error_type = str(e.__class__)
+                if error_type in self._error_map:
+                    raise self._error_map[error_type]()
+                raise
+        else:
+            # deferred object, return promise
+            class DeferredResult(object):
+                def __init__(self, channel, timeout, error_map):
+                    self._channel = channel
+                    self._timeout = timeout
+                    self._error_map = error_map
+
+                def get(self):
+                    try:
+                        return channel.get(timeout=self._timeout).body
+                    except RemoteError as e:
+                        error_type = str(e.__class__)
+                        if error_type in self._error_map:
+                            raise self._error_map[error_type]()
+                        raise
+            deferred = DeferredResult(channel, self._timeout, self._error_map)
+            print 'returning deferred object'
+            return deferred
 
     def __getattr__(self, name):
-        #if name == 'deferred':
-        #    self.thread_local.is_deferred = True
-        #    return self
+        if name == 'deferred':
+            self._thread_local.is_deferred = True
+            return self
 
         try:
-            print "GETATTR", name, self._thread_local.is_deferred
             return self._method_cache[name]
         except KeyError:
             method = functools.partial(self._call, '%s.%s' % (self._namespace, name))
