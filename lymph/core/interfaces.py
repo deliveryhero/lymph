@@ -6,6 +6,8 @@ from lymph.core.decorators import rpc, RPCBase
 from lymph.exceptions import RemoteError
 from lymph.core.declarations import Declaration
 
+from gevent.local import local
+
 
 class Component(object):
     def on_start(self):
@@ -43,6 +45,7 @@ class Proxy(Component):
         self._timeout = timeout
         self._namespace = namespace or address
         self._error_map = error_map or {}
+        #self._thread_local = local()
 
     def _call(self, __name, **kwargs):
         channel = self._container.send_request(self._address, __name, kwargs)
@@ -55,7 +58,12 @@ class Proxy(Component):
             raise
 
     def __getattr__(self, name):
+        #if name == 'deferred':
+        #    self.thread_local.is_deferred = True
+        #    return self
+
         try:
+            print "GETATTR", name, self._thread_local.is_deferred
             return self._method_cache[name]
         except KeyError:
             method = functools.partial(self._call, '%s.%s' % (self._namespace, name))
