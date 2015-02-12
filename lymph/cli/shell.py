@@ -20,10 +20,12 @@ class ShellCommand(Command):
 
     short_description = 'Open an interactive Python shell.'
 
-    def run(self, **kwargs):
+    def get_imported_objects(self, **kwargs):
         client = Client.from_config(self.config, **kwargs)
-        imported_objects = {'client': client, 'config': self.config}
+        return {'client': client, 'config': self.config}
 
+    def run(self, **kwargs):
+        imported_objects = self.get_imported_objects(**kwargs)
         try:
             import IPython
         except ImportError:
