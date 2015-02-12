@@ -49,5 +49,4 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         self.assertEqual(reply.body, {
             'endpoint': self.upper_container.endpoint,
             'identity': self.upper_container.identity,
-            'config': {},
         })

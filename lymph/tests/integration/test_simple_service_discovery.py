@@ -47,4 +47,3 @@ class BasicIntegrationTest(LymphIntegrationTestCase):
     def test_status(self):
         reply = self.client.request(self.upper_container.endpoint, 'lymph.status', {})
         self.assertEqual(reply.body['endpoint'], self.upper_container.endpoint)
-        self.assertEqual(reply.body['config'], {})

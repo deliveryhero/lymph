@@ -157,7 +157,6 @@ class APITestCase(unittest.TestCase):
         container = self.network.add_service(self.test_interface, interface_name = self.interface_name)
 
         webinterface_object = container.installed_interfaces[self.interface_name]
-        webinterface_object.configure({'ip' : 'localhost'})
         self.network.start()
 
         self.client = werkzeug.test.Client(webinterface_object, BaseResponse)

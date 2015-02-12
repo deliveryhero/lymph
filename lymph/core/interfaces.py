@@ -69,7 +69,6 @@ class Interface(object):
 
     def __init__(self, container, name=None):
         self.container = container
-        self.config = {}
         self.components = {}
         self._name = name
         for declaration in self.declarations:
@@ -88,9 +87,6 @@ class Interface(object):
 
     def apply_config(self, config):
         pass
-
-    def configure(self, config):
-        self.config.update(config)
 
     def handle_request(self, func_name, channel):
         self.methods[func_name].rpc_call(self, channel, **channel.request.body)
@@ -143,7 +139,6 @@ class DefaultInterface(Interface):
         return {
             'endpoint': self.container.endpoint,
             'identity': self.container.identity,
-            'config': self.config,
         }
 
     @rpc()
