@@ -76,7 +76,6 @@ class BasicMockTest(unittest.TestCase):
         self.assertEqual(reply.body, {
             'endpoint': 'mock://300.0.0.1:1',
             'identity': '252946e723b6b07c1f5f0aa9442fb348',
-            'config': {},
         })
 
     def test_error(self):

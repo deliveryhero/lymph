@@ -172,7 +172,6 @@ class ServiceContainer(object):
 
         for service in six.itervalues(self.installed_interfaces):
             service.on_start()
-            service.configure({})
 
         if register:
             for interface_name, service in six.iteritems(self.installed_interfaces):
