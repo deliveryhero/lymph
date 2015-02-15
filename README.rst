@@ -46,12 +46,12 @@ Running services
 ~~~~~~~~~~~~~~~~
 
 To run the example services, you can use the example node config in 
-``conf/local-zookeeper-rabbitmq-node.yml``. You'll also need a local installation
+``conf/sample-node.yml``. You'll also need a local installation
 of `ZooKeeper`_ (with the configuration provided in the
 `Getting Started Guide`_) and `RabbitMQ`_::
 
     $ export PYTHONPATH=examples
-    $ cp conf/local-zookeeper-rabbitmq-node.yml .lymph.yml
+    $ cp conf/sample-node.yml .lymph.yml
     $ lymph node
 
 You can then discover running services::

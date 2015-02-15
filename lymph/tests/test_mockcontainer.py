@@ -3,7 +3,6 @@ import unittest
 import lymph
 from lymph.core.interfaces import Interface
 from lymph.core.messages import Message
-from lymph.services.coordinator import Coordinator
 from lymph.testing import MockServiceNetwork
 from lymph.exceptions import RemoteError, Nack
 
@@ -49,7 +48,6 @@ class ClientInterface(Interface):
 class BasicMockTest(unittest.TestCase):
     def setUp(self):
         self.network = MockServiceNetwork()
-        self.coordinator = self.network.add_service(Coordinator, 'coordinator')
         self.upper_container = self.network.add_service(Upper, 'upper')
         self.client_container = self.network.add_service(ClientInterface, 'client')
         self.network.start()
