@@ -58,10 +58,10 @@ and run that class inside a container:
 
 .. code:: bash
 
-    $ lymph instance --config=conf/simple-node.yml --interface=lymph.services.coordinator:Coordinator --port=42400
+    $ lymph instance --config=conf/echo.yml --interface=examples:EchoService
 
-In this example, a new instance of the basic CoordinatorService is setup on port 42400 through specifying the
-class directly as ``lymph.services.coordinator:Coordinator``.
+In this example, a new instance of the example EchoService is started by specifying the
+class directly as ``examples:EchoService``.
 
 
 Writing configuration files for ``lymph instance``

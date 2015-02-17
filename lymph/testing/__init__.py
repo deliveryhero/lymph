@@ -12,7 +12,6 @@ from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.client import Client
-from lymph.services.coordinator import Coordinator
 
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
@@ -21,7 +20,7 @@ from werkzeug.wrappers import BaseResponse
 class MockServiceNetwork(object):
     def __init__(self):
         self.service_containers = {}
-        self.next_port = 0
+        self.next_port = 1
         self.discovery_hub = StaticServiceRegistryHub()
         self.events = LocalEventSystem()
 
@@ -120,7 +119,6 @@ class LymphServiceTestCase(unittest.TestCase):
 
     def setUp(self):
         self.network = MockServiceNetwork()
-        self.coordinator = self.network.add_service(Coordinator)
         self.service_container = self.network.add_service(
             self.service_class,
             interface_name=self.service_name
