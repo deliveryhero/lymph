@@ -44,6 +44,7 @@ class InstanceCommand(Command):
     {COMMON_OPTIONS}
     """
 
+    proctitle = 'lymph-instance'
     short_description = 'Run a single service instance (one process).'
 
     def run(self):
@@ -74,7 +75,8 @@ class InstanceCommand(Command):
         gevent.signal(signal.SIGINT, handle_signal)
         gevent.signal(signal.SIGTERM, handle_signal)
 
-        setproctitle('lymph-instance (identity: %s, service_name: %s, endpoint: %s, config: %s)' % (
+        setproctitle('%s (identity: %s, service_name: %s, endpoint: %s, config: %s)' % (
+            self.proctitle,
             container.identity,
             container.service_name,
             container.endpoint,
@@ -98,6 +100,7 @@ class NodeCommand(InstanceCommand):
     {COMMON_OPTIONS}
     """
 
+    proctitle = 'lymph-node'
     short_description = 'Run a node service that manages a group of processes on the same machine.'
 
     def run(self):
