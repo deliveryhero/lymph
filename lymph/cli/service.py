@@ -74,8 +74,9 @@ class InstanceCommand(Command):
         gevent.signal(signal.SIGINT, handle_signal)
         gevent.signal(signal.SIGTERM, handle_signal)
 
-        setproctitle('lymph-instance (identity: %s, endpoint: %s, config: %s)' % (
+        setproctitle('lymph-instance (identity: %s, service_name: %s, endpoint: %s, config: %s)' % (
             container.identity,
+            container.service_name,
             container.endpoint,
             self.config.source,
         ))
