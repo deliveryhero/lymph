@@ -16,7 +16,7 @@ class RequestHandler(object):
 
     @property
     def allowed_methods(self):
-        return [method.upper() for method in http_methods if callable(getattr(self, method))]
+        return [method.upper() for method in http_methods if callable(getattr(self, method, None))]
 
     def json(self):
         if not "application/json" == self.request.mimetype:
