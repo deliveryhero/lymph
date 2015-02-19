@@ -1,3 +1,4 @@
+import mock
 import six
 import unittest
 
@@ -6,15 +7,56 @@ from kazoo.testing.harness import KazooTestHarness
 
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
-from lymph.core.interfaces import Interface
+from lymph.core.interfaces import Interface, Proxy
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
+from lymph.exceptions import RemoteError
 from lymph.client import Client
 
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
+
+
+def get_side_effect(mocks):
+    class ProxyCall(object):
+        def __init__(self, data):
+            self.data = data
+
+        def __call__(self, name, **kwargs):
+            try:
+                result = self.data[name]
+                if isinstance(result, Exception):
+                    raise getattr(RemoteError, result.__class__.__name__)('', '')
+                return result
+            except KeyError:
+                return
+
+        def update(self, func_name, new_value):
+            self.data[func_name] = new_value
+    return ProxyCall(mocks)
+
+
+class RpcMockTestCase(unittest.TestCase):
+    def setUp(self):
+        super(RpcMockTestCase, self).setUp()
+        self.rpc_patch = mock.patch.object(Proxy, '_call')
+        self.rpc_mock = self.rpc_patch.start()
+
+    def tearDown(self):
+        super(RpcMockTestCase, self).tearDown()
+        self.rpc_patch.stop()
+
+    def setup_rpc_mocks(self, mocks):
+        self.rpc_mock.side_effect = get_side_effect(mocks)
+
+    def update_rpc_mock(self, func_name, new_value):
+        self.rpc_mock.side_effect.update(func_name, new_value)
+
+    @property
+    def rpc_mock_calls(self):
+        return self.rpc_mock.mock_calls
 
 
 class MockServiceNetwork(object):
@@ -109,7 +151,7 @@ class ClientInterface(Interface):
     service_type = 'client'
 
 
-class LymphServiceTestCase(unittest.TestCase):
+class LymphServiceTestCase(RpcMockTestCase):
     client_class = ClientInterface
     client_name = 'client'
     client_config = {}
@@ -118,6 +160,7 @@ class LymphServiceTestCase(unittest.TestCase):
     service_config = {}
 
     def setUp(self):
+        super(LymphServiceTestCase, self).setUp()
         self.network = MockServiceNetwork()
         self.service_container = self.network.add_service(
             self.service_class,
@@ -138,21 +181,23 @@ class LymphServiceTestCase(unittest.TestCase):
         self.network.start()
 
     def tearDown(self):
+        super(LymphServiceTestCase, self).tearDown()
         self.network.stop()
         self.network.join()
 
 
-class APITestCase(unittest.TestCase):
+class APITestCase(RpcMockTestCase):
 
     interface_name = None
 
     def setUp(self):
+        super(APITestCase, self).setUp()
         self.network = MockServiceNetwork()
 
         if not self.interface_name:
             self.interface_name = self.test_interface.__name__.lower()
 
-        container = self.network.add_service(self.test_interface, interface_name = self.interface_name)
+        container = self.network.add_service(self.test_interface, interface_name=self.interface_name)
 
         webinterface_object = container.installed_interfaces[self.interface_name]
         self.network.start()
@@ -160,4 +205,5 @@ class APITestCase(unittest.TestCase):
         self.client = werkzeug.test.Client(webinterface_object, BaseResponse)
 
     def tearDown(self):
+        super(APITestCase, self).tearDown()
         self.network.stop()
