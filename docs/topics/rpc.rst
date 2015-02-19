@@ -165,6 +165,30 @@ answer or it times out. If you require asynchronous communication, please refer 
 :doc:`events`.
 
 
+Deferred RPC calls
+------------------
+
+Classic RPC calls block until the response is received. A deferred RPC call mechanism
+is implemented in case you wish to consume the RPC response later, or simply ingore
+it.
+
+The call interface is similar to making a regular RPC call, with the addition of
+adding .deferred call after it.
+
+In that case, the call will return a Future (the actual implementation is a 
+gevent AsyncResult which will block only when it's .get method is called.
+
+For instance:
+
+    .. code-block:: python
+
+        echo = self.proxy('echo')
+        result_future = echo.upper.deferred(text='foo')
+        # do other stuff
+        result = result_future.get()
+        assert result == 'FOO'
+
+
 Command line interface
 ----------------------
 
