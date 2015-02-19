@@ -47,14 +47,14 @@ class RpcMockTestCase(unittest.TestCase):
         super(RpcMockTestCase, self).tearDown()
         self.rpc_patch.stop()
 
-    def setup_mocks(self, mocks):
+    def setup_rpc_mocks(self, mocks):
         self.rpc_mock.side_effect = self._get_side_effect(mocks)
 
-    def update_mock(self, func_name, new_value):
+    def update_rpc_mock(self, func_name, new_value):
         self.rpc_mock.side_effect.update(func_name, new_value)
 
     @property
-    def mock_calls(self):
+    def rpc_mock_calls(self):
         return self.rpc_mock.mock_calls
 
 
