@@ -6,6 +6,9 @@ from lymph.core.decorators import rpc, RPCBase
 from lymph.exceptions import RemoteError
 from lymph.core.declarations import Declaration
 
+import gevent
+from gevent.event import AsyncResult
+
 
 class Component(object):
     def on_start(self):
@@ -34,6 +37,18 @@ class InterfaceBase(type):
         new_cls.declarations = declarations
         return new_cls
 
+class ProxyMethod(object):
+    def __init__(self, func):
+        self.func = func
+
+    def __call__(self, *args, **kwargs):
+        return self.func(*args, **kwargs)
+
+    def defer(self, *args, **kwargs):
+        result = AsyncResult()
+        gevent.spawn(self, *args, **kwargs).link(result)
+        return result
+
 
 class Proxy(Component):
     def __init__(self, container, address, timeout=30, namespace='', error_map=None):
@@ -58,7 +73,7 @@ class Proxy(Component):
         try:
             return self._method_cache[name]
         except KeyError:
-            method = functools.partial(self._call, '%s.%s' % (self._namespace, name))
+            method = ProxyMethod(functools.partial(self._call, '%s.%s' % (self._namespace, name)))
             self._method_cache[name] = method
             return method
 
