@@ -19,25 +19,26 @@ import werkzeug.test
 from werkzeug.wrappers import BaseResponse
 
 
+def get_side_effect(mocks):
+    class ProxyCall(object):
+        def __init__(self, data):
+            self.data = data
+
+        def __call__(self, name, **kwargs):
+            try:
+                result = self.data[name]
+                if isinstance(result, Exception):
+                    raise getattr(RemoteError, result.__class__.__name__)('', '')
+                return result
+            except KeyError:
+                return
+
+        def update(self, func_name, new_value):
+            self.data[func_name] = new_value
+    return ProxyCall(mocks)
+
+
 class RpcMockTestCase(unittest.TestCase):
-    def _get_side_effect(self, mocks):
-        class ProxyCall(object):
-            def __init__(self, data):
-                self.data = data
-
-            def __call__(self, name, **kwargs):
-                try:
-                    result = self.data[name]
-                    if isinstance(result, Exception):
-                        raise getattr(RemoteError, result.__class__.__name__)('', '')
-                    return result
-                except KeyError:
-                    return
-
-            def update(self, func_name, new_value):
-                self.data[func_name] = new_value
-        return ProxyCall(mocks)
-
     def setUp(self):
         super(RpcMockTestCase, self).setUp()
         self.rpc_patch = mock.patch.object(Proxy, '_call')
@@ -48,7 +49,7 @@ class RpcMockTestCase(unittest.TestCase):
         self.rpc_patch.stop()
 
     def setup_rpc_mocks(self, mocks):
-        self.rpc_mock.side_effect = self._get_side_effect(mocks)
+        self.rpc_mock.side_effect = get_side_effect(mocks)
 
     def update_rpc_mock(self, func_name, new_value):
         self.rpc_mock.side_effect.update(func_name, new_value)
