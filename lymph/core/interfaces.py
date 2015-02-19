@@ -44,7 +44,7 @@ class ProxyMethod(object):
     def __call__(self, *args, **kwargs):
         return self.func(*args, **kwargs)
 
-    def defer(self, *args, **kwargs):
+    def deferred(self, *args, **kwargs):
         result = AsyncResult()
         gevent.spawn(self, *args, **kwargs).link(result)
         return result
