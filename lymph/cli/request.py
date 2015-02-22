@@ -1,25 +1,41 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
+import functools
 import json
 import textwrap
+import time
 import logging
+import math
+import sys
+
+from gevent.pool import Pool
 
 import lymph
 from lymph.client import Client
-from lymph.exceptions import LookupFailure
+from lymph.exceptions import LookupFailure, Timeout
 from lymph.cli.base import Command
 
 
 logger = logging.getLogger(__name__)
 
 
-class RequestError(Exception):
-    pass
+def handle_request_errors(func):
+    @functools.wraps(func)
+    def decorated(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except LookupFailure as e:
+            logger.error("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
+            return 1
+        except Timeout:
+            logger.error("The request timed out. Either the service is not available or busy.")
+            return 1
+    return decorated
 
 
 class RequestCommand(Command):
     """
-    Usage: lymph request [options] [--ip=<address> | --guess-external-ip | -g] <subject> <params>
+    Usage: lymph request [options] <subject> <params>
 
     Description:
         Sends a single RPC request to <address>. Parameters have to be JSON encoded.
@@ -30,47 +46,90 @@ class RequestCommand(Command):
                                    use it instead of the provided address.
       --timeout=<seconds>          RPC timeout. [default: 2.0]
       --address=<addr>             Send the request to the given instance.
+      -N <number>                  Send a total of <N> requests [default: 1].
+      -C <concurrency>             Send requests from <concurrency> concurrent greenlets [default: 1].
 
     {COMMON_OPTIONS}
     """
 
     short_description = 'Send a request message to some service and output the reply.'
 
-    def _request(self, address, subject, body, timeout=2.0):
-        client = Client.from_config(self.config)
-        try:
-            response = client.request(
-                address,
-                subject,
-                body,
-                timeout=timeout
-            )
-        except lymph.exceptions.LookupFailure as e:
-            raise RequestError("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
-        except lymph.exceptions.Timeout:
-            raise RequestError("The request timed out. Either the service is not available or busy.")
-        return response.body
+    def _run_one_request(self, request):
+        print(request().body)
 
+    def _run_many_requests(self, request, n, c):
+        # one warm up request for lookup and connection creation
+        request()
+
+        timings = []
+        timeouts = []
+
+        def timed_request(i):
+            start = time.time()
+            try:
+                request()
+            except Timeout:
+                timeouts.append(i)
+            else:
+                timings.append(1000 * (time.time() - start))
+            request_count = len(timings) + len(timeouts)
+            if request_count % (n / 80) == 0:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+
+        pool = Pool(size=c)
+        print("sending %i requests, concurrency %i" % (n, c))
+        start = time.time()
+        pool.map(timed_request, range(n))
+        total_time = (time.time() - start)
+
+        timings.sort()
+        n_success = len(timings)
+        n_timeout = len(timeouts)
+        avg = sum(timings) / n_success
+        stddev = math.sqrt(sum((t - avg)**2 for t in timings)) / n_success
+
+        print()
+        print('Requests per second:   %8.2f Hz  (#req=%s)' % (n_success / total_time, n_success))
+        print('Mean time per request: %8.2f ms  (stddev=%.2f)' % (avg, stddev))
+        print('Timeout rate:          %8.2f %%   (#req=%s)' % (100 * n_timeout / float(n), n_timeout))
+        print('Total time:            %8.2f s' % total_time)
+        print()
+
+        print('Percentiles:')
+        print('  0.0 %%   %8.2f ms (min)' % timings[0])
+        for p in (50, 90, 95, 97, 98, 99, 99.5, 99.9):
+            print('%5.1f %%   %8.2f ms' % (p, timings[int(math.floor(0.01 * p * n_success))]))
+        print('100.0 %%   %8.2f ms (max)' % timings[-1])
+
+    @handle_request_errors
     def run(self):
         body = json.loads(self.args.get('<params>', '{}'))
         try:
             timeout = float(self.args.get('--timeout'))
         except ValueError:
-            print("--timeout requires a number number (e.g. --timeout=0.42)")
+            print("--timeout requires a number (e.g. --timeout=0.42)")
             return 1
         subject = self.args['<subject>']
         address = self.args.get('--address')
         if not address:
             address = subject.split('.', 1)[0]
-        try:
-            result = self._request(address, subject, body, timeout=timeout)
-        except RequestError as ex:
-            logger.error(str(ex))
-            return 1
-        print(result)
+
+        client = Client.from_config(self.config)
+
+        def request():
+            return client.request(address, subject, body, timeout=timeout)
+
+        N, C = int(self.args['-N']), int(self.args['-C'])
+
+        if N == 1:
+            return self._run_one_request(request)
+        else:
+            return self._run_many_requests(request, N, C)
 
 
-class InspectCommand(RequestCommand):
+
+class InspectCommand(Command):
     """
     Usage: lymph inspect [--ip=<address> | --guess-external-ip | -g] <address> [options]
 
@@ -85,14 +144,10 @@ class InspectCommand(RequestCommand):
 
     short_description = 'Describe the available rpc methods of a service.'
 
+    @handle_request_errors
     def run(self):
-        try:
-            result = self._request(
-                self.args['<address>'], 'lymph.inspect', {}, timeout=5)
-        except RequestError as ex:
-            logger.error(str(ex))
-            return 1
-
+        client = Client.from_config(self.config)
+        result = client.request(self.args['<address>'], 'lymph.inspect', {}, timeout=5).body
         print()
 
         for method in sorted(result['methods'], key=lambda m: m['name']):
