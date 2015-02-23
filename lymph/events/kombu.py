@@ -48,6 +48,9 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
                 # Since the message handler can be run sequentially, we are catching all exception
                 # and reporting them here.
                 self.event_system.container.error_hook(sys.exc_info())
+            finally:
+                if self.handler.once:
+                    self.event_system.unsubscribe(self.handler)
 
         if self.handler.sequential:
             message_handler()
@@ -90,7 +93,7 @@ class KombuEventSystem(BaseEventSystem):
     def setup_consumer(self, handler):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
-            queue = kombu.Queue(handler.queue_name, durable=True)
+            queue = kombu.Queue(handler.queue_name, durable=True, auto_delete=handler.once)
             queue(conn).declare()
             for event_type in handler.event_types:
                 queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)

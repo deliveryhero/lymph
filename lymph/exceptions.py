@@ -29,6 +29,10 @@ class RegistrationFailure(Exception):
     pass
 
 
+class EventHandlerTimeout(Exception):
+    pass
+
+
 class _RemoteException(type):
 
     # Hold dynamically generated exception classes.

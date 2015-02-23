@@ -3,11 +3,25 @@ import functools
 import six
 
 from lymph.core.decorators import rpc, RPCBase
-from lymph.exceptions import RemoteError
+from lymph.exceptions import RemoteError, EventHandlerTimeout
 from lymph.core.declarations import Declaration
 
 import gevent
 from gevent.event import AsyncResult
+
+
+class AsyncResultWrapper(object):
+    def __init__(self, container, handler, async_result):
+        self.container = container
+        self.handler = handler
+        self.result = async_result
+
+    def get(self, timeout=30):
+        try:
+            return self.result.get(timeout=timeout)
+        except gevent.Timeout:
+            self.container.unsubscribe(self.handler)
+            raise EventHandlerTimeout
 
 
 class Component(object):
@@ -36,6 +50,7 @@ class InterfaceBase(type):
         new_cls.methods = methods
         new_cls.declarations = declarations
         return new_cls
+
 
 class ProxyMethod(object):
     def __init__(self, func):
@@ -119,10 +134,20 @@ class Interface(object):
     def subscribe(self, *event_types, **kwargs):
         def decorator(func):
             from lymph.core.events import EventHandler
-            handler = EventHandler(func, event_types, **kwargs)
+            handler = EventHandler(self, func, event_types, **kwargs)
             self.container.subscribe(handler)
             return handler
         return decorator
+
+    def get_next_event(self, *event_types, **kwargs):
+        kwargs['once'] = True
+        result = AsyncResult()
+
+        @self.subscribe(*event_types, **kwargs)
+        def handler(interface, event):
+            result.set(event.body)
+
+        return AsyncResultWrapper(self.container, handler, result)
 
     def on_start(self):
         for component in self.components.values():
