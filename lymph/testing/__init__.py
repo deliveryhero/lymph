@@ -81,7 +81,7 @@ class MockServiceNetwork(object):
         for container in six.itervalues(self.service_containers):
             container.start()
 
-    def stop(self):
+    def stop(self, **kwargs):
         for container in six.itervalues(self.service_containers):
             container.stop()
 

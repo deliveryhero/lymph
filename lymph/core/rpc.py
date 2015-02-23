@@ -95,7 +95,7 @@ class ZmqRPCServer(object):
         self.running = True
         self.recv_loop_greenlet = self.container.spawn(self._recv_loop)
 
-    def stop(self):
+    def stop(self, **kwargs):
         self.running = False
         for connection in list(self.connections.values()):
             connection.close()

@@ -12,7 +12,7 @@ class BaseServiceRegistry(object):
     def on_start(self):
         pass
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         pass
 
     def get(self, service_name, **kwargs):

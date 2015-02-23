@@ -37,7 +37,7 @@ class Monitor(object):
     def start(self):
         self.loop_greenlet = self.container.spawn(self.loop)
 
-    def stop(self):
+    def stop(self, **kwargs):
         self.loop_greenlet.kill()
 
     def get_rusage_stats(self, ru, previous):

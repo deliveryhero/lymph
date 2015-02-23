@@ -14,7 +14,7 @@ class BaseEventSystem(object):
     def on_start(self):
         pass
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         pass
 
     def subscribe(self, container, handler):

@@ -14,7 +14,7 @@ class Component(object):
     def on_start(self):
         pass
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         pass
 
 
@@ -128,9 +128,9 @@ class Interface(object):
         for component in self.components.values():
             component.on_start()
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         for component in self.components.values():
-            component.on_stop()
+            component.on_stop(**kwargs)
 
     def on_connect(self, endpoint):
         pass

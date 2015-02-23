@@ -183,13 +183,13 @@ class ServiceContainer(object):
                     logger.error("registration failed %s, %s", interface_name, service)
                     self.stop()
 
-    def stop(self):
+    def stop(self, **kwargs):
         for service in six.itervalues(self.installed_interfaces):
-            service.on_stop()
-        self.event_system.on_stop()
-        self.service_registry.on_stop()
-        self.monitor.stop()
-        self.server.stop()
+            service.on_stop(**kwargs)
+        self.event_system.on_stop(**kwargs)
+        self.service_registry.on_stop(**kwargs)
+        self.monitor.stop(**kwargs)
+        self.server.stop(**kwargs)
         self.pool.kill()
 
     def join(self):

@@ -1,9 +1,15 @@
-from __future__ import absolute_import, division
-
+from __future__ import absolute_import, division, print_function
 
 import collections
 import importlib
+import inspect
+import gc
+import gevent
 import math
+import os
+import sys
+import threading
+import traceback
 import uuid
 
 
@@ -38,6 +44,7 @@ def make_id():
 
 
 _sqrt2 = math.sqrt(2)
+
 
 class Accumulator(object):
     def __init__(self):
@@ -113,3 +120,39 @@ class SampleWindow(Accumulator):
         if self.stddev == 0:
             return 1. if value == self.mean else 0.
         return 1 - math.erf(abs(value * self.factor - self.mean) / (self.stddev * _sqrt2))
+
+
+def get_greenlets():
+    for object in gc.get_objects():
+        if isinstance(object, gevent.Greenlet):
+            yield object
+
+
+def get_greenlets_frames():
+    for greenlet in get_greenlets():
+        yield str(greenlet), greenlet.gr_frame
+
+
+def get_threads_frames():
+    threads = {thread.ident: thread.name for thread in threading.enumerate()}
+    for ident, frame in sys._current_frames().items():
+        name = threads.get(ident)
+        if name:
+            yield '%s:%s' % (ident, name), frame
+
+
+def format_stack(frame):
+    tb = traceback.format_stack(frame)
+    return ''.join(tb)
+
+
+def dump_stacks(output=print):
+    output('PID: %s' % os.getpid())
+    output('Threads')
+    for i, (name, frame) in enumerate(get_threads_frames()):
+        output('Thread #%d: %s' % (i, name))
+        output(format_stack(frame))
+    output('Greenlets')
+    for i, (name, frame) in enumerate(get_greenlets_frames()):
+        output('Greenlet #%d: %s' % (i, name))
+        output(format_stack(frame))
