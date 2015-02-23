@@ -27,9 +27,10 @@ def setup_config(args):
     ip = args.get('--ip')
     if args.get('--guess-external-ip'):
         if ip:
-            print('cannot combine --ip and --guess-external-ip')
-            return 1
+            sys.exit('Cannot combine --ip and --guess-external-ip')
         ip = guess_external_ip()
+        if ip is None:
+            sys.exit('Cannot guess external ip, aborting ...')
     if ip:
         config.set('container.ip', ip)
 
