@@ -1,14 +1,17 @@
-
-
 import socket
 import os
+
 from six.moves import urllib
+import netifaces
 
 
 def guess_external_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.connect(('google.com', 65056))
-    return s.getsockname()[0]
+    gateways = netifaces.gateways()
+    try:
+         ifnet = gateways['default'][netifaces.AF_INET][1]
+         return netifaces.ifaddresses(ifnet)[netifaces.AF_INET][0]['addr']
+    except (KeyError, IndexError):
+        return
 
 
 def bind_zmq_socket(sock, address, port=None):
