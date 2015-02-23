@@ -20,7 +20,8 @@ install_requires = [
     'setproctitle>=1.1.8',
     'six>=1.6',
     'Werkzeug>=0.9.4',
-    'blessings>=1.5.1'
+    'blessings>=1.5.1',
+    'netifaces==0.10.4'
 ]
 
 dependency_links = []
