@@ -60,7 +60,7 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
         self.should_stop = False
         self.greenlet = self.event_system.container.spawn(self.run)
 
-    def stop(self):
+    def stop(self, **kwargs):
         if not self.greenlet:
             return
         self.should_stop = True
@@ -75,9 +75,9 @@ class KombuEventSystem(BaseEventSystem):
         self.serializer = serializer
         self.consumers_by_queue = {}
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         for consumer in self.consumers_by_queue.values():
-            consumer.stop()
+            consumer.stop(**kwargs)
         self.consumers_by_queue.clear()
 
     @classmethod

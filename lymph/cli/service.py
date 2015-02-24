@@ -1,12 +1,14 @@
-import gevent
 import logging
 import os
+from functools import partial
 import signal
-import six
 import sys
-from setproctitle import setproctitle
 
-from lymph.utils import import_object
+import gevent
+from setproctitle import setproctitle
+import six
+
+from lymph.utils import import_object, dump_stacks
 from lymph.autoreload import set_source_change_callback
 from lymph.cli.base import Command
 from lymph.core.container import create_container
@@ -50,45 +52,59 @@ class InstanceCommand(Command):
     def run(self):
         debug = self.args.get('--debug')
 
-        container = create_container(self.config)
-        container.debug = debug
-        # Set global exception hook to send unhandled exception to the container's error_hook.
-        sys.excepthook = container.excepthook
+        self._setup_container(debug)
 
-        install_plugins(container, self.config.get('plugins', {}))
-        install_interfaces(container, self.config.get('interfaces', {}))
+        if debug:
+            self._start_backdoor_terminal()
+
+        self._register_signals()
+
+        self._set_process_title()
+
+        self.container.start(register=not self.args.get('--isolated', False))
+
+        if self.args.get('--reload'):
+            set_source_change_callback(self.container.stop)
+
+        self.container.join()
+
+    def _setup_container(self, debug):
+        self.container = create_container(self.config)
+        self.container.debug = debug
+        # Set global exception hook to send unhandled exception to the container's error_hook.
+        sys.excepthook = self.container.excepthook
+
+        install_plugins(self.container, self.config.get('plugins', {}))
+        install_interfaces(self.container, self.config.get('interfaces', {}))
 
         for cls_name in self.args.get('--interface', ()):
             cls = import_object(cls_name)
-            container.install(cls)
+            self.container.install(cls)
 
-        if debug:
-            from gevent.backdoor import BackdoorServer
-            backdoor = BackdoorServer(('127.0.0.1', 5005), locals={'container': container})
-            gevent.spawn(backdoor.serve_forever)
+    def _start_backdoor_terminal(self):
+        from gevent.backdoor import BackdoorServer
+        backdoor = BackdoorServer(('127.0.0.1', 5005), locals={'container': self.container, 'dump_stacks': dump_stacks})
+        gevent.spawn(backdoor.serve_forever)
 
-        def handle_signal():
-            logger.info('caught SIGINT/SIGTERM, pid=%s', os.getpid())
-            container.stop()
-            container.join()
-            sys.exit(0)
-        gevent.signal(signal.SIGINT, handle_signal)
-        gevent.signal(signal.SIGTERM, handle_signal)
+    def _register_signals(self):
+        gevent.signal(signal.SIGINT, self._handle_termination_signal, signal.SIGINT)
+        gevent.signal(signal.SIGTERM, self._handle_termination_signal, signal.SIGTERM)
+        gevent.signal(signal.SIGQUIT, self._handle_termination_signal, signal.SIGQUIT, prehook=partial(dump_stacks, output=sys.stderr.write))
 
-        setproctitle('%s (identity: %s, service_name: %s, endpoint: %s, config: %s)' % (
-            self.proctitle,
-            container.identity,
-            container.service_name,
-            container.endpoint,
+    def _handle_termination_signal(self, signalnum, prehook=None):
+        logger.info('caught %s, pid=%s', signal.getsignal(signalnum), os.getpid())
+        if prehook:
+            prehook()
+        self.container.stop(signalnum=signalnum)
+        self.container.join()
+        sys.exit(0)
+
+    def _set_process_title(self):
+        setproctitle('lymph-instance (identity: %s, endpoint: %s, config: %s)' % (
+            self.container.identity,
+            self.container.endpoint,
             self.config.source,
         ))
-
-        container.start(register=not self.args.get('--isolated', False))
-
-        if self.args.get('--reload'):
-            set_source_change_callback(container.stop)
-
-        container.join()
 
 
 class NodeCommand(InstanceCommand):

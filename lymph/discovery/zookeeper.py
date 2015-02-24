@@ -49,7 +49,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             raise RuntimeError('could not connect to zookeeper')
         logger.debug('connected to zookeeper (version=%s)', '.'.join(map(str, self.client.server_version())))
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         self.start_count -= 1
         if self.start_count != 0:
             return

@@ -29,9 +29,13 @@ class Process(object):
             self.cmd, env=self.env, close_fds=False)
         self._process = psutil.Process(self._popen.pid)
 
-    def stop(self):
+    def stop(self, **kwargs):
+        signalnum = kwargs.get('signalnum')
         try:
-            self._process.terminate()
+            if signalnum:
+                self._process.send_signal(signalnum)
+            else:
+                self._process.terminate()
             self._process.wait()
         except psutil.NoSuchProcess:
             pass
@@ -100,12 +104,12 @@ class Node(Interface):
                 p.start()
         self.container.spawn(self.watch_processes)
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         logger.info("waiting for all service processes to die ...")
         self.running = False
         for p in self.processes:
-            p.stop()
-        super(Node, self).on_stop()
+            p.stop(**kwargs)
+        super(Node, self).on_stop(**kwargs)
 
     def create_shared_sockets(self):
         for name, host, port in self._sockets:
