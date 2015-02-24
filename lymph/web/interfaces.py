@@ -54,7 +54,7 @@ class WebServiceInterface(Interface):
         self.wsgi_server = LymphWSGIServer(self.http_socket, self.application)
         self.wsgi_server.start()
 
-    def on_stop(self):
+    def on_stop(self, **kwargs):
         self.wsgi_server.stop()
         super(WebServiceInterface, self).on_stop()
 
