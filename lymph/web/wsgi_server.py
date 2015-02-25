@@ -14,11 +14,12 @@ class LymphWSGIHandler(WSGIHandler):
         # lymph logger format.
         length = self.response_length or '-'
         if self.time_finish:
-            delta = '%.6f' % (self.time_finish - self.time_start)
+            duration= (self.time_finish - self.time_start) * (10 ** 3)
+            delta = '%.3f' % duration
         else:
             delta = '-'
         client_address = self.client_address[0] if isinstance(self.client_address, tuple) else self.client_address
-        return '%s - - "%s" %s %s %s' % (
+        return 'client=%s - - "%s" status=%s length=%s duration=%s (seconds)' % (
             client_address or '-',
             getattr(self, 'requestline', ''),
             (getattr(self, 'status', None) or '000').split()[0],
