@@ -180,7 +180,7 @@ class ZmqRPCServer(object):
                 logger.exception('failed to send automatic NACK')
         finally:
             elapsed = (time.time() - start) * (10 ** 3)
-            logger.log(loglevel, '%s duration=%.3f', msg.subject, elapsed)
+            logger.log(loglevel, 'subject=%s duration=%.3f (seconds)', msg.subject, elapsed)
 
     def _get_loglevel(self, msg):
         return logging.DEBUG if msg.subject == 'lymph.ping' else logging.INFO
