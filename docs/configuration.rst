@@ -143,3 +143,11 @@ The ``_console`` handler writes messages to either stdout or the file given by
 
 
 .. _dictConfig: https://docs.python.org/2/library/logging.config.html#configuration-dictionary-schema
+
+
+Debugging Configuration
+-----------------------
+
+.. describe:: debug:backdoor_ip
+
+Specify which ip address the backdoor terminal should listen too.

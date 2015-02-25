@@ -79,7 +79,7 @@ def main(argv=None):
     config = setup_config(args) if command_cls.needs_config else None
 
     if config:
-        loglevel = args.get('--loglevel')
+        loglevel = args.get('--loglevel', 'ERROR')
         logfile = args.get('--logfile')
 
         lymph_logging.setup_logging(config, loglevel, logfile)

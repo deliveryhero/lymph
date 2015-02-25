@@ -74,3 +74,13 @@ def create_socket(host, family=socket.AF_INET, type=socket.SOCK_STREAM,
         os.set_inheritable(sock.fileno(), True)
 
     return sock
+
+
+def get_unused_port(host="127.0.0.1", family=socket.AF_INET, socktype=socket.SOCK_STREAM):
+    tempsock = socket.socket(family, socktype)
+    tempsock.bind((host, 0))
+    port = tempsock.getsockname()[1]
+    tempsock.close()
+    del tempsock
+    return port
+

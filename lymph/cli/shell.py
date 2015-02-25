@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import sys
+import telnetlib
 import logging
 
 from lymph.client import Client
@@ -12,20 +14,30 @@ class ShellCommand(Command):
     """
     Usage: lymph shell [options]
 
-    Description:
-        Opens a Python shell.
+    Options:
+      --remote=<name:identity-prefix>     Service instance name and identity.
 
     {COMMON_OPTIONS}
+
+    Example:
+
+        $ lymph shell --remote=echo:38428b071a6
+
     """
 
-    short_description = 'Open an interactive Python shell.'
-
-    def get_imported_objects(self, **kwargs):
-        client = Client.from_config(self.config, **kwargs)
-        return {'client': client, 'config': self.config}
+    short_description = 'Open an interactive Python shell locally or remotely.'
 
     def run(self, **kwargs):
-        imported_objects = self.get_imported_objects(**kwargs)
+        self.client = Client.from_config(self.config)
+
+        service_fullname = self.args.get('--remote')
+        if service_fullname:
+            return self._open_remote_shell(service_fullname)
+        else:
+            return self._open_local_shell()
+
+    def _open_local_shell(self):
+        imported_objects = {'client': self.client, 'config': self.config}
         try:
             import IPython
         except ImportError:
@@ -41,3 +53,28 @@ class ShellCommand(Command):
             import code
             code.interact(local=imported_objects)
 
+    def _open_remote_shell(self, service_fullname):
+        backdoor_endpoint = self._get_backdoor_endpoint(service_fullname)
+        if not backdoor_endpoint:
+            return "No backdoor setup for %s" % service_fullname
+
+        host, port = backdoor_endpoint.split(':')
+
+        self._open_telnet(host, port)
+
+    def _get_backdoor_endpoint(self, service_fullname):
+        try:
+            name, identity_prefix = service_fullname.split(':')
+        except ValueError:
+            sys.exit("Malformed argument it should be in the format 'name:identity'")
+        service = self.client.container.lookup(name)
+        instance = service.get_instance(identity_prefix)
+        if instance is None:
+            sys.exit('Unkown instance %s' % service_fullname)
+        return instance.backdoor_endpoint
+
+    def _open_telnet(self, host, port):
+        telnet = telnetlib.Telnet()
+        telnet.open(host, port)
+
+        telnet.interact()

@@ -12,6 +12,7 @@ from lymph.utils import import_object, dump_stacks
 from lymph.autoreload import set_source_change_callback
 from lymph.cli.base import Command
 from lymph.core.container import create_container
+from lymph.utils.sockets import get_unused_port
 
 
 logger = logging.getLogger(__name__)
@@ -82,9 +83,25 @@ class InstanceCommand(Command):
             self.container.install(cls)
 
     def _start_backdoor_terminal(self):
+        # XXX(Mouad): Imported here since this is still broken in Python3.x
         from gevent.backdoor import BackdoorServer
-        backdoor = BackdoorServer(('127.0.0.1', 5005), locals={'container': self.container, 'dump_stacks': dump_stacks})
+
+        try:
+            ip = self.config.get_raw('debug.backdoor_ip')
+        except KeyError:
+            ip = '127.0.0.1'
+        port = get_unused_port()
+        endpoint = '%s:%s' % (ip, port)
+
+        banner = "Welcome to backdoor Terminal of %s" % self.container.service_name
+
+        backdoor = BackdoorServer(
+            endpoint,
+            locals={'container': self.container, 'dump_stacks': dump_stacks},
+            banner=banner)
         gevent.spawn(backdoor.serve_forever)
+
+        self.container.backdoor_endpoint = endpoint
 
     def _register_signals(self):
         gevent.signal(signal.SIGINT, self._handle_termination_signal, signal.SIGINT)
