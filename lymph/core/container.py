@@ -43,6 +43,7 @@ class ServiceContainer(object):
         self.server = self.server_cls(self, ip, port)
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
+        self.backdoor_endpoint = None
         self.service_name = service_name
         self.fqdn = socket.getfqdn()
 
@@ -160,6 +161,7 @@ class ServiceContainer(object):
             'endpoint': self.endpoint,
             'identity': self.identity,
             'log_endpoint': self.log_endpoint,
+            'backdoor_endpoint': self.backdoor_endpoint,
             'fqdn': self.fqdn,
         }
 

@@ -23,11 +23,9 @@ class ServiceInstance(object):
         self.update(endpoint, **info)
         self.connection = None
 
-    def update(self, endpoint, log_endpoint=None, name=None, fqdn=None):
+    def update(self, endpoint, **info):
         self.endpoint = endpoint
-        self.log_endpoint = log_endpoint
-        self.name = name
-        self.fqdn = fqdn
+        self.__dict__.update(info)
 
     def connect(self):
         self.connection = self.container.connect(self.endpoint)
@@ -55,6 +53,11 @@ class Service(observables.Observable):
 
     def __len__(self):
         return len(self.instances)
+
+    def get_instance(self, identity_prefix):
+        for instance in six.itervalues(self.instances):
+            if instance.identity.startswith(identity_prefix):
+                return instance
 
     def identities(self):
         return list(self.instances.keys())
