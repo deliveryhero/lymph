@@ -81,8 +81,12 @@ class Node(Interface):
     def apply_config(self, config):
         for name, c in six.iteritems(config.get('instances', {})):
             self._services.append((name, c.get('command'), c.get('numprocesses', 1)))
-        for name, c in six.iteritems(config.get('sockets', {})):
-            self._sockets.append((name, c.get('host'), c.get('port')))
+
+        socket_config = config.get_raw('sockets', ())
+        if isinstance(socket_config, dict):
+            socket_config = socket_config.values()
+        for c in socket_config:
+            self._sockets.append((c.get('host'), c.get('port')))
 
     def on_start(self):
         self.create_shared_sockets()
@@ -112,7 +116,7 @@ class Node(Interface):
         super(Node, self).on_stop(**kwargs)
 
     def create_shared_sockets(self):
-        for name, host, port in self._sockets:
+        for host, port in self._sockets:
             sock = create_socket(
                 '%s:%s' % (host or self.container.server.ip, port), inheritable=True)
             self.sockets[port] = sock

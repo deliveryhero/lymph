@@ -3,7 +3,7 @@ import collections
 import six
 import yaml
 
-from lymph.utils import import_object
+from lymph.utils import import_object, Undefined
 
 
 class ConfigView(collections.Mapping):
@@ -16,6 +16,9 @@ class ConfigView(collections.Mapping):
 
     def __len__(self):
         return len(self.root.get_raw(self.path))
+
+    def get_raw(self, key, default=None):
+        return self.root.get_raw('%s.%s' % (self.path, key), default)
 
     def get(self, key, default=None):
         return self.root.get('%s.%s' % (self.path, key), default)
@@ -84,14 +87,21 @@ class Configuration(object):
             self._instances_cache[key] = instance
         return instance
 
-    def get_raw(self, key, default=None):
+    def get_raw(self, key, default=Undefined):
         path = key.split('.')
         values = self.values
         for bit in path[:-1]:
             values = values[bit]
             if values is None:
-                raise KeyError
-        return values[path[-1]]
+                if default is not Undefined:
+                    return default
+                raise KeyError(key)
+        try:
+            return values[path[-1]]
+        except KeyError:
+            if default is not Undefined:
+                return default
+            raise KeyError(key)
 
     def get(self, key, default=None):
         try:

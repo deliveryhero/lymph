@@ -141,8 +141,8 @@ class NodeCommand(InstanceCommand):
             'interfaces': {
                 'node': {
                     'class': 'lymph.services.node:Node',
-                    'instances': self.config.get('instances', {}),
-                    'sockets': self.config.get('sockets', {}),
+                    'instances': self.config.get_raw('instances', {}),
+                    'sockets': self.config.get_raw('sockets', {}),
                 },
             }
         })
