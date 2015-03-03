@@ -154,7 +154,7 @@ class ServiceContainer(object):
         return self.event_system.subscribe(handler, **kwargs)
 
     def unsubscribe(self, handler):
-        self.event_system.unsubscribe(self, handler)
+        self.event_system.unsubscribe(handler)
 
     def get_instance_description(self, service_type=None):
         return {

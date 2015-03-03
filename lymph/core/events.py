@@ -1,5 +1,6 @@
 import re
 import logging
+from uuid import uuid4
 
 from lymph.core.interfaces import Component
 from lymph.core import trace
@@ -42,17 +43,22 @@ class Event(object):
 
 
 class EventHandler(Component):
-    def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True):
+    def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True, once=False):
         self.func = func
         self.event_types = event_types
         self.sequential = sequential
         self.active = active
         self.interface = interface
+        self.once = once
+        self.unique_key = str(uuid4()) if once else None
         self._queue_name = queue_name or func.__name__
 
     @property
     def queue_name(self):
-        return '%s-%s' % (self.interface.name, self._queue_name)
+        if self.unique_key:
+            return '%s-%s-%s' % (self.interface.name, self._queue_name, self.unique_key)
+        else:
+            return '%s-%s' % (self.interface.name, self._queue_name)
 
     @queue_name.setter
     def queue_name(self, value):
