@@ -1,6 +1,7 @@
 import mock
 import six
 import unittest
+from types import FunctionType
 
 from kazoo.handlers.gevent import SequentialGeventHandler
 from kazoo.testing.harness import KazooTestHarness
@@ -29,6 +30,8 @@ def get_side_effect(mocks):
                 result = self.data[name]
                 if isinstance(result, Exception):
                     raise getattr(RemoteError, result.__class__.__name__)('', '')
+                if callable(result):
+                    return result(**kwargs)
                 return result
             except KeyError:
                 return
