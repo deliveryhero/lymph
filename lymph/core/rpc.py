@@ -99,7 +99,8 @@ class ZmqRPCServer(object):
         self.running = False
         for connection in list(self.connections.values()):
             connection.close()
-        self.recv_loop_greenlet.kill()
+        if self.recv_loop_greenlet:
+            self.recv_loop_greenlet.kill()
         self._close_sockets()
 
     def _close_sockets(self):
