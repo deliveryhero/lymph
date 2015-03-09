@@ -15,6 +15,7 @@ from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.exceptions import RemoteError
 from lymph.client import Client
+from lymph.utils.sockets import get_unused_port, create_socket
 
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
@@ -122,6 +123,19 @@ class MockRPCServer(ZmqRPCServer):
 
 class MockServiceContainer(ServiceContainer):
     server_cls = MockRPCServer
+
+    def __init__(self, *args, **kwargs):
+        super(MockServiceContainer, self).__init__(*args, **kwargs)
+        self.__shared_sockets = {}
+
+    def get_shared_socket_fd(self, port):
+        try:
+            return self.__shared_sockets[port].fileno()
+        except KeyError:
+            host_port = get_unused_port()
+            sock = create_socket('127.0.0.1:%s' % host_port, inheritable=True)
+            self.__shared_sockets[port] = sock
+            return sock.fileno()
 
 
 class LymphIntegrationTestCase(KazooTestHarness):
