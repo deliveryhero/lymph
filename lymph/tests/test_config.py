@@ -58,29 +58,53 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(config.get('b.c'), 2)
 
 
-class MockStorage(object):
+class ConfigurableThing(object):
+    def __init__(self, config):
+        self.config = config
 
     @classmethod
     def from_config(cls, config):
-        return MockStorage()
+        return cls(dict(config.items()))
+
+
+class CreateInstanceTest(unittest.TestCase):
+    config = Configuration({
+        "thing": {
+            "class": "%s:ConfigurableThing" % __name__,
+            "param": 41
+        },
+        "section": {
+            "thing": {
+                "class": "%s:ConfigurableThing" % __name__,
+                "param": 42
+            },
+        }
+    })
+
+    def test_create_instance(self):
+        obj = self.config.create_instance('thing')
+        self.assertIsInstance(obj, ConfigurableThing)
+        self.assertEqual(obj.config['param'], 41)
+
+    def test_create_instance_on_view(self):
+        config = self.config.get('section')
+        obj = config.create_instance('thing')
+        self.assertIsInstance(obj, ConfigurableThing)
+        self.assertEqual(obj.config['param'], 42)
 
 
 class GetInstanceTest(unittest.TestCase):
-
     config = Configuration({
-        "storage": {
-            "class": "lymph.tests.test_config:MockStorage",
+        "thing": {
+            "class": "%s:ConfigurableThing" % __name__,
         }
     })
 
     def test_creates_instance_based_on_configuration(self):
-        # TODO: Avoiding hickups with Travis run
-        from lymph.tests.test_config import MockStorage
-
-        instance = self.config.get_instance("storage")
-        self.assertIsInstance(instance, MockStorage)
+        instance = self.config.get_instance("thing")
+        self.assertIsInstance(instance, ConfigurableThing)
 
     def test_returns_the_same_instance_on_multiple_invocations(self):
-        instance_1 = self.config.get_instance("storage")
-        instance_2 = self.config.get_instance("storage")
+        instance_1 = self.config.get_instance("thing")
+        instance_2 = self.config.get_instance("thing")
         self.assertIs(instance_1, instance_2)

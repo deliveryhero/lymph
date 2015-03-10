@@ -1,18 +1,47 @@
 import collections
 
+import abc
 import six
 import yaml
 
 from lymph.utils import import_object, Undefined
 
 
-class ConfigView(collections.Mapping):
-    def __init__(self, config, path):
-        self.root = config
-        self.path = path
+@six.add_metaclass(abc.ABCMeta)
+class ConfigObject(collections.Mapping):
+    @abc.abstractmethod
+    def get(self, key, default=None):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def get_raw(self, key, default=None):
+        raise NotImplementedError()
+
+    @abc.abstractmethod
+    def set(self, key, value):
+        raise NotImplementedError()
 
     def __getitem__(self, key):
         return self.get(key)
+
+    def setdefault(self, key, default):
+        value = self.get(key)
+        if value is None:
+            self.set(key, default)
+            return default
+        return value
+
+    def create_instance(self, key, default_class=None, **kwargs):
+        config = self.get(key, {})
+        path = config.get('class', default_class)
+        cls = import_object(path)
+        return cls.from_config(config, **kwargs)
+
+
+class ConfigView(ConfigObject):
+    def __init__(self, config, path):
+        self.root = config
+        self.path = path
 
     def __len__(self):
         return len(self.root.get_raw(self.path))
@@ -26,17 +55,20 @@ class ConfigView(collections.Mapping):
     def set(self, key, value):
         return self.root.set('%s.%s' % (self.path, key), value)
 
-    def setdefault(self, key, value):
-        return self.root.setdefault('%s.%s' % (self.path, key), value)
-
     def __iter__(self):
         return iter(self.root.get_raw(self.path))
 
 
-class Configuration(object):
+class Configuration(ConfigObject):
     def __init__(self, values=None):
         self.values = values or {}
         self._instances_cache = {}
+
+    def __iter__(self):
+        return iter(self.values)
+
+    def __len__(self):
+        return len(self.values)
 
     @property
     def root(self):
@@ -65,19 +97,6 @@ class Configuration(object):
             else:
                 values = new_values
         values[path[-1]] = data
-
-    def setdefault(self, key, default):
-        value = self.get(key)
-        if value is None:
-            self.set(key, default)
-            return default
-        return value
-
-    def create_instance(self, key, default_class=None, **kwargs):
-        config = self.get(key, {})
-        path = config.get('class', default_class)
-        cls = import_object(path)
-        return cls.from_config(config, **kwargs)
 
     def get_instance(self, key, default_class=None, **kwargs):
         instance = self._instances_cache.get(key)
