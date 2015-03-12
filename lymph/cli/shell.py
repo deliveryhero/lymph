@@ -36,8 +36,11 @@ class ShellCommand(Command):
         else:
             return self._open_local_shell()
 
+    def get_imported_objects(self):
+        return {'client': self.client, 'config': self.config}
+
     def _open_local_shell(self):
-        imported_objects = {'client': self.client, 'config': self.config}
+        imported_objects = self.get_imported_objects()
         try:
             import IPython
         except ImportError:
