@@ -16,12 +16,14 @@ class ShellCommand(Command):
 
     Options:
       --remote=<name:identity-prefix>     Service instance name and identity.
+      --guess-external-ip, -g             Guess the public facing IP of this machine and
+                                          use it instead of the provided address.
 
     {COMMON_OPTIONS}
 
     Example:
 
-        $ lymph shell --remote=echo:38428b071a6
+        $ lymph shell --remote=echo:38428b071a6 --guess-external-ip
 
     """
 
