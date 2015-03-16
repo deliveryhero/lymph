@@ -142,12 +142,17 @@ class LymphIntegrationTestCase(KazooTestHarness):
     use_zookeeper = False
 
     def setUp(self):
+        super(LymphIntegrationTestCase, self).setUp()
+        self._containers = []
         if self.use_zookeeper:
             self.setup_zookeeper(handler=SequentialGeventHandler())
 
     def tearDown(self):
+        super(LymphIntegrationTestCase, self).tearDown()
         if self.use_zookeeper:
             self.teardown_zookeeper()
+        for container in self._containers:
+            container.stop()
 
     def create_client(self, **kwargs):
         container, interface = self.create_container(**kwargs)
@@ -161,6 +166,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
         if interface_cls:
             interface = container.install(interface_cls, interface_name=interface_name)
         container.start()
+        self._containers.append(container)
         return container, interface
 
 

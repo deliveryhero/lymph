@@ -1,7 +1,6 @@
 import unittest
 import gevent
 
-
 from lymph.cli.testing import CliIntegrationTestCase, CliTestMixin
 from lymph.core.decorators import rpc
 from lymph.core.interfaces import Interface
@@ -76,7 +75,6 @@ class ServiceCommandTests(CliIntegrationTestCase):
                 'class': 'lymph.tests.integration.test_cli:Upper',
             }
         }
-        self.cli_config['registry']['hosts'] = self.hosts
         command_greenlet = gevent.spawn(self.cli, ['instance'])
         client = self.create_client()
         gevent.sleep(1)  # FIXME: how can we wait for the instance to register?

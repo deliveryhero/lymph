@@ -101,8 +101,6 @@ class Interface(object):
         self.container = container
         self.components = {}
         self._name = name
-        for declaration in self.declarations:
-            declaration.install(self)
 
     @property
     def name(self):
@@ -116,7 +114,7 @@ class Interface(object):
         self.components[factory] = factory(self)
 
     def apply_config(self, config):
-        pass
+        self.config = config
 
     def handle_request(self, func_name, channel):
         self.methods[func_name].rpc_call(self, channel, **channel.request.body)
@@ -150,6 +148,8 @@ class Interface(object):
         return AsyncResultWrapper(self.container, handler, result)
 
     def on_start(self):
+        for declaration in self.declarations:
+            declaration.install(self)
         for component in self.components.values():
             component.on_start()
 

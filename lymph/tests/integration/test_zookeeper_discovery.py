@@ -1,3 +1,6 @@
+from kazoo.client import KazooClient
+from kazoo.handlers.gevent import SequentialGeventHandler
+
 from lymph.core.decorators import rpc
 from lymph.core.interfaces import Interface
 from lymph.discovery.zookeeper import ZookeeperServiceRegistry
@@ -18,7 +21,11 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
 
     def setUp(self):
         super(ZookeeperIntegrationTest, self).setUp()
-        self.registry = ZookeeperServiceRegistry(self.hosts)
+        client = KazooClient(
+            hosts=self.hosts,
+            handler=SequentialGeventHandler(),
+        )
+        self.registry = ZookeeperServiceRegistry(client)
         self.events = NullEventSystem()
 
         self.upper_container, interface = self.create_container(Upper, 'upper')

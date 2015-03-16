@@ -108,3 +108,25 @@ class GetInstanceTest(unittest.TestCase):
         instance_1 = self.config.get_instance("thing")
         instance_2 = self.config.get_instance("thing")
         self.assertIs(instance_1, instance_2)
+
+
+class GetDependencyTest(unittest.TestCase):
+    config = Configuration({
+        "dependencies": {
+            "thing": {
+                "class": "%s:ConfigurableThing" % __name__
+            },
+        },
+        "key": {
+            "client": "dep:thing",
+        }
+    })
+
+    def test_creates_instance_based_on_configuration(self):
+        instance = self.config.get_instance("key.client")
+        self.assertIsInstance(instance, ConfigurableThing)
+
+    def test_returns_the_same_instance_on_multiple_invocations(self):
+        instance_1 = self.config.get_instance("key.client")
+        instance_2 = self.config.get_instance("key.client")
+        self.assertIs(instance_1, instance_2)

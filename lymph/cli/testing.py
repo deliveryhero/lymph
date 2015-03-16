@@ -5,6 +5,8 @@ import os
 import tempfile
 import textwrap
 
+from kazoo.client import KazooClient
+from kazoo.handlers.gevent import SequentialGeventHandler
 from pkg_resources import load_entry_point
 from six import StringIO, integer_types
 import yaml
@@ -63,15 +65,19 @@ class CliTestMixin(object):
 
     _help_output = None
 
+    def setUp(self):
+        self.__clis = []
+        super(CliTestMixin, self).setUp()
+
     @property
     def cli(self):
-        if not hasattr(self, '_cli'):
-            self._cli = CliWrapper(self.cli_config)
-        return self._cli
+        cli = CliWrapper(self.cli_config)
+        self.__clis.append(cli)
+        return cli
 
     def tearDown(self):
-        if hasattr(self, '_cli'):
-            self._cli.tear_down()
+        for cli in self.__clis:
+            cli.tear_down()
         super(CliTestMixin, self).tearDown()
 
     def assert_lines_equal(self, cmd, lines, config=True):
@@ -115,17 +121,27 @@ class CliIntegrationTestCase(CliTestMixin, LymphIntegrationTestCase):
 
     def setUp(self):
         super(CliIntegrationTestCase, self).setUp()
-        self.registry = ZookeeperServiceRegistry(self.hosts)
+        client = KazooClient(
+            hosts=self.hosts,
+            handler=SequentialGeventHandler(),
+        )
+        self.registry = ZookeeperServiceRegistry(client)
         self.events = NullEventSystem()
 
         self.cli_config = {
             "registry": {
                 "class": "lymph.discovery.zookeeper:ZookeeperServiceRegistry",
-                "hosts": self.hosts,
+                "zkclient": 'dep:kazoo',
             },
             "event_system": {
                 "class": "lymph.events.null:NullEventSystem",
             },
+            "dependencies": {
+                "kazoo": {
+                    "class": "kazoo.client:KazooClient",
+                    "hosts": self.hosts,
+                }
+            }
         }
 
 
