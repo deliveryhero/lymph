@@ -1,6 +1,7 @@
 import collections
 
 import abc
+import copy
 import six
 import yaml
 
@@ -9,6 +10,7 @@ from lymph.utils import import_object, Undefined
 
 @six.add_metaclass(abc.ABCMeta)
 class ConfigObject(collections.Mapping):
+
     @abc.abstractmethod
     def get(self, key, default=None):
         raise NotImplementedError()
@@ -32,10 +34,35 @@ class ConfigObject(collections.Mapping):
         return value
 
     def create_instance(self, key, default_class=None, **kwargs):
-        config = self.get(key, {})
-        path = config.get('class', default_class)
-        cls = import_object(path)
-        return cls.from_config(config, **kwargs)
+        instance_config = self.get(key, {})
+        return self._create_instance(instance_config, default_class=default_class, **kwargs)
+
+    def _create_instance(self, instance_config, default_class=None, **kwargs):
+        clspath = instance_config.get('class', default_class)
+        cls = import_object(clspath)
+        if hasattr(cls, 'from_config'):
+            return cls.from_config(instance_config, **kwargs)
+        else:
+            instance_config = copy.deepcopy(instance_config)
+            del instance_config['class']
+            instance_config.update(kwargs)
+            return cls(**instance_config)
+
+    def get_instance(self, key, default_class=None, **kwargs):
+        instance_data = self.get_raw(key)
+        if isinstance(instance_data, six.string_types) and instance_data.startswith('dep:'):
+            _, dep_name = instance_data.split(':', 1)
+            return self._get_dependency(dep_name, **kwargs)
+
+        instance = self.root._instances_cache.get(key)
+        if not instance:
+            instance = self._create_instance(
+                instance_data, default_class=default_class, **kwargs)
+            self.root._instances_cache[key] = instance
+        return instance
+
+    def _get_dependency(self, key, **kwargs):
+        return self.root.get_instance('dependencies.%s' % key, **kwargs)
 
 
 class ConfigView(ConfigObject):
@@ -57,6 +84,12 @@ class ConfigView(ConfigObject):
 
     def __iter__(self):
         return iter(self.root.get_raw(self.path))
+
+    def __str__(self):
+        return '%s -> %r' % (self.path, self.root)
+
+    def __repr__(self):
+        return '%s(%r, %r)' % (self.__class__.__name__, self.root, self.path)
 
 
 class Configuration(ConfigObject):
@@ -81,7 +114,10 @@ class Configuration(ConfigObject):
     def load(self, f, sections=None):
         for section, values in six.iteritems(yaml.load(f)):
             if sections is None or section in sections:
-                self.values[section] = values
+                if section in self.values:
+                    self.values[section].update(values)
+                else:
+                    self.values[section] = values
 
     def update(self, data):
         self.values.update(data)
@@ -97,14 +133,6 @@ class Configuration(ConfigObject):
             else:
                 values = new_values
         values[path[-1]] = data
-
-    def get_instance(self, key, default_class=None, **kwargs):
-        instance = self._instances_cache.get(key)
-        if not instance:
-            instance = self.create_instance(
-                key, default_class=default_class, **kwargs)
-            self._instances_cache[key] = instance
-        return instance
 
     def get_raw(self, key, default=Undefined):
         path = key.split('.')
@@ -130,6 +158,9 @@ class Configuration(ConfigObject):
         if isinstance(value, dict):
             value = ConfigView(self, key)
         return value
+
+    def __str__(self):
+        return str(self.values)
 
     def __repr__(self):
         return "lymph.config.Configuration(values={values})".format(

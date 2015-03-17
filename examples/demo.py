@@ -20,6 +20,7 @@ class Client(lymph.Interface):
         print(self.echo.echo(text="DONE"), event.body)
 
     def apply_config(self, config):
+        super(Client, self).apply_config(config)
         self.delay = config.get('delay', .1)
 
     def loop(self):

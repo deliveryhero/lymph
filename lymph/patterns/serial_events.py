@@ -4,6 +4,7 @@ import collections
 
 import lymph
 import gevent
+from kazoo.handlers.gevent import SequentialGeventHandler
 
 from lymph.core.declarations import Declaration
 from lymph.core.events import Event
@@ -14,21 +15,25 @@ logger = logging.getLogger(__name__)
 
 
 def serial_event(*event_types, **kwargs):
+    if 'key' not in kwargs:
+        raise TypeError('key argument is required')
+
     def decorator(func):
         def factory(interface):
-            return SerialEventHandler(interface, func, event_types, **kwargs)
+            zkclient = interface.config.root.get_instance(
+                'components.SerialEventHandler.zkclient',
+                handler=SequentialGeventHandler())
+            return SerialEventHandler(zkclient, interface, func, event_types, **kwargs)
         return Declaration(factory)
     return decorator
 
 
 class SerialEventHandler(Component):
-    def __init__(self, interface, func, event_types, key=None, partition_count=12):
-        if key is None:
-            raise TypeError('serial_event() handlers must receive a `key` argument')
-        self.zk = interface.container.service_registry.client  # FIXME
+    def __init__(self, zkclient, interface, func, event_types, key, partition_count=12):
+        self.zk = zkclient
         self.interface = interface
         self.partition_count = partition_count
-        self.key_func = key
+        self.key = key
         self.consumer_func = func
         self.consumers = collections.OrderedDict()
         self.name = '%s.%s' % (interface.name, func.__name__)
@@ -46,22 +51,28 @@ class SerialEventHandler(Component):
         lymph.event(*event_types, queue_name=push_queue)(self.push).install(interface)
 
     def on_start(self):
+        super(SerialEventHandler, self).on_start()
         self.start()
+
+    def on_stop(self, **kwargs):
+        super(SerialEventHandler, self).on_stop(**kwargs)
+        self.running = False
 
     def get_queue_name(self, index):
         return '%s.%s' % (self.consumer_func.__name__, index)
 
     def push(self, interface, event):
-        key = str(self.key_func(event))
+        key = str(self.key(event))
         index = int(hashlib.md5(key).hexdigest(), 16) % self.partition_count
         logger.debug('PUBLISH %s %s', self.get_queue_name(index), event)
         self.interface.emit(self.get_queue_name(index), {'event': event.serialize()})
 
     def start(self):
+        self.running = True
         self.interface.container.spawn(self.loop)
 
     def loop(self):
-        while True:
+        while self.running:
             logger.info('starting partitioner')
             partitioner = self.zk.SetPartitioner(
                 path='/lymph/serial_event_partitions/%s' % self.name,

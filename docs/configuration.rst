@@ -3,16 +3,40 @@ Configuration
 
 .. code-block:: yaml
 
+    dependencies:
+        kazoo:
+            class: kazoo.client.KazooClient
+            hosts: 127.0.0.1:2181
+
     registry:
         class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
-        hosts: 127.0.0.1:2181
-    
+        zkclient: dep:kazoo
+
     event_system:
         class: lymph.events.kombu:KombuEventSystem
         transport: amqp
         hostname: 127.0.0.1
 
-You can find this sample configuration file in :file:`conf/service.yml`.
+You can find this sample configuration file in :file:`conf/sample-node.yml`.
+
+
+Dependencies
+------------
+
+Lymph supports a way to inject dependencies from configuration file.
+
+You start by defining a top level "dependencies" key that you want to inject
+and share between different components, this should be in the format
+
+.. code-block:: yaml
+
+     dependencies:
+         <name>:
+             class: <class path>
+             <extra class arguments>
+
+Then you can reference a dependency anywhere in your configuration by
+using the ``dep:<name>`` format, as shown in the example above.
 
 
 Container Configuration
@@ -56,10 +80,10 @@ Interface Configuration
 .. describe:: interfaces:<name>
 
     Mapping the name to instance which will be used to send requests
-    and discover this interface. 
+    and discover this interface.
     This name is also configuration that will be passed to the implementation's
     :meth:`lymph.Interface.apply_config()` method.
-    
+
 .. describe:: interfaces:<name>:class:
 
     The class that implements this interface, e.g. a subclass of :class:`lymph.Interface`.
@@ -81,15 +105,9 @@ ZooKeeper
 To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``.
 
 
-.. describe:: registry:hosts: 127.0.0.1:2181
+.. describe:: registry:zkclient:
 
-    A comma separated sequence of ZooKeeper hosts.
-
-
-.. describe:: registry:chroot: /lymph
-
-    A path that will be used as a prefix for all znodes managed by lymph.
-
+A reference to zookeeper client either as a dependency or a class.
 
 .. _ZooKeeper: http://zookeeper.apache.org/
 
@@ -116,6 +134,18 @@ Null
 ~~~~
 
 The null backend doesn't transport any events. Set ``class`` to ``lymph.events.null.NullEventSystem`` if that is what you want.
+
+
+Components Configuration
+------------------------
+
+Extra component can be defined under the conponents namespace e.g ``SerialEventHandler``.
+
+
+.. code-block:: yaml
+  components:
+      SerialEventHandler:
+             zkclient: dep:kazoo
 
 
 

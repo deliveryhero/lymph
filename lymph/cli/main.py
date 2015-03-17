@@ -17,7 +17,7 @@ def setup_config(args):
     })
 
     if 'LYMPH_NODE_CONFIG' in os.environ:
-        config.load_file(os.environ['LYMPH_NODE_CONFIG'], sections=['registry', 'event_system', 'plugins'])
+        config.load_file(os.environ['LYMPH_NODE_CONFIG'], sections=['registry', 'event_system', 'plugins', 'dependencies'])
 
     config_file = args.get('--config') or '.lymph.yml'
     config.load_file(config_file)

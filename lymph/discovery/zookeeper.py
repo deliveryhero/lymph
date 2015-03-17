@@ -15,28 +15,22 @@ from lymph.utils.logging import setup_logger
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_HOSTS = '127.0.0.1:2181'
 DEFAULT_CHROOT = '/lymph'
 
 
 class ZookeeperServiceRegistry(BaseServiceRegistry):
-    def __init__(self, hosts=DEFAULT_HOSTS, chroot=DEFAULT_CHROOT):
+    def __init__(self, zkclient):
         super(ZookeeperServiceRegistry, self).__init__()
-        self.chroot = chroot
-        self.client = KazooClient(
-            hosts=hosts,
-            handler=SequentialGeventHandler(),
-        )
+        self.client = zkclient
+        if self.client.chroot:
+            self.client.chroot = DEFAULT_CHROOT
         self.client.add_listener(self.on_kazoo_state_change)
         self.start_count = 0
 
     @classmethod
     def from_config(cls, config, **kwargs):
-        return cls(
-            hosts=config.get('hosts', DEFAULT_HOSTS),
-            chroot=config.get('chroot', DEFAULT_CHROOT),
-            **kwargs
-        )
+        zkclient = config.get_instance('zkclient', handler=SequentialGeventHandler())
+        return cls(zkclient=zkclient, **kwargs)
 
     def on_start(self, timeout=10):
         setup_logger('kazoo')
@@ -87,7 +81,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
 
     def discover(self):
         result = self.client.get_children_async(
-            path='%s/services' % self.chroot,
+            path='/services',
         )
         try:
             return list(result.get())
@@ -97,7 +91,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def lookup(self, service, watch=True, timeout=1):
         service_name = service.name
         result = self.client.get_children_async(
-            path='%s/services/%s' % (self.chroot, service_name),
+            path='/services/%s' % (service_name, ),
             watch=functools.partial(self.on_service_name_watch, service),
         )
         try:
@@ -122,11 +116,12 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         return service
 
     def _get_zk_path(self, service_name, identity):
-        return '%s/services/%s/%s' % (self.chroot, service_name, identity)
+        return '/services/%s/%s' % (service_name, identity)
 
     def register(self, service_name, timeout=1):
         path = self._get_zk_path(service_name, self.container.identity)
         value = json.dumps(self.container.get_instance_description())
+
         result = self.client.create_async(
             path,
             value.encode('utf-8'),
