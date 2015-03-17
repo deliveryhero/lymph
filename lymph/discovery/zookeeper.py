@@ -22,7 +22,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def __init__(self, zkclient):
         super(ZookeeperServiceRegistry, self).__init__()
         self.client = zkclient
-        if self.client.chroot:
+        if not self.client.chroot:
             self.client.chroot = DEFAULT_CHROOT
         self.client.add_listener(self.on_kazoo_state_change)
         self.start_count = 0
