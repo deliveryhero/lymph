@@ -1,5 +1,6 @@
 import textwrap
 import functools
+
 import six
 
 from lymph.core.decorators import rpc, RPCBase
@@ -93,13 +94,41 @@ class Proxy(Component):
             return method
 
 
+# XXX(Mouad): Some declaration are meant to be instantiated after
+# apply_config others are accessed immediately, this allow us to
+# lazily evaluate declaration and only when they are accessed, it's
+# still possible to load all declaration by call get_all(...).
+class LazyComponents(object):
+
+    def __init__(self, interface):
+        self._interface = interface
+        self._cache = {}
+
+    def __getitem__(self, declaration):
+        try:
+            component = self._cache[declaration]
+        except KeyError:
+            declaration.install(self._interface)
+            component = self._cache[declaration]
+        return component
+
+    def __setitem__(self, declaration, component):
+        self._cache[declaration] = component
+
+    def get_all(self):
+        for declaration in self._interface.declarations:
+            if declaration not in self._cache:
+                declaration.install(self._interface)
+        return self._cache.values()
+
+
 @six.add_metaclass(InterfaceBase)
 class Interface(object):
     register_with_coordinator = True
 
     def __init__(self, container, name=None):
         self.container = container
-        self.components = {}
+        self.components = LazyComponents(self)
         self._name = name
 
     @property
@@ -148,13 +177,11 @@ class Interface(object):
         return AsyncResultWrapper(self.container, handler, result)
 
     def on_start(self):
-        for declaration in self.declarations:
-            declaration.install(self)
-        for component in self.components.values():
+        for component in self.components.get_all():
             component.on_start()
 
     def on_stop(self, **kwargs):
-        for component in self.components.values():
+        for component in self.components.get_all():
             component.on_stop(**kwargs)
 
     def on_connect(self, endpoint):

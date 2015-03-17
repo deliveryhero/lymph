@@ -52,7 +52,7 @@ class ConfigObject(collections.Mapping):
         instance_data = self.get_raw(key)
         if isinstance(instance_data, six.string_types) and instance_data.startswith('dep:'):
             _, dep_name = instance_data.split(':', 1)
-            return self._get_dependency(dep_name, **kwargs)
+            return self.get_dependency(dep_name, **kwargs)
 
         instance = self.root._instances_cache.get(key)
         if not instance:
@@ -61,7 +61,7 @@ class ConfigObject(collections.Mapping):
             self.root._instances_cache[key] = instance
         return instance
 
-    def _get_dependency(self, key, **kwargs):
+    def get_dependency(self, key, **kwargs):
         return self.root.get_instance('dependencies.%s' % key, **kwargs)
 
 
