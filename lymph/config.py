@@ -43,13 +43,13 @@ class ConfigObject(collections.Mapping):
         if hasattr(cls, 'from_config'):
             return cls.from_config(instance_config, **kwargs)
         else:
-            instance_config = copy.deepcopy(instance_config)
+            instance_config = copy.deepcopy(dict(instance_config))
             del instance_config['class']
             instance_config.update(kwargs)
             return cls(**instance_config)
 
     def get_instance(self, key, default_class=None, **kwargs):
-        instance_data = self.get_raw(key)
+        instance_data = self.get(key)
         if isinstance(instance_data, six.string_types) and instance_data.startswith('dep:'):
             _, dep_name = instance_data.split(':', 1)
             return self.get_dependency(dep_name, **kwargs)
