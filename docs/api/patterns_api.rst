@@ -9,7 +9,10 @@ Pattern API
 
     :param event_types: event types that should be partitioned
     :param partition_count: number of queues that should be used to partition the events
-    :param key: a function that maps :class:`Events <lymph.core.events.Event>` to string keys
+    :param key: a function that maps :class:`Events <lymph.core.events.Event>` to string keys.
+        This function should have two arguments in its signature: the instance of
+        current :class:`Interface <lymph.Interface>` and instance of the handled 
+        :class:`Event <lymph.core.events.Event>` object.
     
     This event handler redistributes events into ``partition_count`` queues. 
     These queues are then partitioned over all service instances and consumed sequentially, 
