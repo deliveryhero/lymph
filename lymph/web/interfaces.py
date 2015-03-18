@@ -10,6 +10,7 @@ from lymph.core import trace
 from lymph.utils.logging import setup_logger
 from lymph.exceptions import SocketNotCreated
 from lymph.utils.sockets import create_socket
+from lymph.core.trace import Group
 from lymph.web.wsgi_server import LymphWSGIServer
 
 
@@ -38,6 +39,7 @@ class WebServiceInterface(Interface):
     def apply_config(self, config):
         super(WebServiceInterface, self).apply_config(config)
         self.http_port = config.get('port', self.default_http_port)
+        self.pool_size = config.get('wsgi_pool_size')
 
     def on_start(self):
         super(WebServiceInterface, self).on_start()
@@ -51,7 +53,7 @@ class WebServiceInterface(Interface):
             self.http_socket = create_socket(address)
         else:
             self.http_socket = create_socket('fd://%s' % socket_fd)
-        self.wsgi_server = LymphWSGIServer(self.http_socket, self.application)
+        self.wsgi_server = LymphWSGIServer(self.http_socket, self.application, spawn=Group(self.pool_size))
         self.wsgi_server.start()
 
     def on_stop(self, **kwargs):
@@ -59,7 +61,6 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).on_stop()
 
     def dispatch_request(self, request):
-        trace.set_id()
         logger.info('%s %s', request.method, request.path)
         urls = self.url_map.bind_to_environ(request.environ)
         request.urls = urls

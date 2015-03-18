@@ -39,7 +39,7 @@ class ServiceContainer(object):
 
     server_cls = ZmqRPCServer
 
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None):
+    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool_size=None):
         self.server = self.server_cls(self, ip, port)
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
@@ -51,7 +51,7 @@ class ServiceContainer(object):
         self.event_system = events
 
         self.error_hook = Hook()
-        self.pool = trace.Group()
+        self.pool = trace.Group(size=pool_size)
 
         self.installed_interfaces = {}
         self.installed_plugins = []

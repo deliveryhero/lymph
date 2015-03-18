@@ -1,7 +1,9 @@
-import gevent
-import gevent.pool
-import uuid
 import logging
+import uuid
+
+import gevent
+
+from lymph.contrib.gpool import NonBlockingPool
 
 
 logger = logging.getLogger(__name__)
@@ -14,20 +16,16 @@ def get_trace(greenlet=None):
     return greenlet._lymph_trace
 
 
-def spawn(*args, **kwargs):
-    greenlet = gevent.Greenlet(*args, **kwargs)
-    greenlet._lymph_trace = get_trace().copy()
-    greenlet.start()
-    return greenlet
+class GreenletWithTrace(gevent.Greenlet):
+
+    def __init__(self, *args, **kwargs):
+        super(GreenletWithTrace, self).__init__(*args, **kwargs)
+        self._lymph_trace = get_trace().copy()
 
 
-_spawn = spawn
+class Group(NonBlockingPool):
 
-class Group(gevent.pool.Group):
-    def spawn(self, *args, **kwargs):
-        g = _spawn(*args, **kwargs)
-        self.add(g)
-        return g
+    greenlet_cls = GreenletWithTrace
 
 
 def trace(**kwargs):

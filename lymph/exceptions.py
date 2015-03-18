@@ -62,3 +62,7 @@ class SocketNotCreated(Exception):
 
 class NotConnected(Exception):
     pass
+
+
+class ResourceExhausted(Exception):
+    pass
