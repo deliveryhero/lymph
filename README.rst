@@ -35,11 +35,17 @@ Development (of lymph itself)
 
     $ git clone https://github.com/deliveryhero/lymph.git
     $ cd lymph
-    $ pip install cython==0.20.1
-    $ pip install -r requirements/base.txt -r requirements/dev.txt
+    $ pip install -r requirements/base2.txt -r requirements/dev.txt
     $ pip install -e .
 
 Run tests with ``tox``, build documentation with ``fab docs``.
+
+.. note:: For Python 3
+   you need to install cython first
+   and use a different requirements file::
+    
+        $ pip install cython
+        $ pip install -r requirements/base3.txt -r requirements/dev.txt
 
 
 Running services
