@@ -9,10 +9,11 @@ before_install:
 
 install:
     - sudo apt-get install zookeeper
-    - pip install "cython==0.20.1"
-    - pip install -r requirements/base.txt
-    - pip install .
-
+    - export MAJOR_TRAVIS_PYTHON_VERSION=$(python -c "import sys;sys.stdout.write(str(sys.version_info.major))")
+    - if [ $MAJOR_TRAVIS_PYTHON_VERSION = "3" ]; then pip wheel cython==0.20.1; fi
+    - pip install
+      -r requirements/base${MAJOR_TRAVIS_PYTHON_VERSION}.txt
+      -r requirements/dev.txt
 
 before_script:
     - export ZOOKEEPER_PATH=/usr/share/java

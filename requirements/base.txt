@@ -1,15 +1,1 @@
-http://py-monotime.googlecode.com/archive/5fb3eb35a8e25140204e957bd010991bfe8758e3.zip#egg=monotime
-PyYAML==3.11
-Werkzeug==0.9.4
-docopt==0.6.1
-git+https://github.com/surfly/gevent.git#egg=gevent
-kazoo==1.3.1
-kombu==3.0.16
-msgpack-python==0.4.0
-psutil==2.1.1
-pyzmq==14.3.0
-redis==2.9.1
-setproctitle==1.1.8
-six==1.6.1
-blessings==1.5.1
-netifaces==0.10.4
+base2.txt
