@@ -71,6 +71,9 @@ Container Configuration
 
     the ZeroMQ endpoint that monitoring data should be sent to.
 
+.. describe:: container:pool_size:
+
+    Size of the pool of Greenlets, default is unlimited.
 
 .. _interface-config:
 
