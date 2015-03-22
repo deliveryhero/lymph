@@ -149,10 +149,12 @@ class LymphIntegrationTestCase(KazooTestHarness):
 
     def tearDown(self):
         super(LymphIntegrationTestCase, self).tearDown()
-        if self.use_zookeeper:
-            self.teardown_zookeeper()
         for container in self._containers:
             container.stop()
+        for container in self._containers:
+            container.join()
+        if self.use_zookeeper:
+            self.teardown_zookeeper()
 
     def create_client(self, **kwargs):
         container, interface = self.create_container(**kwargs)

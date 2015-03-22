@@ -32,38 +32,36 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         zkclient = KazooClient(self.hosts, handler=SequentialGeventHandler())
         return ZookeeperServiceRegistry(zkclient)
 
-    def tearDown(self):
-        self.upper_container.stop()
-        self.lymph_client.container.stop()
-        self.upper_container.join()
-        self.lymph_client.container.join()
-        super(ZookeeperIntegrationTest, self).tearDown()
-
     def test_lookup(self):
         service = self.lymph_client.container.lookup('upper')
         self.assertEqual(len(service), 1)
-        self.assertEqual(next(iter(service)).endpoint, self.upper_container.endpoint)
+        self.assertEqual(list(service)[0].endpoint, self.upper_container.endpoint)
 
     def test_upper(self):
-        reply = self.lymph_client.request(self.upper_container.endpoint, 'upper.upper', {'text': 'foo'})
+        reply = self.lymph_client.request('upper', 'upper.upper', {'text': 'foo'})
         self.assertEqual(reply.body, 'FOO')
 
     def test_ping(self):
-        reply = self.lymph_client.request(self.upper_container.endpoint, 'lymph.ping', {'payload': 42})
+        reply = self.lymph_client.request('upper', 'lymph.ping', {'payload': 42})
         self.assertEqual(reply.body, 42)
 
     def test_status(self):
-        reply = self.lymph_client.request(self.upper_container.endpoint, 'lymph.status', {})
+        reply = self.lymph_client.request('upper', 'lymph.status', {})
         self.assertEqual(reply.body, {
             'endpoint': self.upper_container.endpoint,
             'identity': self.upper_container.identity,
         })
 
     def test_connection_loss(self):
-        endpoints = [i.identity for i in self.lymph_client.container.lookup('upper')]
-        self.assertEqual(endpoints, [self.upper_container.identity])
+        service = self.lymph_client.container.lookup('upper')
+        self.assertEqual(
+            [i.identity for i in service],
+            [self.upper_container.identity],
+        )
         self.client.stop()
         self.client.start()
-        gevent.sleep(.1)
-        endpoints = [i.identity for i in self.lymph_client.container.lookup('upper')]
-        self.assertEqual(endpoints, [self.upper_container.identity])
+        gevent.sleep(.1)  # XXX: give zk a chance to reconnect
+        self.assertEqual(
+            [i.identity for i in service],
+            [self.upper_container.identity],
+        )
