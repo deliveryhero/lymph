@@ -1,3 +1,5 @@
+import gevent
+
 from kazoo.client import KazooClient
 from kazoo.handlers.gevent import SequentialGeventHandler
 
@@ -21,15 +23,14 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
 
     def setUp(self):
         super(ZookeeperIntegrationTest, self).setUp()
-        client = KazooClient(
-            hosts=self.hosts,
-            handler=SequentialGeventHandler(),
-        )
-        self.registry = ZookeeperServiceRegistry(client)
         self.events = NullEventSystem()
 
-        self.upper_container, interface = self.create_container(Upper, 'upper')
+        self.upper_container, interface = self.create_container(Upper, 'upper', registry=ZookeeperServiceRegistry(self.client))
         self.lymph_client = self.create_client()
+
+    def create_registry(self, **kwargs):
+        zkclient = KazooClient(self.hosts, handler=SequentialGeventHandler())
+        return ZookeeperServiceRegistry(zkclient)
 
     def tearDown(self):
         self.upper_container.stop()
@@ -57,3 +58,12 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
             'endpoint': self.upper_container.endpoint,
             'identity': self.upper_container.identity,
         })
+
+    def test_connection_loss(self):
+        endpoints = [i.identity for i in self.lymph_client.container.lookup('upper')]
+        self.assertEqual(endpoints, [self.upper_container.identity])
+        self.client.stop()
+        self.client.start()
+        gevent.sleep(.1)
+        endpoints = [i.identity for i in self.lymph_client.container.lookup('upper')]
+        self.assertEqual(endpoints, [self.upper_container.identity])

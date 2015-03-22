@@ -17,7 +17,7 @@ class StaticServiceRegistryHub(object):
             for container in containers:
                 service.update(container.identity, endpoint=container.endpoint)
         except KeyError:
-            raise LookupFailure(None)
+            raise LookupFailure()
         return service
 
     def register(self, service_name, container):

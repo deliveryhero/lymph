@@ -158,10 +158,18 @@ class LymphIntegrationTestCase(KazooTestHarness):
         container, interface = self.create_container(**kwargs)
         return Client(container)
 
-    def create_container(self, interface_cls=None, interface_name=None, **kwargs):
-        kwargs.setdefault('events', self.events)
-        kwargs.setdefault('registry', self.registry)
-        container = ServiceContainer(**kwargs)
+    def create_registry(self, **kwargs):
+        return self.registry
+
+    def create_event_system(self, **kwargs):
+        return self.events
+
+    def create_container(self, interface_cls=None, interface_name=None, events=None, registry=None, **kwargs):
+        if not events:
+            events = self.create_event_system(**kwargs)
+        if not registry:
+            registry = self.create_registry(**kwargs)
+        container = ServiceContainer(events=events, registry=registry, **kwargs)
         interface = None
         if interface_cls:
             interface = container.install(interface_cls, interface_name=interface_name)

@@ -26,6 +26,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             self.client.chroot = DEFAULT_CHROOT
         self.client.add_listener(self.on_kazoo_state_change)
         self.start_count = 0
+        self.registered_names = set()
 
     @classmethod
     def from_config(cls, config, **kwargs):
@@ -52,6 +53,8 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def on_kazoo_state_change(self, state):
         logger.info('kazoo connection state changed to %s', state)
         if state == KazooState.CONNECTED:
+            for name in self.registered_names:
+                self.container.spawn(self.register, name)
             for service in six.itervalues(self.cache):
                 self.container.spawn(self.lookup, service, timeout=None)
 
@@ -128,9 +131,11 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             ephemeral=True, makepath=True)
         # FIXME: result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
+        self.registered_names.add(service_name)
 
     def unregister(self, service_name, timeout=1):
         path = self._get_zk_path(service_name, self.container.identity)
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
+        self.registered_names.remove(servive_name)
