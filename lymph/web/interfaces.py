@@ -12,6 +12,7 @@ from lymph.exceptions import SocketNotCreated
 from lymph.utils.sockets import create_socket
 from lymph.core.trace import Group
 from lymph.web.wsgi_server import LymphWSGIServer
+from lymph.web.routing import HandledRule
 
 
 logger = logging.getLogger(__name__)
@@ -65,16 +66,12 @@ class WebServiceInterface(Interface):
         urls = self.url_map.bind_to_environ(request.environ)
         request.urls = urls
         try:
-            endpoint, args = urls.match()
-            if callable(endpoint):
-                handler = endpoint(self, request)
-                response = handler.dispatch(args)
+            rule, kwargs = request.urls.match(return_rule=True)
+            handler = self.get_handler(request, rule)
+            if hasattr(handler, "dispatch"):
+                response = handler.dispatch(kwargs)
             else:
-                try:
-                    handler = getattr(self, endpoint)
-                except AttributeError:
-                    raise  # FIXME
-                response = handler(request, **args)
+                response = handler(request, **kwargs)
         except HTTPException as e:
             response = e.get_response(request.environ)
         except Exception as e:
@@ -99,6 +96,15 @@ class WebServiceInterface(Interface):
                     raise
                 response = Response('', status=500)
         return response
+
+    def get_handler(self, request, rule):
+        if callable(rule.endpoint):
+            handler = rule.endpoint(self, request)
+        elif isinstance(rule, HandledRule):
+            handler = rule.handler(self, request)
+        else:
+            handler = getattr(self, rule.endpoint)
+        return handler
 
     def get_wsgi_application(self):
         return self.application
