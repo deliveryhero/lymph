@@ -73,6 +73,7 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
 
 class KombuEventSystem(BaseEventSystem):
     def __init__(self, connection, exchange_name, serializer=DEFAULT_SERIALIZER):
+        super(KombuEventSystem, self).__init__()
         self.connection = connection
         self.exchange = kombu.Exchange(exchange_name, 'topic', durable=True)
         self.serializer = serializer

@@ -44,6 +44,7 @@ class Event(object):
 
 class EventHandler(Component):
     def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True, once=False):
+        super(EventHandler, self).__init__()
         self.func = func
         self.event_types = event_types
         self.sequential = sequential

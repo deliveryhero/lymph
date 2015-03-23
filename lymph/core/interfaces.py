@@ -5,7 +5,7 @@ import six
 
 from lymph.core.decorators import rpc, RPCBase
 from lymph.exceptions import RemoteError, EventHandlerTimeout
-from lymph.core.declarations import Declaration
+from lymph.core.components import Component, Componentized, ComponentizedBase
 
 import gevent
 from gevent.event import AsyncResult
@@ -25,31 +25,17 @@ class AsyncResultWrapper(object):
             raise EventHandlerTimeout
 
 
-class Component(object):
-    def on_start(self):
-        pass
-
-    def on_stop(self, **kwargs):
-        pass
-
-
-class InterfaceBase(type):
+class InterfaceBase(ComponentizedBase):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
-        declarations = set()
         for base in bases:
             if isinstance(base, InterfaceBase):
                 methods.update(base.methods)
-                declarations.update(base.declarations)
         for name, value in six.iteritems(attrs):
-            if isinstance(value, Declaration):
-                value.name = name
-                declarations.add(value)
-            elif isinstance(value, RPCBase):
+            if isinstance(value, RPCBase):
                 methods[name] = value
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
-        new_cls.declarations = declarations
         return new_cls
 
 
@@ -94,53 +80,14 @@ class Proxy(Component):
             return method
 
 
-# XXX(Mouad): Some declaration are meant to be instantiated after
-# apply_config others are accessed immediately, this allow us to
-# lazily evaluate declaration and only when they are accessed, it's
-# still possible to load all declaration by call get_all(...).
-class LazyComponents(object):
-
-    def __init__(self, interface):
-        self._interface = interface
-        self._cache = {}
-
-    def __getitem__(self, declaration):
-        try:
-            component = self._cache[declaration]
-        except KeyError:
-            declaration.install(self._interface)
-            component = self._cache[declaration]
-        return component
-
-    def __setitem__(self, declaration, component):
-        self._cache[declaration] = component
-
-    def get_all(self):
-        for declaration in self._interface.declarations:
-            if declaration not in self._cache:
-                declaration.install(self._interface)
-        return self._cache.values()
-
-
 @six.add_metaclass(InterfaceBase)
-class Interface(object):
+class Interface(Componentized):
     register_with_coordinator = True
 
     def __init__(self, container, name=None):
+        super(Interface, self).__init__()
         self.container = container
-        self.components = LazyComponents(self)
-        self._name = name
-
-    @property
-    def name(self):
-        return self._name or self.__class__.__name__
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    def install(self, factory):
-        self.components[factory] = factory(self)
+        self.name = name or self.__class__.__name__
 
     def apply_config(self, config):
         self.config = config
@@ -176,22 +123,11 @@ class Interface(object):
 
         return AsyncResultWrapper(self.container, handler, result)
 
-    def on_start(self):
-        for component in self.components.get_all():
-            component.on_start()
-
-    def on_stop(self, **kwargs):
-        for component in self.components.get_all():
-            component.on_stop(**kwargs)
-
     def on_connect(self, endpoint):
         pass
 
     def on_disconnect(self, endpoint):
         pass
-
-    def stats(self):
-        return {}
 
 
 class DefaultInterface(Interface):

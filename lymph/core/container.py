@@ -1,5 +1,4 @@
 import json
-import gc
 import logging
 import os
 import sys
@@ -11,8 +10,9 @@ import gevent.pool
 import six
 
 from lymph.exceptions import RegistrationFailure, SocketNotCreated
+from lymph.core.components import Componentized
 from lymph.core.events import Event
-from lymph.core.monitoring import Monitor
+from lymph.core.monitoring.pusher import MonitorPusher
 from lymph.core.services import ServiceInstance, Service
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.interfaces import DefaultInterface
@@ -35,12 +35,12 @@ def create_container(config):
     return container
 
 
-class ServiceContainer(object):
+class ServiceContainer(Componentized):
 
     server_cls = ZmqRPCServer
 
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, logger=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool_size=None):
-        self.server = self.server_cls(self, ip, port)
+    def __init__(self, ip='127.0.0.1', port=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool_size=None):
+        super(ServiceContainer, self).__init__()
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.backdoor_endpoint = None
@@ -56,13 +56,18 @@ class ServiceContainer(object):
         self.installed_interfaces = {}
         self.installed_plugins = []
 
-        self.monitor = Monitor(self, endpoint=monitor_endpoint)
         self.debug = debug
 
-        self.install(DefaultInterface, interface_name='lymph')
+        self.add_component(registry)
         registry.install(self)
         if events:
+            self.add_component(events)
             events.install(self)
+        self.server = self.install(self.server_cls, ip=ip, port=port)
+        self.monitor = self.install(MonitorPusher, endpoint=monitor_endpoint, interval=5)
+        self.monitor.add_tags(service=self.service_name, host=self.fqdn)
+        self.metrics.add(self.raw_metrics)
+        self.install_interface(DefaultInterface, name='lymph')
 
     @classmethod
     def from_config(cls, config, **explicit_kwargs):
@@ -71,6 +76,7 @@ class ServiceContainer(object):
         kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
         kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
         kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
+
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
                 kwargs[key] = value
@@ -99,45 +105,20 @@ class ServiceContainer(object):
                 raise
         return self.pool.spawn(_inner)
 
-    def install(self, cls, interface_name=None, **kwargs):
-        obj = cls(self, **kwargs)
-        obj.name = interface_name
-        self.installed_interfaces[obj.name] = obj
+    def install_interface(self, cls, **kwargs):
+        interface = self.install(cls, **kwargs)
+        self.installed_interfaces[interface.name] = interface
         for plugin in self.installed_plugins:
-            plugin.on_interface_installation(obj)
-        return obj
+            plugin.on_interface_installation(interface)
+        return interface
 
     def install_plugin(self, cls, **kwargs):
-        plugin = cls(self, **kwargs)
+        plugin = self.install(cls, **kwargs)
         self.installed_plugins.append(plugin)
+        return plugin
 
-    def stats(self):
-        hub = gevent.get_hub()
-        threadpool, loop = hub.threadpool, hub.loop
-        s = {
-            'endpoint': self.endpoint,
-            'identity': self.identity,
-            'service': self.service_name,
-            'gevent': {
-                'threadpool': {
-                    'size': threadpool.size,
-                    'maxsize': threadpool.maxsize,
-                },
-                'active': loop.activecnt,
-                'pending': loop.pendingcnt,
-                'iteration': loop.iteration,
-                'depth': loop.depth,
-            },
-            'gc': {
-                'garbage': len(gc.garbage),
-                'collections': gc.get_count(),
-            },
-            'greenlets': len(self.pool),
-        }
-        s.update(self.server.stats)
-        for name, interface in six.iteritems(self.installed_interfaces):
-            s[name] = interface.stats()
-        return s
+    def raw_metrics(self):
+        yield 'greenlets.count', len(self.pool), {}
 
     def get_shared_socket_fd(self, port):
         fds = json.loads(os.environ.get('LYMPH_SHARED_SOCKET_FDS', '{}'))
@@ -167,13 +148,9 @@ class ServiceContainer(object):
 
     def start(self, register=True):
         logger.info('starting %s (%s) at %s (pid=%s)', self.service_name, ', '.join(self.service_types), self.endpoint, os.getpid())
-        self.monitor.start()
-        self.service_registry.on_start()
-        self.event_system.on_start()
-        self.server.start()
 
-        for service in six.itervalues(self.installed_interfaces):
-            service.on_start()
+        self.on_start()
+        self.monitor.add_tags(identity=self.identity)
 
         if register:
             for interface_name, service in six.iteritems(self.installed_interfaces):
@@ -186,12 +163,7 @@ class ServiceContainer(object):
                     self.stop()
 
     def stop(self, **kwargs):
-        for service in six.itervalues(self.installed_interfaces):
-            service.on_stop(**kwargs)
-        self.event_system.on_stop(**kwargs)
-        self.service_registry.on_stop(**kwargs)
-        self.monitor.stop(**kwargs)
-        self.server.stop(**kwargs)
+        self.on_stop()
         self.pool.kill()
 
     def join(self):

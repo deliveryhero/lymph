@@ -1,5 +1,7 @@
+from lymph.core.components import Component
 
-class Plugin(object):
+
+class Plugin(Component):
     def __init__(self, container, **config):
         self.container = container
         self.config = config

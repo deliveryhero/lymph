@@ -38,7 +38,6 @@ class RPCBase(collections.Callable):
         functools.update_wrapper(
             self, func, assigned=functools.WRAPPER_ASSIGNMENTS)
 
-
     @property
     def args(self):
         """Return original function argument spec skipping self.

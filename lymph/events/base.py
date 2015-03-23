@@ -1,9 +1,11 @@
-from abc import ABCMeta, abstractmethod
+import abc
 import six
 
+from lymph.core.components import Component
 
-@six.add_metaclass(ABCMeta)
-class BaseEventSystem(object):
+
+@six.add_metaclass(abc.ABCMeta)
+class BaseEventSystem(Component):
     @classmethod
     def from_config(cls, config, **kwargs):
         return cls(**kwargs)
@@ -23,6 +25,6 @@ class BaseEventSystem(object):
     def unsubscribe(self, container, handler):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def emit(self, container, event):
         raise NotImplementedError
