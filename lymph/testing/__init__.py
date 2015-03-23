@@ -174,7 +174,7 @@ class ClientInterface(Interface):
     service_type = 'client'
 
 
-class LymphServiceTestCase(RpcMockTestCase):
+class LymphServiceTestCase(unittest.TestCase):
     client_class = ClientInterface
     client_name = 'client'
     client_config = {}
@@ -209,7 +209,7 @@ class LymphServiceTestCase(RpcMockTestCase):
         self.network.join()
 
 
-class APITestCase(RpcMockTestCase):
+class APITestCase(unittest.TestCase):
 
     interface_name = None
 
