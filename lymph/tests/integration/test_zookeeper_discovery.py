@@ -25,7 +25,7 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
         super(ZookeeperIntegrationTest, self).setUp()
         self.events = NullEventSystem()
 
-        self.upper_container, interface = self.create_container(Upper, 'upper', registry=ZookeeperServiceRegistry(self.client))
+        self.upper_container, interface = self.create_container(Upper, 'upper')
         self.lymph_client = self.create_client()
 
     def create_registry(self, **kwargs):
@@ -58,8 +58,8 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
             [i.identity for i in service],
             [self.upper_container.identity],
         )
-        self.client.stop()
-        self.client.start()
+        self.upper_container.service_registry.client.stop()
+        self.upper_container.service_registry.client.start()
         gevent.sleep(.1)  # XXX: give zk a chance to reconnect
         self.assertEqual(
             [i.identity for i in service],
