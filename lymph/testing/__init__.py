@@ -149,19 +149,29 @@ class LymphIntegrationTestCase(KazooTestHarness):
 
     def tearDown(self):
         super(LymphIntegrationTestCase, self).tearDown()
-        if self.use_zookeeper:
-            self.teardown_zookeeper()
         for container in self._containers:
             container.stop()
+        for container in self._containers:
+            container.join()
+        if self.use_zookeeper:
+            self.teardown_zookeeper()
 
     def create_client(self, **kwargs):
         container, interface = self.create_container(**kwargs)
         return Client(container)
 
-    def create_container(self, interface_cls=None, interface_name=None, **kwargs):
-        kwargs.setdefault('events', self.events)
-        kwargs.setdefault('registry', self.registry)
-        container = ServiceContainer(**kwargs)
+    def create_registry(self, **kwargs):
+        return self.registry
+
+    def create_event_system(self, **kwargs):
+        return self.events
+
+    def create_container(self, interface_cls=None, interface_name=None, events=None, registry=None, **kwargs):
+        if not events:
+            events = self.create_event_system(**kwargs)
+        if not registry:
+            registry = self.create_registry(**kwargs)
+        container = ServiceContainer(events=events, registry=registry, **kwargs)
         interface = None
         if interface_cls:
             interface = container.install(interface_cls, interface_name=interface_name)

@@ -2,22 +2,21 @@ import six
 
 
 class RpcError(Exception):
-    def __init__(self, msg, *args, **kwargs):
-        self.message = msg or ''
+    def __repr__(self):
+        return '<%s: %s>' % (self.__class__.__name__, self)
+
+
+class RpcRequestError(RpcError):
+    def __init__(self, request, *args, **kwargs):
+        self.request = request
         super(RpcError, self).__init__(*args, **kwargs)
 
-    def __str__(self):
-        return self.message
 
-    def __repr__(self):
-        return '%s: %s' % (self.__class__.__name__, self)
-
-
-class Timeout(RpcError):
+class Timeout(RpcRequestError):
     pass
 
 
-class Nack(RpcError):
+class Nack(RpcRequestError):
     pass
 
 
@@ -25,7 +24,7 @@ class LookupFailure(RpcError):
     pass
 
 
-class RegistrationFailure(Exception):
+class RegistrationFailure(RpcError):
     pass
 
 
@@ -43,12 +42,7 @@ class _RemoteException(type):
 
 
 @six.add_metaclass(_RemoteException)
-class RemoteError(RpcError):
-
-    def __init__(self, request, message):
-        self.request = request
-        super(RemoteError, self).__init__(message)
-
+class RemoteError(RpcRequestError):
     @classmethod
     def from_reply(cls, request, reply):
         errtype = reply.body.get('type', cls.__name__)

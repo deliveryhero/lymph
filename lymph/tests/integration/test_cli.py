@@ -18,11 +18,6 @@ class RequestCommandTests(CliIntegrationTestCase):
         super(RequestCommandTests, self).setUp()
         self.upper_container, interface = self.create_container(Upper, 'upper')
 
-    def tearDown(self):
-        self.upper_container.stop()
-        self.upper_container.join()
-        super(RequestCommandTests, self).tearDown()
-
     def test_request(self):
         result = self.cli(['request', 'upper.upper', '{"text":"foo"}'])
         self.assertEqual(result.returncode, 0)
