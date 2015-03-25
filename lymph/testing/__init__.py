@@ -76,7 +76,7 @@ class MockServiceNetwork(object):
         self.next_port += 1
         registry = self.discovery_hub.create_registry()
         container = MockServiceContainer(registry=registry, events=self.events, **kwargs)
-        container.install(cls, interface_name=interface_name)
+        container.install_interface(cls, name=interface_name)
         self.service_containers[container.endpoint] = container
         container._mock_network = self
         return container
@@ -95,6 +95,10 @@ class MockServiceNetwork(object):
 
 
 class MockRPCServer(ZmqRPCServer):
+    def __init__(self, *args, **kwargs):
+        super(MockRPCServer, self).__init__(*args, **kwargs)
+        self._bind()
+
     def _bind(self):
         self.endpoint = 'mock://%s:%s' % (self.ip, self.port)
 
@@ -174,7 +178,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
         container = ServiceContainer(events=events, registry=registry, **kwargs)
         interface = None
         if interface_cls:
-            interface = container.install(interface_cls, interface_name=interface_name)
+            interface = container.install_interface(interface_cls, name=interface_name)
         container.start()
         self._containers.append(container)
         return container, interface

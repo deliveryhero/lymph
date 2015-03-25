@@ -1,16 +1,4 @@
-class Declaration(object):
-    def __init__(self, factory):
-        self.factory = factory
-
-    def install(self, interface):
-        component = self.factory(interface)
-        interface.components[self] = component
-        return component
-
-    def __get__(self, interface, cls):
-        if interface is None:
-            return self
-        return interface.components[self]
+from lymph.core.components import Declaration
 
 
 def proxy(*args, **kwargs):

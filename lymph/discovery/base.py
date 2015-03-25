@@ -1,19 +1,15 @@
-from abc import ABCMeta, abstractmethod
+import abc
 import six
 
 from lymph.core.services import Service
+from lymph.core.components import Component
 
 
-@six.add_metaclass(ABCMeta)
-class BaseServiceRegistry(object):
+@six.add_metaclass(abc.ABCMeta)
+class BaseServiceRegistry(Component):
     def __init__(self):
+        super(BaseServiceRegistry, self).__init__()
         self.cache = {}
-
-    def on_start(self):
-        pass
-
-    def on_stop(self, **kwargs):
-        pass
 
     def get(self, service_name, **kwargs):
         try:
@@ -27,18 +23,18 @@ class BaseServiceRegistry(object):
     def install(self, container):
         self.container = container
 
-    @abstractmethod
+    @abc.abstractmethod
     def discover(self):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def lookup(self, container, service, watch=False, timeout=1):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def register(self, container, service_name):
         raise NotImplementedError
 
-    @abstractmethod
+    @abc.abstractmethod
     def unregister(self, container, service_name):
         raise NotImplementedError

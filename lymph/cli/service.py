@@ -25,14 +25,14 @@ def install_plugins(container, plugins):
 
 
 def install_interfaces(container, interfaces):
-    for interface_name, instance_config in six.iteritems(interfaces):
+    for name, instance_config in six.iteritems(interfaces):
         try:
             cls_name = instance_config['class']
         except KeyError:
-            print("no instance class for '%s'" % interface_name)
+            print("no instance class for '%s'" % name)
             sys.exit(1)
         cls = import_object(cls_name)
-        instance = container.install(cls, interface_name=interface_name)
+        instance = container.install_interface(cls, name=name)
         instance.apply_config(instance_config)
 
 
@@ -80,7 +80,7 @@ class InstanceCommand(Command):
 
         for cls_name in self.args.get('--interface', ()):
             cls = import_object(cls_name)
-            self.container.install(cls)
+            self.container.install_interface(cls)
 
     def _start_backdoor_terminal(self):
         # XXX(Mouad): Imported here since this is still broken in Python3.x

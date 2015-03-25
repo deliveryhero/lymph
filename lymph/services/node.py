@@ -8,6 +8,7 @@ from gevent import subprocess
 from six.moves import range
 
 from lymph.core.interfaces import Interface
+from lymph.core.monitoring.metrics import Metrics
 from lymph.utils.sockets import create_socket
 
 
@@ -45,15 +46,17 @@ class Process(object):
         self.stop()
         self.start()
 
-    def stats(self):
+    def metrics(self):
+        if not self.is_running():
+            return
         try:
             memory = self._process.memory_info()
-            return {
-                'memory': {'rss': memory.rss, 'vms': memory.vms},
-                'cpu': self._process.cpu_percent(interval=2.0),
-            }
+            yield 'node.process.memory.rss', memory.rss, {}
+            yield 'node.process.memory.vms', memory.vms, {}
+            cpu = self._process.cpu_percent(interval=2.0)
+            yield 'node.process.cpu', cpu, {}
         except psutil.NoSuchProcess:
-            return {}
+            pass
 
 
 class Node(Interface):
@@ -66,17 +69,6 @@ class Node(Interface):
         self.running = False
         self._sockets = []
         self._services = []
-
-    def stats(self):
-        process_stats = []
-        for p in self.processes:
-            if not p.is_running():
-                continue
-            process_stats.append({
-                'command': p.cmd,
-                'stats': p.stats(),
-            })
-        return {'processes': process_stats}
 
     def apply_config(self, config):
         for name, c in six.iteritems(config.get('instances', {})):
@@ -101,9 +93,12 @@ class Node(Interface):
                 'LYMPH_SHARED_SOCKET_FDS': shared_fds,
                 'LYMPH_SERVICE_NAME': service_type,
             })
+            monitor = Metrics(service_type=service_type)
+            self.metrics.add(monitor)
             for i in range(num):
                 p = Process(cmd.split(' '), env=env)
                 self.processes.append(p)
+                monitor.add(p.metrics)
                 logger.info('starting %s', cmd)
                 p.start()
         self.container.spawn(self.watch_processes)

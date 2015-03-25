@@ -12,4 +12,4 @@ Contents:
     config_api
     web_api
     patterns_api
-
+    components_api

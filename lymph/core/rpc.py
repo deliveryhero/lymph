@@ -10,6 +10,7 @@ import gevent
 import zmq.green as zmq
 
 from lymph.core.channels import RequestChannel, ReplyChannel
+from lymph.core.components import Component
 from lymph.core.connection import Connection
 from lymph.core.messages import Message
 from lymph.core import trace
@@ -19,10 +20,11 @@ from lymph.exceptions import NotConnected
 logger = logging.getLogger(__name__)
 
 
-class ZmqRPCServer(object):
+class ZmqRPCServer(Component):
     """RPC server using ZeroMQ."""
 
     def __init__(self, container, ip='127.0.0.1', port=None):
+        super(ZmqRPCServer, self).__init__()
         self.container = container
         self.ip = ip
         self.port = port
@@ -34,9 +36,9 @@ class ZmqRPCServer(object):
         self.recv_loop_greenlet = None
         self.channels = {}
         self.connections = {}
+        self.running = False
 
-        # FIXME: Bind in start and not here.
-        self._bind()
+        self.metrics.add(self.raw_metrics)
 
     @property
     def identity(self):
@@ -91,11 +93,12 @@ class ZmqRPCServer(object):
         if socket:
             self.send_sock.disconnect(endpoint)
 
-    def start(self):
+    def on_start(self):
+        self._bind()
         self.running = True
         self.recv_loop_greenlet = self.container.spawn(self._recv_loop)
 
-    def stop(self, **kwargs):
+    def on_stop(self, **kwargs):
         self.running = False
         for connection in list(self.connections.values()):
             connection.close()
@@ -217,13 +220,7 @@ class ZmqRPCServer(object):
     def ping(self, address):
         return self.send_request(address, 'lymph.ping', {'payload': ''})
 
-    @property
-    def stats(self):
-        stats = {
-            'rpc': {
-                'requests': dict(self.request_counts)
-            },
-            'connections': [c.stats() for c in self.connections.values()],
-        }
-        self.request_counts.clear()
-        return stats
+    def raw_metrics(self):
+        yield 'rpc.connection_count', len(self.connections), {}
+        for subject, count in self.request_counts.items():
+            yield 'rpc.request_count', count, {'subject': subject}
