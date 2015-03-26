@@ -30,6 +30,7 @@ def serial_event(*event_types, **kwargs):
 
 class SerialEventHandler(Component):
     def __init__(self, zkclient, interface, func, event_types, key, partition_count=12):
+        super(SerialEventHandler, self).__init__()
         self.zk = zkclient
         self.interface = interface
         self.partition_count = partition_count
