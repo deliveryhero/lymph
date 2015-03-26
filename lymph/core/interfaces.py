@@ -119,8 +119,8 @@ class Interface(Componentized):
         channel = self.container.send_request(address, subject, body)
         return channel.get(timeout=timeout)
 
-    def emit(self, event_type, payload):
-        self.container.emit_event(event_type, payload)
+    def emit(self, event_type, payload, delay=0):
+        self.container.emit_event(event_type, payload, delay=delay)
 
     def proxy(self, address, **kwargs):
         return Proxy(self.container, address, **kwargs)
