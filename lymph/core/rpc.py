@@ -14,6 +14,8 @@ from lymph.core.components import Component
 from lymph.core.connection import Connection
 from lymph.core.messages import Message
 from lymph.core.monitoring import metrics
+from lymph.core.services import Service
+from lymph.core import services
 from lymph.core import trace
 from lymph.exceptions import NotConnected
 
@@ -24,9 +26,8 @@ logger = logging.getLogger(__name__)
 class ZmqRPCServer(Component):
     """RPC server using ZeroMQ."""
 
-    def __init__(self, container, ip='127.0.0.1', port=None):
-        super(ZmqRPCServer, self).__init__()
-        self.container = container
+    def __init__(self, ip='127.0.0.1', port=None, pool=None):
+        super(ZmqRPCServer, self).__init__(pool=pool)
         self.ip = ip
         self.port = port
 
@@ -39,6 +40,18 @@ class ZmqRPCServer(Component):
         self.connections = {}
         self.running = False
 
+    @classmethod
+    def from_config(cls, config, **kwargs):
+        if 'pool' in config:
+            pool = config.create_instance('pool', default_class='lymph.core.trace:Group')
+        else:
+            pool = None
+        return cls(
+            ip=config.get('ip', kwargs.get('ip', '127.0.0.1')),
+            port=config.get('port', kwargs.get('port')),
+            pool=pool,
+        )
+
     @property
     def identity(self):
         if self.endpoint:
@@ -46,7 +59,7 @@ class ZmqRPCServer(Component):
 
     def _bind(self, max_retries=2, retry_delay=0):
         if self.bound:
-            raise TypeError('this container is already bound (endpoint=%s)', self.endpoint)
+            raise TypeError('already bound (endpoint=%s)', self.endpoint)
         self.send_sock = self.zctx.socket(zmq.ROUTER)
         self.recv_sock = self.zctx.socket(zmq.ROUTER)
         port = self.port
@@ -75,7 +88,7 @@ class ZmqRPCServer(Component):
 
     def connect(self, endpoint):
         if endpoint not in self.connections:
-            logger.debug("connect(%s)", endpoint)
+            logger.debug("connecting to %s", endpoint)
             self.connections[endpoint] = Connection(self, endpoint)
             self.send_sock.connect(endpoint)
             gevent.sleep(0.02)
@@ -88,14 +101,14 @@ class ZmqRPCServer(Component):
             return
         del self.connections[endpoint]
         connection.close()
-        logger.debug("disconnect(%s)", endpoint)
+        logger.debug("disconnecting from %s", endpoint)
         if socket:
             self.send_sock.disconnect(endpoint)
 
     def on_start(self):
         self._bind()
         self.running = True
-        self.recv_loop_greenlet = self.container.spawn(self._recv_loop)
+        self.recv_loop_greenlet = self.spawn(self._recv_loop)
 
     def on_stop(self, **kwargs):
         self.running = False
@@ -109,33 +122,58 @@ class ZmqRPCServer(Component):
         self.recv_sock.close()
         self.send_sock.close()
 
-    def _send_message(self, address, msg):
+    def _on_service_instance_unavailable(self, instance, action=None):
+        self.disconnect(instance.endpoint)
+
+    def _send_message(self, endpoint, msg):
         if not self.running:
             # FIXME: This should raise an Error instead of failing silently.
-            logger.error('cannot send message (container not started): %s', msg)
+            logger.error('cannot send message (not started): %s', msg)
             return
-        service = self.container.lookup(address)
-        try:
-            connection = service.connect()
-        except NotConnected:
-            logger.error('cannot send message (no connection): %s', msg)
-            return
-        self.send_sock.send(connection.endpoint.encode('utf-8'), flags=zmq.SNDMORE)
+        connection = self.connect(endpoint)
+        self.send_sock.send(endpoint.encode('utf-8'), flags=zmq.SNDMORE)
         self.send_sock.send_multipart(msg.pack_frames())
-        logger.debug('-> %s to %s', msg, connection.endpoint)
+        logger.debug('-> %s to %s', msg, endpoint)
         connection.on_send(msg)
 
-    def send_request(self, address, subject, body, headers=None):
+    def prepare_headers(self, headers):
+        headers = headers or {}
+        headers.setdefault('trace_id', trace.get_id())
+        return headers
+
+    def _pick_endpoint(self, service):
+        if not isinstance(service, Service):
+            return service
+        service.observe(services.REMOVED, self._on_service_instance_unavailable)
+        choices = []
+        for instance in service:
+            try:
+                connection = self.connections[instance.endpoint]
+            except KeyError:
+                choices.append(instance.endpoint)
+                continue
+            if connection.is_alive():
+                choices.append(instance.endpoint)
+        if not choices:
+            raise NotConnected('Not connected to %s' % service.name)
+        return random.choice(choices)
+
+    def send_request(self, service, subject, body, headers=None):
         msg = Message(
             msg_type=Message.REQ,
             subject=subject,
             body=body,
             source=self.endpoint,
-            headers=self.container.prepare_headers(headers),
+            headers=self.prepare_headers(headers),
         )
         channel = RequestChannel(msg, self)
         self.channels[msg.id] = channel
-        self._send_message(address, msg)
+        try:
+            endpoint = self._pick_endpoint(service)
+        except NotConnected:
+            logger.error('cannot send message (no instance): %s', msg)
+        else:
+            self._send_message(endpoint, msg)
         return channel
 
     def send_reply(self, msg, body, msg_type=Message.REP, headers=None):
@@ -144,7 +182,7 @@ class ZmqRPCServer(Component):
             subject=msg.id,
             body=body,
             source=self.endpoint,
-            headers=self.container.prepare_headers(headers),
+            headers=self.prepare_headers(headers),
         )
         self._send_message(msg.source, reply_msg)
         return reply_msg
@@ -157,12 +195,13 @@ class ZmqRPCServer(Component):
         channel = ReplyChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
         try:
-            service = self.container.installed_interfaces[service_name]
+            # FIXME: this code should be in ServiceContainer
+            interface = self._parent_component.installed_interfaces[service_name]
         except KeyError:
             logger.warning('unsupported service type: %s', service_name)
             return
         try:
-            service.handle_request(func_name, channel)
+            interface.handle_request(func_name, channel)
         except Exception:
             logger.exception('Request error:')
             exc_info = sys.exc_info()
@@ -172,7 +211,7 @@ class ZmqRPCServer(Component):
                 'trace_id': trace.get_id(),
             }
             try:
-                self.container.error_hook(exc_info, extra=extra_info)
+                self.error_hook(exc_info, extra=extra_info)
             except:
                 logger.exception('error hook failure')
             finally:
@@ -194,7 +233,7 @@ class ZmqRPCServer(Component):
         connection = self.connect(msg.source)
         connection.on_recv(msg)
         if msg.is_request():
-            self.container.spawn(self.dispatch_request, msg)
+            self.spawn(self.dispatch_request, msg)
         elif msg.is_reply():
             try:
                 channel = self.channels[msg.subject]

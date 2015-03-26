@@ -4,7 +4,6 @@ from lymph.exceptions import LookupFailure
 
 class StaticServiceRegistryHub(object):
     def __init__(self):
-        self.containers = []
         self.registry = {}
 
     def create_registry(self):
@@ -13,18 +12,18 @@ class StaticServiceRegistryHub(object):
     def lookup(self, service, **kwargs):
         service_name = service.name
         try:
-            containers = self.registry[service_name]
-            for container in containers:
-                service.update(container.identity, endpoint=container.endpoint)
+            instances = self.registry[service_name]
+            for instance in instances:
+                service.update(instance.identity, endpoint=instance.endpoint)
         except KeyError:
             raise LookupFailure()
         return service
 
-    def register(self, service_name, container):
-        self.registry.setdefault(service_name, []).append(container)
+    def register(self, service_name, instance):
+        self.registry.setdefault(service_name, []).append(instance)
 
-    def unregister(self, service_name, container):
-        self.registry.get(service_name, []).remove(container)
+    def unregister(self, service_name, instance):
+        self.registry.get(service_name, []).remove(instance)
 
     def discover(self):
         return list(self.registry.keys())
@@ -41,8 +40,8 @@ class StaticServiceRegistry(BaseServiceRegistry):
     def lookup(self, service, **kwargs):
         return self.hub.lookup(service, **kwargs)
 
-    def register(self, service_name):
-        return self.hub.register(service_name, self.container)
+    def register(self, service_name, instance):
+        return self.hub.register(service_name, instance)
 
-    def unregister(self, service_name):
-        return self.hub.unregister(service_name, self.container)
+    def unregister(self, service_name, instance):
+        return self.hub.unregister(service_name, instance)

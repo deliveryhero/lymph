@@ -12,4 +12,4 @@ class Observable(object):
         if not isinstance(actions, (tuple, list)):
             actions = (actions,)
         for action in actions:
-            self.observers.setdefault(action, []).append(callback)
+            self.observers.setdefault(action, set()).add(callback)

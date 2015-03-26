@@ -73,14 +73,14 @@ Core API
 
     .. attribute:: body
 
-        dictionary with the payload of the message 
+        dictionary with the payload of the message
 
     .. attribute:: source
 
         id of the event source service
 
     .. method:: __getitem__(name)
-    
+
         gets an event parameter from the body
 
 
@@ -91,14 +91,6 @@ Core API
 
     Normally created by :meth:`ServiceContainer.lookup() <lymph.core.container.ServiceContainer.lookup()>`.
     Service objects represent lymph services.
-
-    .. method:: connect()
-
-        :return: :class:`lymph.core.connection.Connection` to an instance of this service.
-
-    .. method:: disconnect()
-
-        Disconnects all connections to instances of this service.
 
     .. method:: __iter__()
 
@@ -111,15 +103,16 @@ Core API
 
 .. class:: ServiceInstance()
 
+    Describes a single service instance.
     Normally created by :meth:`ServiceContainer.lookup() <lymph.core.container.ServiceContainer.lookup()>`
 
-    .. method:: connect()
+    .. attribute:: identity
 
-        :return: :class:`lymph.core.connection.Connection` to this service instance
+        The identity string of this service instance
 
-    .. method:: disconnect()
+    .. attribute:: endpoint
 
-        Disconnects from this service instance.
+        The rpc endpoint for this
 
 
 .. currentmodule:: lymph.core.connections

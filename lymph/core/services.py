@@ -5,7 +5,6 @@ import random
 import six
 
 from lymph.utils import observables
-from lymph.exceptions import NotConnected
 
 
 logger = logging.getLogger(__name__)
@@ -17,34 +16,30 @@ UPDATED = 'UPDATED'
 
 
 class ServiceInstance(object):
-    def __init__(self, container, endpoint=None, identity=None, **info):
-        self.container = container
+    def __init__(self, endpoint=None, identity=None, **info):
         self.identity = identity if identity else hashlib.md5(endpoint.encode('utf-8')).hexdigest()
-        self.update(endpoint, **info)
+        self.info = info
         self.connection = None
+        self.update(endpoint, **info)
 
     def update(self, endpoint, **info):
         self.endpoint = endpoint
         self.__dict__.update(info)
+        self.info.update(info)
 
-    def connect(self):
-        self.connection = self.container.connect(self.endpoint)
-        return self.connection
-
-    def disconnect(self):
-        if self.connection:
-            self.container.disconnect(self.endpoint)
-            self.connection = None
-
-    def is_alive(self):
-        return self.connection is None or self.connection.is_alive()
-
+    def serialize(self):
+        d = {
+            'endpoint': self.endpoint,
+            'identity': self.identity,
+            'log_endpoint': self.log_endpoint,
+            'fqdn': self.fqdn,
+        }
+        return d
 
 class Service(observables.Observable):
 
-    def __init__(self, container, name=None, instances=()):
+    def __init__(self, name=None, instances=()):
         super(Service, self).__init__()
-        self.container = container
         self.name = name
         self.instances = {i.endpoint: i for i in instances}
 
@@ -62,27 +57,12 @@ class Service(observables.Observable):
     def identities(self):
         return list(self.instances.keys())
 
-    def connect(self):
-        choices = [i for i in self if i.is_alive()]
-        if not choices:
-            logger.info("no live instance for %s", self.name)
-            choices = list(self.instances.values())
-        if not choices:
-            raise NotConnected()
-        instance = random.choice(choices)
-        return instance.connect()
-
-    def disconnect(self):
-        for instance in self:
-            instance.disconnect()
-
     def remove(self, identity):
         try:
             instance = self.instances.pop(identity)
         except KeyError:
             pass
         else:
-            instance.disconnect()
             self.notify_observers(REMOVED, instance)
 
     def update(self, identity, **info):
@@ -90,5 +70,5 @@ class Service(observables.Observable):
             self.instances[identity].update(**info)
             self.notify_observers(UPDATED, self.instances[identity])
         else:
-            instance = self.instances[identity] = ServiceInstance(self.container, **info)
+            instance = self.instances[identity] = ServiceInstance(**info)
             self.notify_observers(ADDED, instance)

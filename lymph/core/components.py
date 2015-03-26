@@ -1,7 +1,13 @@
+import sys
+import gevent
 import six
 
 
 class Component(object):
+    def __init__(self, error_hook=None, pool=None):
+        self._parent_component = None
+        self.__error_hook = error_hook
+        self.__pool = pool
 
     def on_start(self):
         pass
@@ -11,6 +17,34 @@ class Component(object):
 
     def _get_metrics(self):
         return []
+
+    @property
+    def pool(self):
+        if self.__pool is not None:
+            return self.__pool
+        if not self._parent_component:
+            raise TypeError("no parent component")
+        return self._parent_component.pool
+
+    @property
+    def error_hook(self):
+        if self.__error_hook:
+            return self.__error_hook
+        if not self._parent_component:
+            # FIXME
+            raise TypeError("no parent component")
+        return self._parent_component.error_hook
+
+    def spawn(self, func, *args, **kwargs):
+        def _inner():
+            try:
+                return func(*args, **kwargs)
+            except gevent.GreenletExit:
+                raise
+            except:
+                self.error_hook(sys.exc_info())
+                raise
+        return self.pool.spawn(_inner)
 
 
 class Declaration(object):
@@ -49,12 +83,13 @@ class ComponentizedBase(type):
 
 @six.add_metaclass(ComponentizedBase)
 class Componentized(Component):
-    def __init__(self):
-        super(Componentized, self).__init__()
+    def __init__(self, **kwargs):
+        super(Componentized, self).__init__(**kwargs)
         self._declared_components = {}
         self.__all_components = []
 
     def add_component(self, component):
+        component._parent_component = self
         self.__all_components.append(component)
 
     def install(self, factory, **kwargs):

@@ -2,6 +2,7 @@ import functools
 import json
 import logging
 import six
+import gevent
 
 from kazoo.client import KazooClient
 from kazoo.protocol.states import EventType, KazooState
@@ -19,14 +20,14 @@ DEFAULT_CHROOT = '/lymph'
 
 
 class ZookeeperServiceRegistry(BaseServiceRegistry):
-    def __init__(self, zkclient):
-        super(ZookeeperServiceRegistry, self).__init__()
+    def __init__(self, zkclient, pool=None):
+        super(ZookeeperServiceRegistry, self).__init__(pool=pool)
         self.client = zkclient
         if not self.client.chroot:
             self.client.chroot = DEFAULT_CHROOT
         self.client.add_listener(self.on_kazoo_state_change)
         self.start_count = 0
-        self.registered_names = set()
+        self.registered_names = {}
 
     @classmethod
     def from_config(cls, config, **kwargs):
@@ -53,10 +54,10 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def on_kazoo_state_change(self, state):
         logger.info('kazoo connection state changed to %s', state)
         if state == KazooState.CONNECTED:
-            for name in self.registered_names:
-                self.container.spawn(self.register, name)
+            for name, instance in self.registered_names.items():
+                self.spawn(self.register, name, instance)
             for service in six.itervalues(self.cache):
-                self.container.spawn(self.lookup, service, timeout=None)
+                self.spawn(self.lookup, service, timeout=None)
 
     def on_service_name_watch(self, service, event):
         try:
@@ -121,9 +122,9 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
     def _get_zk_path(self, service_name, identity):
         return '/services/%s/%s' % (service_name, identity)
 
-    def register(self, service_name, timeout=1):
-        path = self._get_zk_path(service_name, self.container.identity)
-        value = json.dumps(self.container.get_instance_description())
+    def register(self, service_name, instance, timeout=1):
+        path = self._get_zk_path(service_name, instance.identity)
+        value = json.dumps(instance.serialize())
 
         result = self.client.create_async(
             path,
@@ -131,11 +132,11 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             ephemeral=True, makepath=True)
         # FIXME: result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
-        self.registered_names.add(service_name)
+        self.registered_names[service_name] = instance
 
-    def unregister(self, service_name, timeout=1):
-        path = self._get_zk_path(service_name, self.container.identity)
+    def unregister(self, service_name, instance, timeout=1):
+        path = self._get_zk_path(service_name, instance.identity)
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
-        self.registered_names.remove(servive_name)
+        del self.registered_names[servive_name]

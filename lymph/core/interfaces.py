@@ -140,12 +140,6 @@ class Interface(Componentized):
 
         return AsyncResultWrapper(self.container, handler, result)
 
-    def on_connect(self, endpoint):
-        pass
-
-    def on_disconnect(self, endpoint):
-        pass
-
 
 class DefaultInterface(Interface):
     register_with_coordinator = False

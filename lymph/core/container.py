@@ -26,12 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 def create_container(config):
-    registry = config.create_instance('registry')
+    if 'registry' in config:
+        logger.warning('global `registry` configuration is deprecated. please use `container.registry` instead.')
+        config.set('container.registry', config.get_raw('registry'))
     event_system = config.create_instance('event_system')
     container = config.create_instance(
         'container',
         default_class='lymph.core.container:ServiceContainer',
-        registry=registry,
         events=event_system,
     )
     return container
@@ -41,19 +42,19 @@ class ServiceContainer(Componentized):
 
     server_cls = ZmqRPCServer
 
-    def __init__(self, ip='127.0.0.1', port=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool_size=None):
-        super(ServiceContainer, self).__init__()
+    def __init__(self, rpc=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
+        if pool is None:
+            pool = trace.Group()
+        super(ServiceContainer, self).__init__(error_hook=Hook(), pool=pool)
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.backdoor_endpoint = None
         self.service_name = service_name
         self.fqdn = socket.getfqdn()
 
+        self.server = rpc
         self.service_registry = registry
         self.event_system = events
-
-        self.error_hook = Hook()
-        self.pool = trace.Group(size=pool_size)
 
         self.installed_interfaces = {}
         self.installed_plugins = []
@@ -65,7 +66,6 @@ class ServiceContainer(Componentized):
 
         if self.service_registry:
             self.add_component(self.service_registry)
-            self.service_registry.install(self)
 
         if self.event_system:
             self.add_component(self.event_system)
@@ -73,7 +73,7 @@ class ServiceContainer(Componentized):
 
         self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
 
-        self.server = self.install(self.server_cls, ip=ip, port=port)
+        self.add_component(rpc)
 
         self.install_interface(DefaultInterface, name='lymph')
 
@@ -84,6 +84,10 @@ class ServiceContainer(Componentized):
         kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
         kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
         kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
+        kwargs['registry'] = config.create_instance('registry')
+
+        kwargs['rpc'] = config.create_instance('rpc', default_class=cls.server_cls, ip=kwargs.pop('ip', None), port=kwargs.pop('port', None))
+        kwargs['pool'] = config.create_instance('pool', default_class='lymph.core.trace:Group')
 
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:
@@ -101,17 +105,6 @@ class ServiceContainer(Componentized):
     @property
     def identity(self):
         return self.server.identity
-
-    def spawn(self, func, *args, **kwargs):
-        def _inner():
-            try:
-                return func(*args, **kwargs)
-            except gevent.GreenletExit:
-                raise
-            except:
-                self.error_hook(sys.exc_info())
-                raise
-        return self.pool.spawn(_inner)
 
     def install_interface(self, cls, **kwargs):
         interface = self.install(cls, **kwargs)
@@ -142,7 +135,7 @@ class ServiceContainer(Componentized):
     def unsubscribe(self, handler):
         self.event_system.unsubscribe(handler)
 
-    def get_instance_description(self, service_type=None):
+    def get_instance_description(self):
         return {
             'endpoint': self.endpoint,
             'identity': self.identity,
@@ -157,12 +150,14 @@ class ServiceContainer(Componentized):
         self.on_start()
         self.metrics_aggregator.add_tags(identity=self.identity)
 
+        self.instance = ServiceInstance(**self.get_instance_description())
+
         if register:
             for interface_name, service in six.iteritems(self.installed_interfaces):
                 if not service.register_with_coordinator:
                     continue
                 try:
-                    self.service_registry.register(interface_name)
+                    self.service_registry.register(interface_name, self.instance)
                 except RegistrationFailure:
                     logger.error("registration failed %s, %s", interface_name, service)
                     self.stop()
@@ -174,39 +169,24 @@ class ServiceContainer(Componentized):
     def join(self):
         self.pool.join()
 
-    def connect(self, endpoint):
-        for service in six.itervalues(self.installed_interfaces):
-            service.on_connect(endpoint)
-        return self.server.connect(endpoint)
-
-    def disconnect(self, endpoint, socket=False):
-        self.server.disconnect(endpoint, socket)
-
-        for service in six.itervalues(self.installed_interfaces):
-            service.on_disconnect(endpoint)
-
-    @staticmethod
-    def prepare_headers(headers):
-        headers = headers or {}
-        headers.setdefault('trace_id', trace.get_id())
-        return headers
-
     def lookup(self, address):
         if '://' not in address:
             return self.service_registry.get(address)
-        instance = ServiceInstance(self, address)
-        return Service(self, address, instances=[instance])
+        instance = ServiceInstance(address)
+        return Service(address, instances=[instance])
 
     def discover(self):
         return self.service_registry.discover()
 
     def emit_event(self, event_type, payload, headers=None, **kwargs):
-        headers = self.prepare_headers(headers)
+        headers = headers or {}
+        headers.setdefault('trace_id', trace.get_id())
         event = Event(event_type, payload, source=self.identity, headers=headers)
         self.event_system.emit(event, **kwargs)
 
     def send_request(self, address, subject, body, headers=None):
-        return self.server.send_request(address, subject, body, headers=None)
+        service = self.lookup(address)
+        return self.server.send_request(service, subject, body, headers=headers)
 
     def _get_metrics(self):
         for metric in super(ServiceContainer, self)._get_metrics():
