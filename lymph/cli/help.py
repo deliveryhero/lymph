@@ -1,9 +1,14 @@
 from lymph.cli.base import Command, get_command_classes, get_command_class, format_docstring
 
 
-HELP = 'Usage: lymph [options] <command> [<args>...]'
+HEADER = 'Usage: lymph [options] <command> [<args>...]'
 
-TEMPLATE = HELP + """
+HELP = HEADER + """
+  lymph help             display help overview
+  lymph help <command>   display command documentation
+"""
+
+TEMPLATE = HEADER + """
 
 {COMMON_OPTIONS}
 
@@ -64,7 +69,8 @@ class HelpCommand(Command):
             cmds = []
             for name, cls in classes.items():
                 cmds.append(_format_help(name, cls.short_description))
-            self._description = format_docstring(TEMPLATE % '\n'.join(cmds))
+            self._description = (format_docstring(TEMPLATE % '\n'.join(cmds)) +
+                "\n\nlymph help <command>     to display command specific help")
         return self._description
 
     def run(self):
