@@ -35,10 +35,16 @@ class ConfigObject(collections.Mapping):
 
     def create_instance(self, key, default_class=None, **kwargs):
         instance_config = self.get(key, {})
-        return self._create_instance(instance_config, default_class=default_class, **kwargs)
+        return self._create_instance(key, instance_config, default_class=default_class, **kwargs)
 
-    def _create_instance(self, instance_config, default_class=None, **kwargs):
+    def _create_instance(self, instance_key, instance_config, default_class=None, **kwargs):
+        if instance_config is None:
+            raise ValueError("no config available for %r" % instance_key)
+
         clspath = instance_config.get('class', default_class)
+        if clspath is None:
+            raise ValueError("no config available for %r (or no class configured)" % instance_key)
+
         cls = import_object(clspath)
         if hasattr(cls, 'from_config'):
             return cls.from_config(instance_config, **kwargs)
@@ -57,7 +63,7 @@ class ConfigObject(collections.Mapping):
         instance = self.root._instances_cache.get(key)
         if not instance:
             instance = self._create_instance(
-                instance_data, default_class=default_class, **kwargs)
+                key, instance_data, default_class=default_class, **kwargs)
             self.root._instances_cache[key] = instance
         return instance
 
