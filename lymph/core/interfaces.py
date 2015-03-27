@@ -54,6 +54,7 @@ class ProxyMethod(object):
 
 class Proxy(Component):
     def __init__(self, container, address, timeout=30, namespace='', error_map=None):
+        super(Proxy, self).__init__()
         self._container = container
         self._address = address
         self._method_cache = {}
