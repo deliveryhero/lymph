@@ -17,18 +17,22 @@ class InspectCommand(Command):
 
     """
 
-    short_description = 'Describe the available rpc methods of a service.'
+    short_description = 'Describes the RPC interface of a service'
 
     @handle_request_errors
     def run(self):
+        address = self.args['<address>']
         client = Client.from_config(self.config)
-        result = client.request(self.args['<address>'], 'lymph.inspect', {}, timeout=5).body
-        print()
+        result = client.request(address, 'lymph.inspect', {}, timeout=5).body
+
+        print('RPC interface of {}\n'.format(self.terminal.bold(address)))
 
         for method in sorted(result['methods'], key=lambda m: m['name']):
-            print("rpc {name}({params})\n    {help}\n".format(
-                name=self.terminal.red(method['name']),
-                params=', '.join(method['params']),
-                help='\n    '.join(textwrap.wrap(method['help'], 70)),
-            ))
+            print(
+                "rpc {name}({params})\n\t {help}\n".format(
+                    name=self.terminal.red(method['name']),
+                    params=self.terminal.yellow(', '.join(method['params'])),
+                    help='\n    '.join(textwrap.wrap(method['help'], 70)),
+                )
+            )
 
