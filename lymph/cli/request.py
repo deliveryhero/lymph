@@ -1,36 +1,19 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import functools
 import json
-import textwrap
-import time
 import logging
 import math
 import sys
+import time
 
 from gevent.pool import Pool
 
-import lymph
 from lymph.client import Client
-from lymph.exceptions import LookupFailure, Timeout
-from lymph.cli.base import Command
+from lymph.exceptions import Timeout
+from lymph.cli.base import Command, handle_request_errors
 
 
 logger = logging.getLogger(__name__)
-
-
-def handle_request_errors(func):
-    @functools.wraps(func)
-    def decorated(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except LookupFailure as e:
-            logger.error("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
-            return 1
-        except Timeout:
-            logger.error("The request timed out. Either the service is not available or busy.")
-            return 1
-    return decorated
 
 
 class RequestCommand(Command):
@@ -87,7 +70,7 @@ class RequestCommand(Command):
         n_success = len(timings)
         n_timeout = len(timeouts)
         avg = sum(timings) / n_success
-        stddev = math.sqrt(sum((t - avg)**2 for t in timings)) / n_success
+        stddev = math.sqrt(sum((t - avg) ** 2 for t in timings)) / n_success
 
         print()
         print('Requests per second:   %8.2f Hz  (#req=%s)' % (n_success / total_time, n_success))
@@ -127,108 +110,3 @@ class RequestCommand(Command):
         else:
             return self._run_many_requests(request, N, C)
 
-
-
-class InspectCommand(Command):
-    """
-    Usage: lymph inspect [--ip=<address> | --guess-external-ip | -g] <address> [options]
-
-    Options:
-      --ip=<address>               Use this IP for all sockets.
-      --guess-external-ip, -g      Guess the public facing IP of this machine and
-                                   use it instead of the provided address.
-
-    {COMMON_OPTIONS}
-
-    """
-
-    short_description = 'Describe the available rpc methods of a service.'
-
-    @handle_request_errors
-    def run(self):
-        client = Client.from_config(self.config)
-        result = client.request(self.args['<address>'], 'lymph.inspect', {}, timeout=5).body
-        print()
-
-        for method in sorted(result['methods'], key=lambda m: m['name']):
-            print("rpc {name}({params})\n    {help}\n".format(
-                name=self.terminal.red(method['name']),
-                params=', '.join(method['params']),
-                help='\n    '.join(textwrap.wrap(method['help'], 70)),
-            ))
-
-
-class DiscoverCommand(Command):
-    """
-    Usage: lymph discover [--instances] [--ip=<address> | --guess-external-ip | -g] [--only-running] [options]
-
-    Show available services
-
-    Options:
-
-      --instances                  Show service instances.
-      --ip=<address>               Use this IP for all sockets.
-      --guess-external-ip, -g      Guess the public facing IP of this machine and
-                                   use it instead of the provided address.
-      --only-running               Show only running services.
-
-    {COMMON_OPTIONS}
-
-    """
-
-    short_description = 'Show available services.'
-
-    def run(self):
-        client = Client.from_config(self.config)
-        services = client.container.discover()
-        if services:
-            for interface_name in sorted(services):
-                interface_instances = client.container.lookup(interface_name)
-                if not interface_instances and self.args.get('--only-running'):
-                    continue
-                print(u"%s [%s]" % (self.terminal.red(interface_name), len(interface_instances)))
-                if self.args.get('--instances'):
-                    instances = sorted(interface_instances, key=lambda d: d.identity)
-                    for i, d in enumerate(interface_instances):
-                        prefix = u'└─' if i == len(instances) - 1 else u'├─'
-                        print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
-        else:
-            print(u"No registered services found")
-
-
-class SubscribeCommand(Command):
-    """
-    Usage: lymph subscribe <event-type>... [options]
-
-    {COMMON_OPTIONS}
-    """
-
-    short_description = 'Prints events to stdout.'
-
-    def run(self):
-        event_type = self.args.get('<event-type>')
-
-        class Subscriber(lymph.Interface):
-            @lymph.event(*event_type)
-            def on_event(self, event):
-                print('%s: %r' % (event.evt_type, event.body))
-
-        client = Client.from_config(self.config, interface_cls=Subscriber)
-        client.container.join()
-
-
-class EmitCommand(Command):
-    """
-    Usage: lymph emit <event-type> [<body>] [options]
-
-    {COMMON_OPTIONS}
-    """
-
-    short_description = 'Manually emits an event.'
-
-    def run(self):
-        event_type = self.args.get('<event-type>')
-        body = json.loads(self.args.get('<body>'))
-
-        client = Client.from_config(self.config)
-        client.emit(event_type, body)
