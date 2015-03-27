@@ -5,7 +5,7 @@ Configuration
 
     dependencies:
         kazoo:
-            class: kazoo.client.KazooClient
+            class: kazoo.client:KazooClient
             hosts: 127.0.0.1:2181
 
     registry:
