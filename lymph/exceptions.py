@@ -60,3 +60,7 @@ class NotConnected(Exception):
 
 class ResourceExhausted(Exception):
     pass
+
+
+class ConfigurationError(Exception):
+    pass

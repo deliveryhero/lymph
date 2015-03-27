@@ -6,6 +6,7 @@ import six
 import yaml
 
 from lymph.utils import import_object, Undefined
+from lymph.exceptions import ConfigurationError
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -37,13 +38,13 @@ class ConfigObject(collections.Mapping):
         instance_config = self.get(key, {})
         return self._create_instance(key, instance_config, default_class=default_class, **kwargs)
 
-    def _create_instance(self, instance_key, instance_config, default_class=None, **kwargs):
+    def _create_instance(self, key, instance_config, default_class=None, **kwargs):
         if instance_config is None:
-            raise ValueError("no config available for %r" % instance_key)
+            raise ConfigurationError("no config available for %r" % key)
 
         clspath = instance_config.get('class', default_class)
         if clspath is None:
-            raise ValueError("no config available for %r (or no class configured)" % instance_key)
+            raise ConfigurationError("no config available for %r (or no class configured)" % key)
 
         cls = import_object(clspath)
         if hasattr(cls, 'from_config'):
