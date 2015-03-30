@@ -71,7 +71,7 @@ def main(argv=None):
     try:
         command_cls = get_command_class(name)
     except KeyError:
-        print("'%s' is not a valid lymph command. See 'lymph list' or 'lymph --help'." % name)
+        print("'%s' is not a valid lymph command. See 'lymph list' or 'lymph help'." % name)
         return 1
     command_args = docopt.docopt(command_cls.get_help(), [name] + argv)
     args.update(command_args)
