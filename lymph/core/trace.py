@@ -36,7 +36,7 @@ def set_id(trace_id=None):
     tid = trace_id or uuid.uuid4().hex
     trace(lymph_trace_id=tid)
     if trace_id is None:
-        logger.info('starting trace')
+        logger.debug('starting trace')
     return tid
 
 
