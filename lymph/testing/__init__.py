@@ -63,6 +63,21 @@ class RpcMockTestCase(unittest.TestCase):
         return self.rpc_mock.mock_calls
 
 
+class EventMockTestCase(unittest.TestCase):
+    def setUp(self):
+        super(EventMockTestCase, self).setUp()
+        self.event_patch = mock.patch.object(ServiceContainer, 'emit_event')
+        self.event_mock = self.event_patch.start()
+
+    def tearDown(self):
+        super(EventMockTestCase, self).tearDown()
+        self.event_patch.stop()
+
+    @property
+    def events(self):
+        return self.event_mock.mock_calls
+
+
 class MockServiceNetwork(object):
     def __init__(self):
         self.service_containers = {}
