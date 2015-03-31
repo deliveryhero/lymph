@@ -161,3 +161,7 @@ class DefaultInterface(Interface):
         return {
             'methods': methods,
         }
+
+    @rpc()
+    def get_metrics(self):
+        return list(self.container.metrics)
