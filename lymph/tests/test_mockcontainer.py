@@ -109,5 +109,6 @@ class BasicMockTest(unittest.TestCase):
         methods = proxy.inspect()['methods']
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
-            'lymph.status', 'lymph.inspect', 'lymph.ping', 'upper.indirect_upper'
+            'lymph.status', 'lymph.inspect', 'lymph.ping', 'upper.indirect_upper',
+            'lymph.get_metrics',
         ]))

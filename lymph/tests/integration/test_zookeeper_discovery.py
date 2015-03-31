@@ -52,6 +52,10 @@ class ZookeeperIntegrationTest(LymphIntegrationTestCase):
             'identity': self.upper_container.identity,
         })
 
+    def test_get_metrics(self):
+        reply = self.lymph_client.request('upper', 'lymph.get_metrics', {})
+        self.assertIsInstance(reply.body, list)
+
     def test_connection_loss(self):
         service = self.lymph_client.container.lookup('upper')
         self.assertEqual(
