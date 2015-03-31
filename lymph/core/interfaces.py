@@ -1,10 +1,11 @@
 import textwrap
 import functools
+import collections
 
 import six
 
 from lymph.core.decorators import rpc, RPCBase
-from lymph.exceptions import RemoteError, EventHandlerTimeout
+from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 from lymph.core.components import Component, Componentized, ComponentizedBase
 
 import gevent
@@ -62,14 +63,27 @@ class Proxy(Component):
         self._namespace = namespace or address
         self._error_map = error_map or {}
 
+        self.timeout_counts = 0
+        self.exception_counts = collections.Counter()
+
+        self.metrics.add_tags(name=address)
+        self.metrics.add(self.raw_metrics)
+
     def _call(self, __name, **kwargs):
         channel = self._container.send_request(self._address, __name, kwargs)
         try:
             return channel.get(timeout=self._timeout).body
         except RemoteError as e:
             error_type = str(e.__class__)
+            self.exception_counts[e.__class__.__name__] += 1
             if error_type in self._error_map:
                 raise self._error_map[error_type]()
+            raise
+        except Timeout:
+            self.timeout_counts += 1
+            raise
+        except Nack:
+            self.exception_counts['nack'] += 1
             raise
 
     def __getattr__(self, name):
@@ -79,6 +93,11 @@ class Proxy(Component):
             method = ProxyMethod(functools.partial(self._call, '%s.%s' % (self._namespace, name)))
             self._method_cache[name] = method
             return method
+
+    def raw_metrics(self):
+        yield 'exception.timeout_count', self.timeout_counts, {}
+        for exc_name, count in self.exception_counts.items():
+            yield 'exception.error_count', count, {'subject': exc_name}
 
 
 @six.add_metaclass(InterfaceBase)

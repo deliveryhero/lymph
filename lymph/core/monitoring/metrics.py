@@ -21,3 +21,6 @@ class Metrics(object):
             for name, value, tags in metrics():
                 tags.update(self.tags)
                 yield name, value, tags
+
+    def __repr__(self):
+        return '<%s tags=%r metrics=%r>' % (self.__class__.__name__, self.tags, self.__metrics)
