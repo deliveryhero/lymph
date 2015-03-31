@@ -1,4 +1,4 @@
-from gevent.pool import Pool
+from gevent.pool import Pool, Group
 
 from lymph.exceptions import ResourceExhausted
 
@@ -32,7 +32,7 @@ class NonBlockingPool(Pool):
         if acquired is False:
             raise RejectExcecutionError('No more resource available to run %r' % greenlet)
         try:
-            super(NonBlockingPool, self).add(greenlet)
+            Group.add(self, greenlet)
         except:
             self._semaphore.release()
             raise
