@@ -32,7 +32,7 @@ class RequestCommandTests(CliIntegrationTestCase):
         # Use --no-color to facilitate string comparison.
         result = self.cli(['inspect', '--no-color', 'upper'])
         self.assertEqual(result.returncode, 0)
-        self.assertIn('rpc upper.upper(text)', result.stdout)
+        self.assertIn('upper.upper(text)', result.stdout)
 
     def test_negative_inspect(self):
         result = self.cli(['inspect', 'no_existing_container'])
