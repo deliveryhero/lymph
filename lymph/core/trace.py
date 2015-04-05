@@ -3,7 +3,7 @@ import uuid
 
 import gevent
 
-from lymph.contrib.gpool import NonBlockingPool
+from lymph.utils.gpool import NonBlockingPool
 
 
 logger = logging.getLogger(__name__)

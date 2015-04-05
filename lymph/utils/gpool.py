@@ -1,4 +1,4 @@
-from gevent.pool import Pool
+from gevent.pool import Pool, Group
 
 from lymph.exceptions import ResourceExhausted
 
@@ -15,9 +15,7 @@ class NonBlockingPool(Pool):
     When the ``timeout`` is not given or set to None the pool will reject
     immediately without waiting when pool size reach max size.
 
-    In case ``size`` is None this will create an unbound pool, this was
-    added for backward compatibility with old lymph behaviour so use it
-    at your own risk.
+    In case ``size`` is None this will create an unbound pool.
 
     """
 
@@ -32,7 +30,7 @@ class NonBlockingPool(Pool):
         if acquired is False:
             raise RejectExcecutionError('No more resource available to run %r' % greenlet)
         try:
-            super(NonBlockingPool, self).add(greenlet)
+            Group.add(self, greenlet)
         except:
             self._semaphore.release()
             raise
