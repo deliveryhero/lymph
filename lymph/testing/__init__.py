@@ -1,3 +1,4 @@
+import gevent
 import mock
 import six
 import unittest
@@ -259,3 +260,29 @@ class APITestCase(unittest.TestCase):
     def tearDown(self):
         super(APITestCase, self).tearDown()
         self.network.stop()
+
+
+class AsyncTestsMixin(object):
+    def wait_for(self, condition, timeout=2):
+        with gevent.Timeout(timeout):
+            while not condition():
+                gevent.sleep(0)  # yield
+
+    def assert_eventually_true(self, condition, message=None, timeout=2):
+        if message is None:
+            message = "The expected condition didn't happen within %s seconds" % timeout
+        try:
+            self.wait_for(condition, timeout=timeout)
+        except gevent.Timeout:
+            self.fail(message)
+
+    def assert_temporarily_true(self, condition, message=None, timeout=2):
+        try:
+            with gevent.Timeout(timeout):
+                while condition():
+                    gevent.sleep(0)  # yield
+        except gevent.Timeout:
+            return
+        if message is None:
+            message = "The condition wasn't true for %s seconds" % timeout
+        self.fail(message)
