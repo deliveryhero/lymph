@@ -71,10 +71,11 @@ Service API
         This is equivalent to ``self.request('echo', 'echo.upper', text='foo')``.
 
 
-    .. method:: emit(event_type, payload)
+    .. method:: emit(event_type, payload, delay=0)
 
         :param event_type: str
         :param payload: a dict of JSON serializable data structures
+        :param delay: delay delivery of this event by `delay` seconds
 
     .. decorator:: subscribe(*event_types, sequential=True)
 
