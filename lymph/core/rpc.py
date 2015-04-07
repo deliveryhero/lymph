@@ -13,6 +13,7 @@ from lymph.core.channels import RequestChannel, ReplyChannel
 from lymph.core.components import Component
 from lymph.core.connection import Connection
 from lymph.core.messages import Message
+from lymph.core.monitoring import metrics
 from lymph.core import trace
 from lymph.exceptions import NotConnected
 
@@ -32,13 +33,11 @@ class ZmqRPCServer(Component):
         self.zctx = zmq.Context.instance()
         self.endpoint = None
         self.bound = False
-        self.request_counts = collections.Counter()
+        self.request_counts = metrics.TaggedCounter('rpc')
         self.recv_loop_greenlet = None
         self.channels = {}
         self.connections = {}
         self.running = False
-
-        self.metrics.add(self.raw_metrics)
 
     @property
     def identity(self):
@@ -154,7 +153,7 @@ class ZmqRPCServer(Component):
         loglevel = self._get_loglevel(msg)
         logger.log(loglevel, '%s source=%s', msg.subject, msg.source)
         start = time.time()
-        self.request_counts[msg.subject] += 1
+        self.request_counts.incr(subject=msg.subject)
         channel = ReplyChannel(msg, self)
         service_name, func_name = msg.subject.rsplit('.', 1)
         try:
@@ -220,7 +219,6 @@ class ZmqRPCServer(Component):
     def ping(self, address):
         return self.send_request(address, 'lymph.ping', {'payload': ''})
 
-    def raw_metrics(self):
-        yield 'rpc.connection_count', len(self.connections), {}
-        for subject, count in self.request_counts.items():
-            yield 'rpc.request_count', count, {'subject': subject}
+    def _get_metrics(self):
+        yield metrics.RawMetric('rpc.connection_count', len(self.connections))
+        yield self.request_counts

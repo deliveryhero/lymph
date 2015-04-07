@@ -12,7 +12,9 @@ import six
 from lymph.exceptions import RegistrationFailure, SocketNotCreated
 from lymph.core.components import Componentized
 from lymph.core.events import Event
+from lymph.core.monitoring import metrics
 from lymph.core.monitoring.pusher import MonitorPusher
+from lymph.core.monitoring.aggregator import Aggregator
 from lymph.core.services import ServiceInstance, Service
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.interfaces import DefaultInterface
@@ -57,16 +59,20 @@ class ServiceContainer(Componentized):
         self.installed_plugins = []
 
         self.debug = debug
+        self.monitor_endpoint = monitor_endpoint
 
-        self.add_component(registry)
-        registry.install(self)
-        if events:
-            self.add_component(events)
-            events.install(self)
+        self.metrics_aggregator = Aggregator(self._get_metrics, service=self.service_name, host=self.fqdn)
+
+        self.add_component(self.service_registry)
+        self.service_registry.install(self)
+
+        self.add_component(self.event_system)
+        self.event_system.install(self)
+
+        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
+
         self.server = self.install(self.server_cls, ip=ip, port=port)
-        self.monitor = self.install(MonitorPusher, endpoint=monitor_endpoint, interval=5)
-        self.monitor.add_tags(service=self.service_name, host=self.fqdn)
-        self.metrics.add(self.raw_metrics)
+
         self.install_interface(DefaultInterface, name='lymph')
 
     @classmethod
@@ -117,9 +123,6 @@ class ServiceContainer(Componentized):
         self.installed_plugins.append(plugin)
         return plugin
 
-    def raw_metrics(self):
-        yield 'greenlets.count', len(self.pool), {}
-
     def get_shared_socket_fd(self, port):
         fds = json.loads(os.environ.get('LYMPH_SHARED_SOCKET_FDS', '{}'))
         try:
@@ -150,7 +153,7 @@ class ServiceContainer(Componentized):
         logger.info('starting %s (%s) at %s (pid=%s)', self.service_name, ', '.join(self.service_types), self.endpoint, os.getpid())
 
         self.on_start()
-        self.monitor.add_tags(identity=self.identity)
+        self.metrics_aggregator.add_tags(identity=self.identity)
 
         if register:
             for interface_name, service in six.iteritems(self.installed_interfaces):
@@ -202,3 +205,8 @@ class ServiceContainer(Componentized):
 
     def send_request(self, address, subject, body, headers=None):
         return self.server.send_request(address, subject, body, headers=None)
+
+    def _get_metrics(self):
+        for metric in super(ServiceContainer, self)._get_metrics():
+            yield metric
+        yield metrics.RawMetric('greenlets.count', len(self.pool))

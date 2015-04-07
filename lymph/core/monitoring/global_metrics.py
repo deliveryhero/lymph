@@ -3,6 +3,8 @@ import gc
 import resource
 import gevent
 
+from . import metrics
+
 
 RUSAGE_ATTRS = (
     'utime', 'stime',
@@ -26,7 +28,7 @@ class RUsageMetrics(GlobalMetrics):
     def __iter__(self):
         ru = resource.getrusage(resource.RUSAGE_SELF)
         for ru_attr, series_name in self.attr_map:
-            yield series_name, getattr(ru, ru_attr), {}
+            yield metrics.RawMetric(series_name, getattr(ru, ru_attr))
 
 
 class GarbageCollectionMetrics(GlobalMetrics):
@@ -34,9 +36,9 @@ class GarbageCollectionMetrics(GlobalMetrics):
         self.name = name
 
     def __iter__(self):
-        yield '{}.garbage'.format(self.name), len(gc.garbage), {}
+        yield metrics.RawMetric('{}.garbage'.format(self.name), len(gc.garbage))
         for i, count in enumerate(gc.get_count()):
-            yield '{}.count{}'.format(self.name, i), count, {}
+            yield metrics.RawMetric('{}.count{}'.format(self.name, i), count)
 
 
 class GeventMetrics(GlobalMetrics):
@@ -46,10 +48,8 @@ class GeventMetrics(GlobalMetrics):
     def __iter__(self):
         hub = gevent.get_hub()
         threadpool, loop = hub.threadpool, hub.loop
-        yield 'gevent.threadpool.size', threadpool.size, {}
-        yield 'gevent.threadpool.maxsize', threadpool.maxsize, {}
-        yield 'gevent.active', loop.activecnt, {}
-        yield 'gevent.pending', loop.pendingcnt, {}
-        yield 'gevent.depth', loop.depth, {}
-
-
+        yield metrics.RawMetric('gevent.threadpool.size', threadpool.size)
+        yield metrics.RawMetric('gevent.threadpool.maxsize', threadpool.maxsize)
+        yield metrics.RawMetric('gevent.active', loop.activecnt)
+        yield metrics.RawMetric('gevent.pending', loop.pendingcnt)
+        yield metrics.RawMetric('gevent.depth', loop.depth)
