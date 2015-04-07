@@ -1,9 +1,11 @@
 import abc
+import functools
+import logging
+import pkg_resources
 import six
 import textwrap
-import pkg_resources
-import logging
 
+from lymph.exceptions import Timeout, LookupFailure
 
 logger = logging.getLogger(__name__)
 
@@ -58,21 +60,6 @@ class Command(object):
         raise NotImplementedError
 
 
-class ListCommand(Command):
-    """
-    Usage: lymph list [options]
-
-    {COMMON_OPTIONS}
-    """
-
-    short_description = 'List available commands.'
-    needs_config = False
-
-    def run(self):
-        for name, cls in six.iteritems(get_command_classes()):
-            print(u'%-15s   %s' % (name, cls.short_description))
-
-
 _command_class_cache = None
 
 
@@ -95,3 +82,16 @@ def get_command_classes():
 def get_command_class(name):
     return get_command_classes()[name]
 
+
+def handle_request_errors(func):
+    @functools.wraps(func)
+    def decorated(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except LookupFailure as e:
+            logger.error("The specified service name could not be found: %s: %s" % (type(e).__name__, e))
+            return 1
+        except Timeout:
+            logger.error("The request timed out. Either the service is not available or busy.")
+            return 1
+    return decorated

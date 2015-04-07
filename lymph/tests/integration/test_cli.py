@@ -1,5 +1,6 @@
-import unittest
+import blessings
 import gevent
+import unittest
 
 from lymph.cli.testing import CliIntegrationTestCase, CliTestMixin
 from lymph.core.decorators import rpc
@@ -31,7 +32,7 @@ class RequestCommandTests(CliIntegrationTestCase):
         # Use --no-color to facilitate string comparison.
         result = self.cli(['inspect', '--no-color', 'upper'])
         self.assertEqual(result.returncode, 0)
-        self.assertIn('rpc upper.upper(text)', result.stdout)
+        self.assertIn('upper.upper(text)', result.stdout)
 
     def test_negative_inspect(self):
         result = self.cli(['inspect', 'no_existing_container'])
@@ -40,19 +41,19 @@ class RequestCommandTests(CliIntegrationTestCase):
 
 class ListCommandTests(CliTestMixin, unittest.TestCase):
     def test_list(self):
-        self.assert_lines_equal(['list'], """
-            tail              Stream the logs of one or more services.
-            emit              Manually emits an event.
-            request           Send a request message to some service and output the reply.
-            inspect           Describe the available rpc methods of a service.
-            discover          Show available services.
-            help              Display help information about lymph.
-            list              List available commands.
-            subscribe         Prints events to stdout.
-            instance          Run a single service instance (one process).
-            node              Run a node service that manages a group of processes on the same machine.
-            shell             Open an interactive Python shell locally or remotely.
-        """, config=False)
+        self.assert_lines_equal(['list'], u"""
+            {t.bold}tail           {t.normal}Stream the logs of one or more services.
+            {t.bold}emit           {t.normal}Manually emits an event.
+            {t.bold}request        {t.normal}Send a request message to some service and output the reply.
+            {t.bold}inspect        {t.normal}Describes the RPC interface of a service
+            {t.bold}discover       {t.normal}Show available services.
+            {t.bold}help           {t.normal}Display help information about lymph.
+            {t.bold}list           {t.normal}List available commands.
+            {t.bold}subscribe      {t.normal}Prints events to stdout.
+            {t.bold}instance       {t.normal}Run a single service instance (one process).
+            {t.bold}node           {t.normal}Run a node service that manages a group of processes on the same machine.
+            {t.bold}shell          {t.normal}Open an interactive Python shell locally or remotely.
+        """.format(t=blessings.Terminal()), config=False)
 
 
 class HelpCommandTests(CliTestMixin, unittest.TestCase):
