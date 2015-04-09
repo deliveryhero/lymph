@@ -1,17 +1,16 @@
 import six
 
-from lymph.core.monitoring.metrics import Metrics
-
 
 class Component(object):
-    def __init__(self):
-        self.metrics = Metrics()
 
     def on_start(self):
         pass
 
     def on_stop(self, **kwargs):
         pass
+
+    def _get_metrics(self):
+        return []
 
 
 class Declaration(object):
@@ -57,7 +56,6 @@ class Componentized(Component):
 
     def add_component(self, component):
         self.__all_components.append(component)
-        self.metrics.add(component.metrics)
 
     def install(self, factory, **kwargs):
         if factory in self._declared_components:
@@ -77,3 +75,10 @@ class Componentized(Component):
     def on_stop(self, **kwargs):
         for component in reversed(self.__all_components):
             component.on_stop(**kwargs)
+
+    def _get_metrics(self):
+        for metric in super(Componentized, self)._get_metrics():
+            yield metric
+        for component in self.__all_components:
+            for metric in component._get_metrics():
+                yield metric

@@ -7,6 +7,7 @@ import six
 from lymph.core.decorators import rpc, RPCBase
 from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 from lymph.core.components import Component, Componentized, ComponentizedBase
+from lymph.core.monitoring import metrics
 
 import gevent
 from gevent.event import AsyncResult
@@ -63,11 +64,8 @@ class Proxy(Component):
         self._namespace = namespace or address
         self._error_map = error_map or {}
 
-        self.timeout_counts = 0
-        self.exception_counts = collections.Counter()
-
-        self.metrics.add_tags(name=address)
-        self.metrics.add(self.raw_metrics)
+        self.timeout_counts = metrics.Counter('timeout', {'address': address})
+        self.exception_counts = metrics.TaggedCounter('exceptions', {'address': address})
 
     def _call(self, __name, **kwargs):
         channel = self._container.send_request(self._address, __name, kwargs)
@@ -75,7 +73,7 @@ class Proxy(Component):
             return channel.get(timeout=self._timeout).body
         except RemoteError as e:
             error_type = str(e.__class__)
-            self.exception_counts[e.__class__.__name__] += 1
+            self.exception_counts.incr(name=e.__class__.__name__)
             if error_type in self._error_map:
                 raise self._error_map[error_type]()
             raise
@@ -83,7 +81,7 @@ class Proxy(Component):
             self.timeout_counts += 1
             raise
         except Nack:
-            self.exception_counts['nack'] += 1
+            self.exception_counts.incr(name='nack')
             raise
 
     def __getattr__(self, name):
@@ -94,10 +92,9 @@ class Proxy(Component):
             self._method_cache[name] = method
             return method
 
-    def raw_metrics(self):
-        yield 'exception.timeout_count', self.timeout_counts, {}
-        for exc_name, count in self.exception_counts.items():
-            yield 'exception.error_count', count, {'subject': exc_name}
+    def _get_metrics(self):
+        yield self.timeout_counts
+        yield self.exception_counts
 
 
 @six.add_metaclass(InterfaceBase)
@@ -183,4 +180,4 @@ class DefaultInterface(Interface):
 
     @rpc()
     def get_metrics(self):
-        return list(self.container.metrics)
+        return list(self.container.metrics_aggregator.get_metrics())

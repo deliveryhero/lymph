@@ -8,7 +8,7 @@ from gevent import subprocess
 from six.moves import range
 
 from lymph.core.interfaces import Interface
-from lymph.core.monitoring.metrics import Metrics
+from lymph.core.monitoring.metrics import RawMetric
 from lymph.utils.sockets import create_socket
 
 
@@ -16,9 +16,10 @@ logger = logging.getLogger(__name__)
 
 
 class Process(object):
-    def __init__(self, cmd, env=None):
+    def __init__(self, cmd, env=None, service_type='n/a'):
         self.cmd = cmd
         self.env = env
+        self.service_type = service_type
         self._process = None
         self._popen = None
 
@@ -46,15 +47,15 @@ class Process(object):
         self.stop()
         self.start()
 
-    def metrics(self):
+    def _get_metrics(self):
         if not self.is_running():
             return
         try:
             memory = self._process.memory_info()
-            yield 'node.process.memory.rss', memory.rss, {}
-            yield 'node.process.memory.vms', memory.vms, {}
+            yield RawMetric('node.process.memory.rss', memory.rss, {'service_type': self.service_type})
+            yield RawMetric('node.process.memory.vms', memory.vms, {'service_type': self.service_type})
             cpu = self._process.cpu_percent(interval=2.0)
-            yield 'node.process.cpu', cpu, {}
+            yield RawMetric('node.process.cpu', cpu, {'service_type': self.service_type})
         except psutil.NoSuchProcess:
             pass
 
@@ -93,12 +94,9 @@ class Node(Interface):
                 'LYMPH_SHARED_SOCKET_FDS': shared_fds,
                 'LYMPH_SERVICE_NAME': service_type,
             })
-            monitor = Metrics(service_type=service_type)
-            self.metrics.add(monitor)
             for i in range(num):
-                p = Process(cmd.split(' '), env=env)
+                p = Process(cmd.split(' '), env=env, service_type=service_type)
                 self.processes.append(p)
-                monitor.add(p.metrics)
                 logger.info('starting %s', cmd)
                 p.start()
         self.container.spawn(self.watch_processes)
@@ -134,3 +132,7 @@ class Node(Interface):
                         process.restart()
             gevent.sleep(1)
 
+    def _get_metrics(self):
+        for process in self.processes:
+            for metric in process._get_metrics():
+                yield metric
