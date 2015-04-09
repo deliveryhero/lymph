@@ -1,4 +1,3 @@
-import codecs
 import json
 
 from werkzeug.exceptions import MethodNotAllowed
@@ -23,8 +22,7 @@ class RequestHandler(object):
             raise ValueError("The request Content-Type is not JSON")
 
         if self._json is None:
-            reader = codecs.getreader(self.request.charset)
-            self._json = json.load(reader(self.request.stream))
+            self._json = json.loads(self.request.get_data(as_text=True))
         return self._json
 
     def dispatch(self, args):
