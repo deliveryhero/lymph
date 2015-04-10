@@ -19,12 +19,12 @@ class BaseEventSystem(Component):
     def on_stop(self, **kwargs):
         pass
 
-    def subscribe(self, container, handler):
+    def subscribe(self, handler):
         raise NotImplementedError
 
-    def unsubscribe(self, container, handler):
+    def unsubscribe(self, handler):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def emit(self, container, event):
+    def emit(self, event, delay=0):
         raise NotImplementedError

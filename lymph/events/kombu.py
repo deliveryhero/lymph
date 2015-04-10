@@ -76,6 +76,8 @@ class KombuEventSystem(BaseEventSystem):
         super(KombuEventSystem, self).__init__()
         self.connection = connection
         self.exchange = kombu.Exchange(exchange_name, 'topic', durable=True)
+        self.waiting_exchange = kombu.Exchange('%s_waiting' % exchange_name, 'direct', durable=True)
+        self.waiting_queues = {}
         self.serializer = serializer
         self.consumers_by_queue = {}
 
@@ -130,7 +132,32 @@ class KombuEventSystem(BaseEventSystem):
         with kombu.pools.connections[self.connection].acquire(block=True) as conn:
             yield conn
 
-    def emit(self, event):
+    def _get_waiting_queue(self, conn, event_type, delay):
+        delay_ms = int(1000 * delay)
+        queue_name = '%s-wait_%s' % (event_type, delay_ms)
+        try:
+            return self.waiting_queues[queue_name]
+        except KeyError:
+            pass
+        queue = kombu.Queue(queue_name, durable=True, queue_arguments={
+            'x-dead-letter-exchange': self.exchange.name,
+            'x-dead-letter-routing-key': event_type,
+            'x-message-ttl': delay_ms,
+        })
+        self.waiting_exchange(conn).declare()
+        queue(conn).declare()
+        queue(conn).bind_to(exchange=self.waiting_exchange, routing_key=queue_name)
+        self.waiting_queues[queue_name] = queue
+        return queue
+
+    def emit(self, event, delay=0):
         with self._get_connection() as conn:
             producer = conn.Producer(serializer=self.serializer)
-            producer.publish(event.serialize(), routing_key=event.evt_type, exchange=self.exchange, declare=[self.exchange])
+            if delay:
+                queue = self._get_waiting_queue(conn, event.evt_type, delay)
+                routing_key = queue.name
+                exchange = self.waiting_exchange
+            else:
+                routing_key = event.evt_type
+                exchange = self.exchange
+            producer.publish(event.serialize(), routing_key=routing_key, exchange=exchange, declare=[self.exchange])

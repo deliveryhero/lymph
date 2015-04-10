@@ -200,10 +200,10 @@ class ServiceContainer(Componentized):
     def discover(self):
         return self.service_registry.discover()
 
-    def emit_event(self, event_type, payload, headers=None):
+    def emit_event(self, event_type, payload, headers=None, **kwargs):
         headers = self.prepare_headers(headers)
         event = Event(event_type, payload, source=self.identity, headers=headers)
-        self.event_system.emit(event)
+        self.event_system.emit(event, **kwargs)
 
     def send_request(self, address, subject, body, headers=None):
         return self.server.send_request(address, subject, body, headers=None)

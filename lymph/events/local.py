@@ -1,3 +1,5 @@
+import gevent
+
 from lymph.core.events import EventDispatcher
 from lymph.events.base import BaseEventSystem
 
@@ -14,5 +16,8 @@ class LocalEventSystem(BaseEventSystem):
     def unsubscribe(self, handler):
         raise NotImplementedError()
 
-    def emit(self, event):
-        self.dispatcher(event)
+    def emit(self, event, delay=0):
+        if delay:
+            gevent.spawn_later(delay, self.dispatcher, event)
+        else:
+            self.dispatcher(event)
