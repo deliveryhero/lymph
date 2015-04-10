@@ -1,13 +1,7 @@
-import logging
-import sys
-
-import blessings
-
-from lymph.utils import logging as lymph_logging
-
 
 def setup_config(args):
     import os
+    import sys
 
     from lymph.config import Configuration
     from lymph.utils.sockets import guess_external_ip
@@ -42,6 +36,8 @@ def setup_config(args):
 
 
 def setup_terminal(args, config):
+    import blessings
+
     force_color = args.get('--color', False)
     if args.get('--no-color', False):
         if force_color:
@@ -51,6 +47,8 @@ def setup_terminal(args, config):
 
 
 def _excepthook(type, value, tb):
+    import logging
+
     logger = logging.getLogger('lymph')
     logger.log(logging.CRITICAL, 'Uncaught exception', exc_info=(type, value, tb))
 
@@ -60,10 +58,13 @@ def main(argv=None):
     lymph.monkey.patch()
 
     import docopt
+    import sys
+    import logging
 
     from lymph import __version__ as VERSION
     from lymph.cli.help import HELP
     from lymph.cli.base import get_command_class
+    from lymph.utils import logging as lymph_logging
 
     args = docopt.docopt(HELP, argv, version=VERSION, options_first=True)
     name = args.pop('<command>')
