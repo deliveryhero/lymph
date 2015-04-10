@@ -63,11 +63,13 @@ class ServiceContainer(Componentized):
 
         self.metrics_aggregator = Aggregator(self._get_metrics, service=self.service_name, host=self.fqdn)
 
-        self.add_component(self.service_registry)
-        self.service_registry.install(self)
+        if self.service_registry:
+            self.add_component(self.service_registry)
+            self.service_registry.install(self)
 
-        self.add_component(self.event_system)
-        self.event_system.install(self)
+        if self.event_system:
+            self.add_component(self.event_system)
+            self.event_system.install(self)
 
         self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
 
