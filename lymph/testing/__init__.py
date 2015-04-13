@@ -1,15 +1,14 @@
-import gevent
-import mock
-import six
 import unittest
-from types import FunctionType
+
+import gevent
+import six
 
 from kazoo.handlers.gevent import SequentialGeventHandler
 from kazoo.testing.harness import KazooTestHarness
 
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
-from lymph.core.interfaces import Interface, Proxy
+from lymph.core.interfaces import Interface
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
@@ -21,62 +20,7 @@ from lymph.utils.sockets import get_unused_port, create_socket
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
 
-
-def get_side_effect(mocks):
-    class ProxyCall(object):
-        def __init__(self, data):
-            self.data = data
-
-        def __call__(self, name, **kwargs):
-            try:
-                result = self.data[name]
-                if isinstance(result, Exception):
-                    raise getattr(RemoteError, result.__class__.__name__)('', '')
-                if callable(result):
-                    return result(**kwargs)
-                return result
-            except KeyError:
-                return
-
-        def update(self, func_name, new_value):
-            self.data[func_name] = new_value
-    return ProxyCall(mocks)
-
-
-class RpcMockTestCase(unittest.TestCase):
-    def setUp(self):
-        super(RpcMockTestCase, self).setUp()
-        self.rpc_patch = mock.patch.object(Proxy, '_call')
-        self.rpc_mock = self.rpc_patch.start()
-
-    def tearDown(self):
-        super(RpcMockTestCase, self).tearDown()
-        self.rpc_patch.stop()
-
-    def setup_rpc_mocks(self, mocks):
-        self.rpc_mock.side_effect = get_side_effect(mocks)
-
-    def update_rpc_mock(self, func_name, new_value):
-        self.rpc_mock.side_effect.update(func_name, new_value)
-
-    @property
-    def rpc_mock_calls(self):
-        return self.rpc_mock.mock_calls
-
-
-class EventMockTestCase(unittest.TestCase):
-    def setUp(self):
-        super(EventMockTestCase, self).setUp()
-        self.event_patch = mock.patch.object(ServiceContainer, 'emit_event')
-        self.event_mock = self.event_patch.start()
-
-    def tearDown(self):
-        super(EventMockTestCase, self).tearDown()
-        self.event_patch.stop()
-
-    @property
-    def events(self):
-        return self.event_mock.mock_calls
+from lymph.testing.mock_helpers import RpcMockTestCase, EventMockTestCase
 
 
 class MockServiceNetwork(object):

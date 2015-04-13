@@ -21,7 +21,9 @@ install_requires = [
     'six>=1.6',
     'Werkzeug>=0.9.4',
     'blessings>=1.5.1',
-    'netifaces>=0.10.4'
+    'netifaces>=0.10.4',
+    'mock>=1.0.1',
+    'PyHamcrest==1.8.2',
 ]
 
 dependency_links = []
