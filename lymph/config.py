@@ -51,7 +51,7 @@ class ConfigObject(collections.Mapping):
             return cls.from_config(instance_config, **kwargs)
         else:
             instance_config = copy.deepcopy(dict(instance_config))
-            del instance_config['class']
+            instance_config.pop('class', None)
             instance_config.update(kwargs)
             return cls(**instance_config)
 
