@@ -7,7 +7,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
    :glob:
-   
+
    getting_started
    installation
    overview

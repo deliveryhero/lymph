@@ -9,7 +9,7 @@ from lymph.core.interfaces import Interface
 from lymph.core import trace
 from lymph.utils.logging import setup_logger
 from lymph.exceptions import SocketNotCreated
-from lymph.utils.sockets import create_socket
+from lymph.utils import sockets
 from lymph.core.trace import Group
 from lymph.web.wsgi_server import LymphWSGIServer
 from lymph.web.routing import HandledRule
@@ -51,9 +51,9 @@ class WebServiceInterface(Interface):
         except SocketNotCreated:
             logger.warning("socket for port %s wasn't created by node, binding from instance instead", self.http_port)
             address = '%s:%s' % (self.container.server.ip, self.http_port)
-            self.http_socket = create_socket(address)
+            self.http_socket = sockets.create_socket(address)
         else:
-            self.http_socket = create_socket('fd://%s' % socket_fd)
+            self.http_socket = sockets.create_socket('fd://%s' % socket_fd)
         self.wsgi_server = LymphWSGIServer(self.http_socket, self.application, spawn=Group(self.pool_size))
         self.wsgi_server.start()
 
