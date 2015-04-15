@@ -1,14 +1,17 @@
+import abc
 import unittest
+import warnings
 
 import gevent
 import six
+import mock
 
 from kazoo.handlers.gevent import SequentialGeventHandler
 from kazoo.testing.harness import KazooTestHarness
 
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
-from lymph.core.interfaces import Interface
+from lymph.core.interfaces import Interface, Proxy
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.discovery.static import StaticServiceRegistryHub
@@ -157,6 +160,7 @@ class LymphServiceTestCase(unittest.TestCase):
     service_config = {}
 
     def setUp(self):
+        warnings.warn("deprecated, please use either RPCServiceTestCase or WebServiceTestCase")
         super(LymphServiceTestCase, self).setUp()
         self.network = MockServiceNetwork()
         self.service_container = self.network.add_service(
@@ -183,27 +187,60 @@ class LymphServiceTestCase(unittest.TestCase):
         self.network.join()
 
 
-class APITestCase(unittest.TestCase):
-
-    interface_name = None
+@six.add_metaclass(abc.ABCMeta)
+class RPCServiceTestCase(unittest.TestCase):
+    service_config = {}
 
     def setUp(self):
-        super(APITestCase, self).setUp()
+        super(RPCServiceTestCase, self).setUp()
         self.network = MockServiceNetwork()
 
-        if not self.interface_name:
-            self.interface_name = self.test_interface.__name__.lower()
+        self.container = self.network.add_service(self.service_class, interface_name=self.service_name)
+        self.service = self.container.installed_interfaces[self.service_name]
+        self.service.apply_config(self.service_config)
 
-        container = self.network.add_service(self.test_interface, interface_name=self.interface_name)
-
-        webinterface_object = container.installed_interfaces[self.interface_name]
         self.network.start()
 
-        self.client = werkzeug.test.Client(webinterface_object, BaseResponse)
+    @abc.abstractproperty
+    def service_class(self):
+        pass
+
+    @property
+    def service_name(self):
+        return self.service_class.__name__
+
+    def get_proxy(self, **kwargs):
+        return Proxy(self.container, self.service_name, **kwargs)
+
+    client = property(get_proxy)
+
+    def request(self, *args, **kwargs):
+        channel = self.container.send_request(self.service_name, *args, **kwargs)
+        return channel.get(timeout=kwargs.get('timeout', 1))
+
+    def emit(self, *args, **kwargs):
+        return self.container.emit_event(*args, **kwargs)
 
     def tearDown(self):
-        super(APITestCase, self).tearDown()
+        super(RPCServiceTestCase, self).tearDown()
         self.network.stop()
+        self.network.join()
+
+
+class WebServiceTestCase(RPCServiceTestCase):
+
+    def setUp(self):
+        # XXX(Mouad): Gevent master fail n python3 with: name 'dup' is not defined.
+        # A workaround is to mock lymph.utils.sockets.create_socket to return
+        # a dummy socket for us.
+        port = get_unused_port()
+        sock = create_socket('127.0.0.1:%s' % port, inheritable=True)
+        with mock.patch('lymph.utils.sockets.create_socket', return_value=sock):
+            super(WebServiceTestCase, self).setUp()
+
+    @property
+    def client(self):
+        return werkzeug.test.Client(self.service.application, BaseResponse)
 
 
 class AsyncTestsMixin(object):

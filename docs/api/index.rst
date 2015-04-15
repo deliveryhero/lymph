@@ -14,3 +14,4 @@ Contents:
     patterns_api
     components_api
     metrics_api
+    testings_api

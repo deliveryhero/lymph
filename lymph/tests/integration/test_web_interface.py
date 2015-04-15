@@ -5,7 +5,7 @@ from werkzeug.routing import Map, Rule
 from werkzeug.test import Client
 from werkzeug.wrappers import Response, BaseResponse
 
-from lymph.testing import LymphServiceTestCase
+from lymph.testing import WebServiceTestCase
 from lymph.web.interfaces import WebServiceInterface
 from lymph.web.handlers import RequestHandler
 from lymph.web.routing import HandledRule
@@ -34,36 +34,31 @@ class Web(WebServiceInterface):
         return Response("method test")
 
 
-class WebIntegrationTest(unittest.TestCase):
+class WebIntegrationTest(WebServiceTestCase):
 
-    def setUp(self):
-        super(WebIntegrationTest, self).setUp()
-        container = mock.Mock()
-        container.debug = False
-        self.interface = Web(container)
-        self.http_client = Client(self.interface.application, BaseResponse)
+    service_class = Web
 
     def test_dispatch_rule_with_string_endpoint(self):
-        response = self.http_client.get("/test/")
+        response = self.client.get("/test/")
         self.assertEqual(response.data.decode("utf8"), "method test")
         self.assertEqual(response.status_code, 200)
 
     def test_dispatch_rule_with_callable_endpoint(self):
-        response = self.http_client.get("/foo/")
+        response = self.client.get("/foo/")
         self.assertEqual(response.data.decode("utf8"), "Rule Handler")
         self.assertEqual(response.status_code, 200)
 
     def test_dispatch_handled_rule(self):
-        response = self.http_client.get("/bar/")
+        response = self.client.get("/bar/")
         self.assertEqual(response.data.decode("utf8"), "Handled Rule Handler")
         self.assertEqual(response.status_code, 200)
 
     def test_dispatch_failing_rule_to_500(self):
-        response = self.http_client.get("/fail/")
+        response = self.client.get("/fail/")
         self.assertEqual(response.data.decode("utf8"), "")
         self.assertEqual(response.status_code, 500)
 
     def test_dispatch_failing_endpoint_to_500(self):
-        response = self.http_client.get("/fail-wrong-endpoint/")
+        response = self.client.get("/fail-wrong-endpoint/")
         self.assertEqual(response.data.decode("utf8"), "")
         self.assertEqual(response.status_code, 500)
