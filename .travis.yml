@@ -29,4 +29,11 @@ script:
 
 notifications:
     email: false
-
+    irc:
+        channels:
+            - "chat.freenode.net#lymph"
+        template:
+            - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
+            - "Change view : %{compare_url}"
+            - "Build details : %{build_url}"
+        use_notice: true
