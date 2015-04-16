@@ -75,6 +75,18 @@ Testings API
      ``mock.call(..)`` can contain `PyHamcrest`_ matchers for better and less brittle
      tests.
 
+  .. method:: assert_any_rpc_calls(*expected_calls)
+
+    At the opposite of ``assert_rpc_calls`` where you have to specify
+    all mocked calls that were done, this method accept a list of mocked calls and
+    assert that each one of them was done. The calls should be specified in the same
+    order as they are made.
+
+    .. note::
+
+      This method do it's best to guess which function user is looking for and in
+      case of a mismatch it try to generate a useful message for the user.
+
 
 .. class:: EventMockTestCase
 
