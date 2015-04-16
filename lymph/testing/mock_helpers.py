@@ -19,18 +19,21 @@ class MockMixins(object):
             msg="number of calls doesn't match, expected %d actual %d" % (expected_count, actual_count))
 
         for pos, (actual_call, expected_call) in enumerate(zip(actual_calls, expected_calls)):
-            self._assert_equal_call(actual_call, expected_call, pos)
+            success, msg = self._check_equal_call(actual_call, expected_call)
+            if not success:
+                self.fail("function #%d %s" % (pos, msg))
 
-    def _assert_equal_call(self, actual_call, expected_call, position):
+    def _check_equal_call(self, actual_call, expected_call):
         act_name, act_args, act_kwargs = self._unpack_mock_call(actual_call)
         exp_name, exp_args, exp_kwargs = self._unpack_mock_call(expected_call)
 
-        self.assertEqual(
-            exp_name, act_name,
-            msg="function #%d name doesn't match, expected %s actual %s" % (position, exp_name, act_name))
+        if exp_name != act_name:
+            return False, "name doesn't match, expected %r actual %r" % (exp_name, act_name)
 
-        self._assert_equal_arguments(act_args, exp_args, act_name, position)
-        self._assert_equal_keyword_arguments(act_kwargs, exp_kwargs, act_name, position)
+        success, msg = self._check_equal_arguments(act_args, exp_args)
+        if not success:
+            return False, msg
+        return self._check_equal_keyword_arguments(act_kwargs, exp_kwargs)
 
     @staticmethod
     def _unpack_mock_call(mock_call):
@@ -41,24 +44,71 @@ class MockMixins(object):
         name, args = args[0], args[1:]
         return name, args, kwargs
 
-    def _assert_equal_arguments(self, actual_args, expected_args, function_name, position):
-        self.assertEqual(
-            len(actual_args), len(expected_args),
-            msg="call #%d '%s' arguments count doesn't match, expected %r actual %r" % (position, function_name, len(expected_args), len(actual_args)))
+    def _check_equal_arguments(self, actual_args, expected_args):
+        if len(actual_args) != len(expected_args):
+            return False, "arguments count doesn't match, expected %r actual %r" % (len(expected_args), len(actual_args))
 
-        for actual_arg, expected_arg in zip(actual_args, expected_args):
-            hamcrest.assert_that(actual_arg, hamcrest.is_(expected_arg))
+        for pos, (actual_arg, expected_arg) in enumerate(zip(actual_args, expected_args)):
+            success, msg = self._check_that(actual_arg, hamcrest.is_(expected_arg))
+            if not success:
+                return False, "argument #%d doesn't match, %s" % (pos, msg)
+        return True, None
 
-    def _assert_equal_keyword_arguments(self, actual_kwargs, expected_kwargs, function_name, position):
+    def _check_equal_keyword_arguments(self, actual_kwargs, expected_kwargs):
         actual_arg_names = sorted(actual_kwargs.keys())
         expected_arg_names = sorted(expected_kwargs.keys())
 
-        self.assertEqual(
-            actual_arg_names, expected_arg_names,
-            msg="call #%d '%s' keyword arguments doesn't match, expected %r actual %r" % (position, function_name, expected_arg_names, actual_arg_names))
+        if actual_arg_names != expected_arg_names:
+            return False, "keyword arguments doesn't match, expected %r actual %r" % (expected_arg_names, actual_arg_names)
 
         for name, act_value in actual_kwargs.items():
-            hamcrest.assert_that(act_value, hamcrest.is_(expected_kwargs[name]))
+            success, msg = self._check_that(act_value, hamcrest.is_(expected_kwargs[name]))
+            if not success:
+                return False, "keyword argument %r doesn't match, %s" % (name, msg)
+        return True, None
+
+    @staticmethod
+    def _check_that(actual, expected):
+        try:
+            hamcrest.assert_that(actual, expected)
+        except AssertionError as ex:
+            msg = ex.args[0]
+            return False, msg
+        return True, None
+
+    def _assert_equal_any_calls(self, actual_calls, expected_calls):
+        next_idx = 0
+        for exp_call in expected_calls:
+            name, _, _ = self._unpack_mock_call(exp_call)
+            possible_matches = self._get_same_named_calls(actual_calls, name, start_idx=next_idx)
+            if not possible_matches:
+                self.fail("Call '%r' wasn't found." % (exp_call, ))
+            elif len(possible_matches) == 1:
+                # In case we have one possible match, use _assert_equal_calls to have
+                # a better error message.
+                match_idx, actual_call = possible_matches[0]
+                self._assert_equal_calls([actual_call], [exp_call])
+            else:
+                match_idx = self._assert_match_one_call(possible_matches, exp_call)
+            next_idx = match_idx + 1
+
+    def _get_same_named_calls(self, actual_calls, name, start_idx=0):
+        matches = []
+        for i, act_call in enumerate(actual_calls[start_idx:]):
+            act_name, _, _ = self._unpack_mock_call(act_call)
+            if name == act_name:
+                matches.append((i + start_idx, act_call))
+        return matches
+
+    def _assert_match_one_call(self, actual_calls, exp_call):
+        for idx, act_call in actual_calls:
+            success, _ = self._check_equal_call(act_call, exp_call)
+            if success:
+                return idx
+        msg = "Call '%r' wasn't found." % (exp_call, )
+        if actual_calls:
+            msg += " Maybe you want: \n%s" % "\n".join(map(str, actual_calls))
+        self.fail(msg)
 
 
 def _get_side_effect(mocks):
@@ -104,6 +154,9 @@ class RpcMockTestCase(unittest.TestCase, MockMixins):
 
     def assert_rpc_calls(self, *expected_calls):
         self._assert_equal_calls(self.rpc_mock_calls, expected_calls)
+
+    def assert_any_rpc_calls(self, *expected_calls):
+        self._assert_equal_any_calls(self.rpc_mock_calls, expected_calls)
 
 
 class EventMockTestCase(unittest.TestCase, MockMixins):
