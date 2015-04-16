@@ -116,15 +116,17 @@ def _get_side_effect(mocks):
         def __init__(self, data):
             self.data = data
 
-        def __call__(self, name, **kwargs):
+        def __call__(self, __name, **kwargs):
             try:
-                result = self.data[name]
+                result = self.data[__name]
                 if isinstance(result, Exception):
                     raise getattr(RemoteError, result.__class__.__name__)('', '')
                 if callable(result):
                     return result(**kwargs)
                 return result
             except KeyError:
+                # TODO: Forward to original proxy this will be useful if we want
+                # to mock some part and not others.
                 return
 
         def update(self, func_name, new_value):
@@ -174,9 +176,9 @@ class EventMockTestCase(unittest.TestCase, MockMixins):
         return self.event_mock.mock_calls
 
     def assert_events_emitted(self, *expected_emitted):
-        self._assert_equal_calls(self.events, expected_emitted)
-
-    def _assert_equal_keyword_arguments(self, actual_kwargs, expected_kwargs, function_name, position):
-        if 'delay' not in expected_kwargs:
-            expected_kwargs['delay'] = 0
-        super(EventMockTestCase, self)._assert_equal_keyword_arguments(actual_kwargs, expected_kwargs, function_name, position)
+        expected_emitted_with_delay = []
+        for call in expected_emitted:
+            name, args, kwargs = self._unpack_mock_call(call)
+            kwargs.setdefault('delay', 0)
+            expected_emitted_with_delay.append(mock.call(name, *args, **kwargs))
+        self._assert_equal_calls(self.events, expected_emitted_with_delay)
