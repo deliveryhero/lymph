@@ -3,7 +3,9 @@ import unittest
 
 import mock
 
-from lymph.testing.mock_helpers import MockMixins
+import lymph
+from lymph.testing import RPCServiceTestCase
+from lymph.testing.mock_helpers import MockMixins, RpcMockTestCase, EventMockTestCase
 
 
 class DummyTestCase(unittest.TestCase, MockMixins):
@@ -153,3 +155,46 @@ class RPCMockHelperTests(unittest.TestCase):
                     mock.call('func2', 2, foo='bar')
                 ],
             )
+
+
+class Upper(lymph.Interface):
+
+    @lymph.rpc()
+    def upper(self, text):
+        self.emit('upper.uppered', {'text': text})
+        return text.upper()
+
+
+class MetaRPCUpperTestCase(RPCServiceTestCase, RpcMockTestCase):
+
+    service_class = Upper
+    service_name = 'upper'
+
+    def setUp(self):
+        super(MetaRPCUpperTestCase, self).setUp()
+        self.setup_rpc_mocks({
+            'upper.upper': 'HELLO WORLD'
+        })
+
+    def test_meta_rpc(self):
+        response = self.client.upper(text='hello world')
+
+        self.assertEqual(response, 'HELLO WORLD')
+
+        self.assert_rpc_calls(
+            mock.call('upper.upper', text='hello world')
+        )
+
+
+class MetaEventUpperTestCase(RPCServiceTestCase, EventMockTestCase):
+
+    service_class = Upper
+
+    def test_meta_events(self):
+        response = self.client.upper(text='hello world')
+
+        self.assertEqual(response, 'HELLO WORLD')
+
+        self.assert_events_emitted(
+            mock.call('upper.uppered', {'text': 'hello world'})
+        )
