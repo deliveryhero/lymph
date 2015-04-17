@@ -107,7 +107,7 @@ Testings API
              def test_something(self):
                  ...
 
-                 self.assert_emitted_evemts(
+                 self.assert_events_emitted(
                      mock.call('upper.uppercase_transform_finished', {'text': 'hello world'})
                  )
 
