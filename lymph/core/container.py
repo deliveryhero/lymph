@@ -71,6 +71,7 @@ class ServiceContainer(Componentized):
         self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
 
         self.add_component(rpc)
+        rpc.request_handler = self.handle_request
 
         self.install_interface(DefaultInterface, name='lymph')
 
@@ -184,6 +185,35 @@ class ServiceContainer(Componentized):
     def send_request(self, address, subject, body, headers=None):
         service = self.lookup(address)
         return self.server.send_request(service, subject, body, headers=headers)
+
+    def handle_request(self, channel):
+        interface_name, func_name = channel.request.subject.rsplit('.', 1)
+        try:
+            interface = self.installed_interfaces[interface_name]
+        except KeyError:
+            logger.warning('unsupported service type: %s', interface_name)
+            return
+        try:
+            interface.handle_request(func_name, channel)
+        except Exception:
+            logger.exception('Request error:')
+            exc_info = sys.exc_info()
+            extra_info = {
+                'service': self.service_name,
+                'interface': interface_name,
+                'func_name': func_name,
+                'trace_id': trace.get_id(),
+            }
+            try:
+                self.error_hook(exc_info, extra=extra_info)
+            except:
+                logger.exception('error hook failure')
+            finally:
+                del exc_info
+            try:
+                channel.nack(True)
+            except:
+                logger.exception('failed to send automatic NACK')
 
     def _get_metrics(self):
         for metric in super(ServiceContainer, self)._get_metrics():

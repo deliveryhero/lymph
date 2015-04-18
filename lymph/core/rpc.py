@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 class ZmqRPCServer(Component):
-    """RPC server using ZeroMQ."""
-
     def __init__(self, ip='127.0.0.1', port=None, pool=None):
         super(ZmqRPCServer, self).__init__(pool=pool)
         self.ip = ip
@@ -39,6 +37,7 @@ class ZmqRPCServer(Component):
         self.channels = {}
         self.connections = {}
         self.running = False
+        self.request_handler = lambda channel: None
 
     @classmethod
     def from_config(cls, config, **kwargs):
@@ -193,33 +192,8 @@ class ZmqRPCServer(Component):
         start = time.time()
         self.request_counts.incr(subject=msg.subject)
         channel = ReplyChannel(msg, self)
-        service_name, func_name = msg.subject.rsplit('.', 1)
         try:
-            # FIXME: this code should be in ServiceContainer
-            interface = self._parent_component.installed_interfaces[service_name]
-        except KeyError:
-            logger.warning('unsupported service type: %s', service_name)
-            return
-        try:
-            interface.handle_request(func_name, channel)
-        except Exception:
-            logger.exception('Request error:')
-            exc_info = sys.exc_info()
-            extra_info = {
-                'service': service_name,
-                'func_name': func_name,
-                'trace_id': trace.get_id(),
-            }
-            try:
-                self.error_hook(exc_info, extra=extra_info)
-            except:
-                logger.exception('error hook failure')
-            finally:
-                del exc_info
-            try:
-                channel.nack(True)
-            except:
-                logger.exception('failed to send automatic NACK')
+            self.request_handler(channel)
         finally:
             elapsed = time.time() - start
             logger.log(loglevel, 'subject=%s duration=%f (seconds)', msg.subject, elapsed)
