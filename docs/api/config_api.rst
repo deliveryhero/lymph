@@ -42,14 +42,26 @@ Config API
         Like ``get()``, but doesn't wrap dict values in :class:`ConfigView`.
     
     .. method:: create_instance(key, default_class=None, **kwargs)
-    
-        Creates an instance of the class given by a fully qualified name in
-        ``self.get(key, default_class)`` by calling a 
-        ``from_config()`` classmethod. The ``config`` argument
-        will be a :class:`ConfigView` of ``self[key]``.
+
+        :param key: dotted config path (e.g. ``"container.rpc"``)
+        :param default_class: class object or fully qualified name of a class
+        :param kwargs: extra keyword arguments to be passed to the factory
+
+        Creates an object from the config dict at ``key``. The instance is
+        created by a factory that is specified by its fully qualified name in
+        a ``class`` key of the config dict.
         
-        Given a config file like the following:
+        If the factory has a ``from_config()`` method it is called with a :class:`ConfigView`
+        of ``key``. Otherwise, the factory is called directly with the config values as keyword arguments.
         
+        Extra keyword arguments to ``create_instance()`` are passed through to ``from_config()`` or mixed
+        into the arguments if the factory is a plain callable.
+
+        If the config doesn't have a ``class`` key the instance is create by ``default_class``, which can be
+        either a fully qualifed name or a factory object.
+
+        Given the following config file
+
         .. code-block:: yaml
 
             foo:
@@ -57,7 +69,7 @@ Config API
                 extra_arg: 42
 
 
-        You can create an instance of SomeClass
+        you can create an instance of SomeClass
 
         .. code-block:: python
 
@@ -69,6 +81,7 @@ Config API
                     assert kwargs['bar'] is True
                     return cls(...)
 
+            # in any module
             config = Configuration()
             config.load(...)
             config.create_instance('foo', bar=True)
