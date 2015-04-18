@@ -1,6 +1,5 @@
 import textwrap
 import functools
-import collections
 
 import six
 

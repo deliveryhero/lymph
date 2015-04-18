@@ -2,9 +2,7 @@ import functools
 import json
 import logging
 import six
-import gevent
 
-from kazoo.client import KazooClient
 from kazoo.protocol.states import EventType, KazooState
 from kazoo.handlers.gevent import SequentialGeventHandler
 from kazoo.exceptions import NoNodeError, ConnectionLoss
@@ -139,4 +137,4 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)
-        del self.registered_names[servive_name]
+        del self.registered_names[service_name]

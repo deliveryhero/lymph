@@ -1,6 +1,5 @@
 import hashlib
 import logging
-import random
 
 import six
 
@@ -36,8 +35,8 @@ class ServiceInstance(object):
         }
         return d
 
-class Service(observables.Observable):
 
+class Service(observables.Observable):
     def __init__(self, name=None, instances=()):
         super(Service, self).__init__()
         self.name = name

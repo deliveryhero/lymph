@@ -4,9 +4,6 @@ import os
 import sys
 import socket
 
-import gevent
-import gevent.queue
-import gevent.pool
 import six
 
 from lymph.exceptions import RegistrationFailure, SocketNotCreated

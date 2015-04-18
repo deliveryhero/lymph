@@ -1,9 +1,7 @@
-import collections
 import errno
 import hashlib
 import logging
 import random
-import sys
 import time
 
 import gevent

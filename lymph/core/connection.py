@@ -128,7 +128,8 @@ class Connection(object):
     def is_alive(self):
         return self.status in (RESPONSIVE, IDLE, UNKNOWN)
 
-    def stats(self): # FIXME: rtt and phi should be recorded as summary/histogram for all connections
+    def stats(self):
+        # FIXME: rtt and phi should be recorded as summary/histogram for all connections
         return {
             'endpoint': self.endpoint,
             'rtt': self.heartbeat_samples.stats,
