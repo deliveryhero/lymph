@@ -39,9 +39,6 @@ def create_container(config):
 
 
 class ServiceContainer(Componentized):
-
-    server_cls = ZmqRPCServer
-
     def __init__(self, rpc=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
         if pool is None:
             pool = trace.Group()
@@ -86,7 +83,7 @@ class ServiceContainer(Componentized):
         kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
         kwargs['registry'] = config.create_instance('registry')
 
-        kwargs['rpc'] = config.create_instance('rpc', default_class=cls.server_cls, ip=kwargs.pop('ip', None), port=kwargs.pop('port', None))
+        kwargs['rpc'] = config.create_instance('rpc', default_class=ZmqRPCServer, ip=kwargs.pop('ip', None), port=kwargs.pop('port', None))
         kwargs['pool'] = config.create_instance('pool', default_class='lymph.core.trace:Group')
 
         for key, value in six.iteritems(explicit_kwargs):

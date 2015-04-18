@@ -93,8 +93,6 @@ class MockRPCServer(ZmqRPCServer):
 
 
 class MockServiceContainer(ServiceContainer):
-    server_cls = MockRPCServer
-
     def __init__(self, *args, **kwargs):
         super(MockServiceContainer, self).__init__(*args, **kwargs)
         self.__shared_sockets = {}
@@ -145,7 +143,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
         container = ServiceContainer(
             events=events,
             registry=registry,
-            rpc=ServiceContainer.server_cls(),
+            rpc=ZmqRPCServer(),
             **kwargs)
         interface = None
         if interface_cls:
