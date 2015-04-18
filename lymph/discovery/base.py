@@ -25,7 +25,7 @@ class BaseServiceRegistry(Component):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def lookup(self, service, watch=False, timeout=1):
+    def lookup(self, service, timeout=1):
         raise NotImplementedError
 
     @abc.abstractmethod

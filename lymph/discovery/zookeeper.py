@@ -90,7 +90,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         except NoNodeError:
             return []
 
-    def lookup(self, service, watch=True, timeout=1):
+    def lookup(self, service, timeout=1):
         service_name = service.name
         result = self.client.get_children_async(
             path='/services/%s' % (service_name, ),
