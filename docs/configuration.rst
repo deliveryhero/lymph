@@ -8,9 +8,10 @@ Configuration
             class: kazoo.client:KazooClient
             hosts: 127.0.0.1:2181
 
-    registry:
-        class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
-        zkclient: dep:kazoo
+    container:
+        registry:
+            class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
+            zkclient: dep:kazoo
 
     event_system:
         class: lymph.events.kombu:KombuEventSystem
@@ -75,7 +76,32 @@ Container Configuration
 
     Size of the pool of Greenlets, default is unlimited.
 
+
+.. _registry-config:
+
+Registry Configuration
+----------------------
+
+.. describe:: container:registry:class:
+
+Defaults to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``
+
+
+ZooKeeper
+~~~~~~~~~
+
+To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``.
+
+
+.. describe:: container:registry:zkclient:
+
+A reference to zookeeper client either as a dependency or a class.
+
+.. _ZooKeeper: http://zookeeper.apache.org/
+
+
 .. _interface-config:
+
 
 Interface Configuration
 -----------------------
@@ -90,29 +116,6 @@ Interface Configuration
 .. describe:: interfaces:<name>:class:
 
     The class that implements this interface, e.g. a subclass of :class:`lymph.Interface`.
-
-
-.. _registry-config:
-
-Registry Configuration
-----------------------
-
-.. describe:: registry:class:
-
-Defaults to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``
-
-
-ZooKeeper
-~~~~~~~~~
-
-To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``.
-
-
-.. describe:: registry:zkclient:
-
-A reference to zookeeper client either as a dependency or a class.
-
-.. _ZooKeeper: http://zookeeper.apache.org/
 
 
 .. _event-config:

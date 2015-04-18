@@ -41,11 +41,11 @@ where
     
 In order to start a lymph service, you need to specify a configuration file to use with
 ``--config`` (if none is provided, the ``.lymph.yml`` file will be used). ``lymph instance``
-needs to read the ``registry`` and ``event_system`` part of the configuration file to properly
+needs to read the ``container`` and ``event_system`` part of the configuration file to properly
 setup and start the service. The setup of the individual instance is then handled through the
 ``interface`` section which is explained below.
 
-If you want to keep your service configuration files free from the ``registry`` and the
+If you want to keep your service configuration files free from the ``container`` and the
 ``event_system`` part, you can specify a default config file to be read, using the 
 ``LYMPH_NODE_CONFIG`` environmental variable. You might want to set
 
@@ -69,12 +69,12 @@ Writing configuration files for ``lymph instance``
 
 A configuration file of a lymph service requires the following sections:
 
-    - registry
+    - container
     - event_system
     - interfaces
 
 You need to define a separate configuration file for each service or instance setup. If you have many services
-running, which would be the normal case in a productive lymph setup, the same information about ``registry`` and
+running, which would be the normal case in a productive lymph setup, the same information about ``container`` and
 ``event_system`` would be present in each file. In order to avoid having to copy the same information into every
 file and obtain a configuration mess, it is possible to set a default configuration file where lymph extracts the
 necessary information. This is usually the ``.lymph.yml`` file, which is also needed by ``lymph node`` (the standard
@@ -151,7 +151,7 @@ Configuring ``lymph node``
 
 .. describe:: instances:<name>
 
-Besides the usual configuration sections for the ``registry`` and the ``event_system``, a
+Besides the usual configuration sections for the ``container`` and the ``event_system``, a
 section on ``instances`` needs to be added. In this section, each service is defined,
 together with the ``lymph instance`` command to start it, and the number of processes 
 ``numprocesses`` each service should have.

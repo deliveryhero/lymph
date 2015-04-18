@@ -129,9 +129,11 @@ class CliIntegrationTestCase(CliTestMixin, LymphIntegrationTestCase):
         self.events = NullEventSystem()
 
         self.cli_config = {
-            "registry": {
-                "class": "lymph.discovery.zookeeper:ZookeeperServiceRegistry",
-                "zkclient": 'dep:kazoo',
+            "container": {
+                "registry": {
+                    "class": "lymph.discovery.zookeeper:ZookeeperServiceRegistry",
+                    "zkclient": 'dep:kazoo',
+                },
             },
             "event_system": {
                 "class": "lymph.events.null:NullEventSystem",
