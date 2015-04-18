@@ -39,11 +39,10 @@ def create_container(config):
 
 
 class ServiceContainer(Componentized):
-    def __init__(self, rpc=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
+    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
         if pool is None:
             pool = trace.Group()
         super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
-        self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.backdoor_endpoint = None
         self.service_name = service_name
@@ -79,7 +78,6 @@ class ServiceContainer(Componentized):
     def from_config(cls, config, **explicit_kwargs):
         kwargs = dict(config)
         kwargs.pop('class', None)
-        kwargs.setdefault('node_endpoint', os.environ.get('LYMPH_NODE'))
         kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
         kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
         kwargs['registry'] = config.create_instance('registry')
