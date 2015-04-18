@@ -42,7 +42,7 @@ class ServiceContainer(Componentized):
     def __init__(self, rpc=None, registry=None, events=None, node_endpoint=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
         if pool is None:
             pool = trace.Group()
-        super(ServiceContainer, self).__init__(error_hook=Hook(), pool=pool)
+        super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
         self.node_endpoint = node_endpoint
         self.log_endpoint = log_endpoint
         self.backdoor_endpoint = None
@@ -198,16 +198,13 @@ class ServiceContainer(Componentized):
         except Exception:
             logger.exception('Request error:')
             exc_info = sys.exc_info()
-            extra_info = {
-                'service': self.service_name,
-                'interface': interface_name,
-                'func_name': func_name,
-                'trace_id': trace.get_id(),
-            }
             try:
-                self.error_hook(exc_info, extra=extra_info)
-            except:
-                logger.exception('error hook failure')
+                self.error_hook(exc_info, extra={
+                    'service': self.service_name,
+                    'interface': interface_name,
+                    'func_name': func_name,
+                    'trace_id': trace.get_id(),
+                })
             finally:
                 del exc_info
             try:
