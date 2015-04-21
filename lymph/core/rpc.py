@@ -55,8 +55,7 @@ class ZmqRPCServer(Component):
             return hashlib.md5(self.endpoint.encode('utf-8')).hexdigest()
 
     def _bind(self, max_retries=2, retry_delay=0):
-        if self.bound:
-            raise TypeError('already bound (endpoint=%s)', self.endpoint)
+        assert not self.bound, 'already bound (endpoint=%s)' % self.endpoint
         self.send_sock = self.zctx.socket(zmq.ROUTER)
         self.recv_sock = self.zctx.socket(zmq.ROUTER)
         port = self.port
