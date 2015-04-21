@@ -27,6 +27,13 @@ class ConfigObject(collections.Mapping):
     def __getitem__(self, key):
         return self.get(key)
 
+    def __contains__(self, key):
+        try:
+            self.get_raw(key)
+        except KeyError:
+            return False
+        return True
+
     def setdefault(self, key, default):
         value = self.get(key)
         if value is None:
@@ -43,10 +50,15 @@ class ConfigObject(collections.Mapping):
             raise ConfigurationError("no config available for %r" % key)
 
         clspath = instance_config.get('class', default_class)
+
         if clspath is None:
             raise ConfigurationError("no config available for %r (or no class configured)" % key)
 
-        cls = import_object(clspath)
+        if callable(clspath):
+            cls = clspath
+        else:
+            cls = import_object(clspath)
+
         if hasattr(cls, 'from_config'):
             return cls.from_config(instance_config, **kwargs)
         else:

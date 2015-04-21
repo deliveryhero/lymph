@@ -1,4 +1,9 @@
+import logging
+
 from lymph.core.components import Component
+
+
+logger = logging.getLogger(__name__)
 
 
 class Plugin(Component):
@@ -7,7 +12,8 @@ class Plugin(Component):
 
 
 class Hook(object):
-    def __init__(self):
+    def __init__(self, name='hook'):
+        self.name = name
         self.callbacks = []
 
     def install(self, callback):
@@ -15,4 +21,7 @@ class Hook(object):
 
     def __call__(self, *args, **kwargs):
         for callback in self.callbacks:
-            callback(*args, **kwargs)
+            try:
+                callback(*args, **kwargs)
+            except:
+                logger.exception('%s failure', self.name)

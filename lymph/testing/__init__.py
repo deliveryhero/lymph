@@ -3,6 +3,7 @@ import unittest
 import warnings
 
 import gevent
+import random
 import six
 import mock
 
@@ -34,11 +35,14 @@ class MockServiceNetwork(object):
         self.events = LocalEventSystem()
 
     def add_service(self, cls, interface_name=None, **kwargs):
-        kwargs.setdefault('ip', '300.0.0.1')
-        kwargs.setdefault('port', self.next_port)
+        port = self.next_port
         self.next_port += 1
         registry = self.discovery_hub.create_registry()
-        container = MockServiceContainer(registry=registry, events=self.events, **kwargs)
+        container = MockServiceContainer(
+            registry=registry,
+            events=self.events,
+            rpc=MockRPCServer(ip='300.0.0.1', port=port, mock_network=self),
+            **kwargs)
         container.install_interface(cls, name=interface_name)
         self.service_containers[container.endpoint] = container
         container._mock_network = self
@@ -59,6 +63,7 @@ class MockServiceNetwork(object):
 
 class MockRPCServer(ZmqRPCServer):
     def __init__(self, *args, **kwargs):
+        self.__mock_network = kwargs.pop('mock_network')
         super(MockRPCServer, self).__init__(*args, **kwargs)
         self._bind()
 
@@ -73,9 +78,8 @@ class MockRPCServer(ZmqRPCServer):
             self.connections[endpoint] = Connection(self, endpoint)
         return self.connections[endpoint]
 
-    def _send_message(self, address, msg):
-        dst = self.container.lookup(address).connect().endpoint
-        dst = self.container._mock_network.service_containers[dst]
+    def _send_message(self, endpoint, msg):
+        dst = self.__mock_network.service_containers[endpoint]
 
         # Exercise the msgpack packing and unpacking.
         frames = msg.pack_frames()
@@ -89,8 +93,6 @@ class MockRPCServer(ZmqRPCServer):
 
 
 class MockServiceContainer(ServiceContainer):
-    server_cls = MockRPCServer
-
     def __init__(self, *args, **kwargs):
         super(MockServiceContainer, self).__init__(*args, **kwargs)
         self.__shared_sockets = {}
@@ -138,7 +140,11 @@ class LymphIntegrationTestCase(KazooTestHarness):
             events = self.create_event_system(**kwargs)
         if not registry:
             registry = self.create_registry(**kwargs)
-        container = ServiceContainer(events=events, registry=registry, **kwargs)
+        container = ServiceContainer(
+            events=events,
+            registry=registry,
+            rpc=ZmqRPCServer(),
+            **kwargs)
         interface = None
         if interface_cls:
             interface = container.install_interface(interface_cls, name=interface_name)

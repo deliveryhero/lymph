@@ -41,8 +41,8 @@ class Connection(object):
         self.received_message_count = 0
         self.sent_message_count = 0
 
-        self.heartbeat_loop_greenlet = self.server.container.spawn(self.heartbeat_loop)
-        self.live_check_loop_greenlet = self.server.container.spawn(self.live_check_loop)
+        self.heartbeat_loop_greenlet = self.server.spawn(self.heartbeat_loop)
+        self.live_check_loop_greenlet = self.server.spawn(self.live_check_loop)
 
         self.pid = os.getpid()
 
@@ -68,7 +68,8 @@ class Connection(object):
             channel = self.server.ping(self.endpoint)
             try:
                 channel.get(timeout=self.heartbeat_interval)
-            except RpcError:
+            except RpcError as e:
+                logger.debug('hearbeat error on %s: %r', self, e)
                 pass
             else:
                 self.heartbeat_samples.add(time.monotonic() - start)
@@ -125,9 +126,10 @@ class Connection(object):
         self.sent_message_count += 1
 
     def is_alive(self):
-        return self.status in (RESPONSIVE, IDLE)
+        return self.status in (RESPONSIVE, IDLE, UNKNOWN)
 
-    def stats(self): # FIXME: rtt and phi should be recorded as summary/histogram for all connections
+    def stats(self):
+        # FIXME: rtt and phi should be recorded as summary/histogram for all connections
         return {
             'endpoint': self.endpoint,
             'rtt': self.heartbeat_samples.stats,

@@ -1,7 +1,4 @@
-import abc
 import collections
-
-import six
 
 
 class RawMetric(object):

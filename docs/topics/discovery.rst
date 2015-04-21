@@ -19,9 +19,12 @@ The discovery service can be set in the :file:`.lymph.yml` configuration file:
 
 .. code:: yaml
 
-    registry:
-        class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
-        hosts: 127.0.0.1:2181
+    container:
+        registry:
+            class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
+            zkclient:
+                class: kazoo.client:KazooClient
+                hosts: 127.0.0.1:2181
 
 See :ref:`registry-config` for details.
 

@@ -24,7 +24,6 @@ class GreenletWithTrace(gevent.Greenlet):
 
 
 class Group(NonBlockingPool):
-
     greenlet_cls = GreenletWithTrace
 
 

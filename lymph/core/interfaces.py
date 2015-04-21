@@ -1,6 +1,5 @@
 import textwrap
 import functools
-import collections
 
 import six
 
@@ -139,12 +138,6 @@ class Interface(Componentized):
             result.set(event.body)
 
         return AsyncResultWrapper(self.container, handler, result)
-
-    def on_connect(self, endpoint):
-        pass
-
-    def on_disconnect(self, endpoint):
-        pass
 
 
 class DefaultInterface(Interface):
