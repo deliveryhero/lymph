@@ -92,3 +92,7 @@ def main(argv=None):
     terminal = setup_terminal(args, config)
     command = command_cls(args, config, terminal)
     return command.run()
+
+
+if __name__ == '__main__':
+    main()
