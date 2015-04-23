@@ -6,15 +6,20 @@ Testings API
 .. class:: RpcMockTestCase
 
   Base mixin test class that provice a highlevel interface for mocking remote rpc
-  calls.
+  calls. By inheriting this class, test cases can supply mock return values for
+  rpc functions.
+
+  .. note::
+
+     In case an rpc function is not mocked the actual RPC call will be made to the service.
 
   .. attribute:: rpc_mock_calls
 
       A List of the called rpc functions.
 
-  .. method:: setup_rpc_mocks(mocks)
+  .. method:: setup_rpc_mocks(rpc_functions)
 
-      Setup RPC mocks by passing all mocked RPC function as a dictionary in the form
+      Setup RPC mocks by passing all mocked RPC functions as a dictionary in the form
       ``{'<service_name>.<function_name>': <return_value>}``, in case
       ``<return_value>`` is an exception, call will raise the exception.
 
@@ -30,7 +35,7 @@ Testings API
                       ...
                   })
 
-  .. method:: update_rpc_mock(func_name, new_value)
+  .. method:: update_rpc_mock(func_name, return_value)
 
       Update a mock of an already mocked RPC function.
 
@@ -47,6 +52,27 @@ Testings API
 
              def test_something(self):
                   self.update_rpc_mock('upper.upper', 'A NEW VALUE')
+                  ...
+
+  .. method:: delete_rpc_mock(func_name)
+
+      Delete a mock of an already mocked RPC function.
+
+      :raises KeyError: In case the functions wasn't mocked previously.
+
+      .. code-block:: python
+
+          class SomeTest(RpcMockTestCase):
+
+              def setUp(self):
+                  super().setUp()
+                  self.setup_rpc_mocks({
+                      'upper.upper': 'HELLO WORLD',
+                      'upper.echo': 'hello world',
+                  })
+
+             def test_really_something(self):
+                  self.delete_rpc_mock('upper.upper')
                   ...
 
   .. method:: assert_rpc_calls(*expected_calls)
