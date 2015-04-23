@@ -1,4 +1,5 @@
 import unittest
+import functools
 
 from lymph.exceptions import RemoteError
 from lymph.core.interfaces import Proxy
@@ -14,6 +15,7 @@ class MockMixins(object):
     def _assert_equal_calls(self, actual_calls, expected_calls):
         actual_count, expected_count = len(actual_calls), len(expected_calls)
 
+        # TODO(Mouad): Add in the message which calls are missing.
         self.assertEqual(
             expected_count, actual_count,
             msg="number of calls doesn't match, expected %d actual %d" % (expected_count, actual_count))
@@ -111,44 +113,49 @@ class MockMixins(object):
         self.fail(msg)
 
 
-def _get_side_effect(mocks):
-    class ProxyCall(object):
-        def __init__(self, data):
-            self.data = data
+def _get_rpc_mock(rpc_mocks={}, original=Proxy._call):
+    class ProxyCall(mock.MagicMock):
 
-        def __call__(self, __name, **kwargs):
+        rpc_functions = rpc_mocks
+
+        def __call__(self, proxy_inst, __name, **kwargs):
+            # XXX (Mouad): We need to call MagicMock __call__ here else calls
+            # will not be tracked, and we do it for all calls mocked or not.
+            super(ProxyCall, self).__call__(__name, **kwargs)
             try:
-                result = self.data[__name]
+                result = self.rpc_functions[__name]
+            except KeyError:
+                return original(proxy_inst, __name, **kwargs)
+            else:
                 if isinstance(result, Exception):
                     raise getattr(RemoteError, result.__class__.__name__)('', '')
                 if callable(result):
                     return result(**kwargs)
                 return result
-            except KeyError:
-                # TODO: Forward to original proxy this will be useful if we want
-                # to mock some part and not others.
-                return
 
-        def update(self, func_name, new_value):
-            self.data[func_name] = new_value
-    return ProxyCall(mocks)
+        def __get__(self, obj, type=None):
+            return functools.partial(self.__call__, obj)
+    return ProxyCall()
 
 
 class RpcMockTestCase(unittest.TestCase, MockMixins):
     def setUp(self):
         super(RpcMockTestCase, self).setUp()
-        self.rpc_patch = mock.patch.object(Proxy, '_call')
+        self.rpc_patch = mock.patch.object(Proxy, '_call', new_callable=_get_rpc_mock)
         self.rpc_mock = self.rpc_patch.start()
 
     def tearDown(self):
         super(RpcMockTestCase, self).tearDown()
         self.rpc_patch.stop()
 
-    def setup_rpc_mocks(self, mocks):
-        self.rpc_mock.side_effect = _get_side_effect(mocks)
+    def setup_rpc_mocks(self, rpc_functions):
+        self.rpc_mock.rpc_functions = rpc_functions
 
-    def update_rpc_mock(self, func_name, new_value):
-        self.rpc_mock.side_effect.update(func_name, new_value)
+    def update_rpc_mock(self, func_name, return_value):
+        self.rpc_mock.rpc_functions[func_name] = return_value
+
+    def delete_rpc_mock(self, func_name):
+        del self.rpc_mock.rpc_functions[func_name]
 
     @property
     def rpc_mock_calls(self):

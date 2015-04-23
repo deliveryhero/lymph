@@ -157,23 +157,29 @@ class RPCMockHelperTests(unittest.TestCase):
             )
 
 
-class Upper(lymph.Interface):
+class StringService(lymph.Interface):
 
     @lymph.rpc()
     def upper(self, text):
-        self.emit('upper.uppered', {'text': text})
+        self.emit('str.uppered', {'text': text})
         return text.upper()
 
+    @lymph.rpc()
+    def lower(self, text):
+        self.emit('str.lowered', {'text': text})
+        return text.lower()
 
-class MetaRPCUpperTestCase(RPCServiceTestCase, RpcMockTestCase):
 
-    service_class = Upper
-    service_name = 'upper'
+class MetaRPCUpperTestCase(RPCServiceTestCase, RpcMockTestCase, EventMockTestCase):
+
+    service_class = StringService
+    service_name = 'str'
 
     def setUp(self):
         super(MetaRPCUpperTestCase, self).setUp()
         self.setup_rpc_mocks({
-            'upper.upper': 'HELLO WORLD'
+            'str.upper': 'HELLO WORLD',
+            'str.lower': 'hello world'
         })
 
     def test_meta_rpc(self):
@@ -182,19 +188,43 @@ class MetaRPCUpperTestCase(RPCServiceTestCase, RpcMockTestCase):
         self.assertEqual(response, 'HELLO WORLD')
 
         self.assert_rpc_calls(
-            mock.call('upper.upper', text='hello world')
+            mock.call('str.upper', text='hello world')
         )
 
-
-class MetaEventUpperTestCase(RPCServiceTestCase, EventMockTestCase):
-
-    service_class = Upper
-
     def test_meta_events(self):
+        self.delete_rpc_mock('str.upper')
+
         response = self.client.upper(text='hello world')
 
         self.assertEqual(response, 'HELLO WORLD')
 
+        self.assert_rpc_calls(
+            mock.call('str.upper', text='hello world')
+        )
+
         self.assert_events_emitted(
-            mock.call('upper.uppered', {'text': 'hello world'})
+            mock.call('str.uppered', {'text': 'hello world'})
+        )
+
+    def test_meta_update_rpc(self):
+        self.update_rpc_mock('str.upper', 'FOOBAR')
+
+        response = self.client.upper(text='hello world')
+
+        self.assertEqual(response, 'FOOBAR')
+
+        self.assert_rpc_calls(
+            mock.call('str.upper', text='hello world')
+        )
+
+    def test_meta_multiple_rpc(self):
+        response = self.client.upper(text='hello world')
+        self.assertEqual(response, 'HELLO WORLD')
+
+        response = self.client.lower(text='HELLO WORLD')
+        self.assertEqual(response, 'hello world')
+
+        self.assert_rpc_calls(
+            mock.call('str.upper', text='hello world'),
+            mock.call('str.lower', text='HELLO WORLD'),
         )
