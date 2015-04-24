@@ -3,6 +3,7 @@ from __future__ import print_function
 import json
 import logging
 import math
+import pprint
 import sys
 import time
 
@@ -38,7 +39,7 @@ class RequestCommand(Command):
     short_description = 'Send a request message to some service and output the reply.'
 
     def _run_one_request(self, request):
-        print(request().body)
+        pprint.pprint(request().body)
 
     def _run_many_requests(self, request, n, c):
         # one warm up request for lookup and connection creation
