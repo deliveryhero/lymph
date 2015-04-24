@@ -81,7 +81,7 @@ class TailCommand(Command):
     Usage: lymph tail [options] [--level=<level> | -l <level>] <address>...
 
     Description:
-        Shows the log output of <address>
+        Shows the log output of <address> on stderr
 
     Tail Options:
       --level=<level>, -l <level>  Log level to subscribe to [default: INFO]
@@ -106,9 +106,11 @@ class TailCommand(Command):
         level = get_loglevel(self.args['--level'])
         logger = logging.getLogger('lymph-tail-cli')
         logger.setLevel(level)
+
         console = logging.StreamHandler()
         console.setLevel(level)
         console.setFormatter(logging.Formatter('[%(service_type)s][%(identity)s] [%(levelname)s] %(message)s'))
+
         logger.addHandler(console)
 
         try:
