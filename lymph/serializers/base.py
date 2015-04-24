@@ -98,6 +98,8 @@ class BaseSerializer(object):
                 '__type__': obj_type.__name__,
                 '_': serializer.serialize(obj),
             }
+        elif hasattr(obj, '_lymph_dump_'):
+            obj = obj._lymph_dump_()
         return obj
 
     def load_object(self, obj):
