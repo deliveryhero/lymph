@@ -187,6 +187,7 @@ class ServiceContainer(Componentized):
             interface = self.installed_interfaces[interface_name]
         except KeyError:
             logger.warning('unsupported service type: %s', interface_name)
+            channel.nack(True)
             return
         try:
             interface.handle_request(func_name, channel)
