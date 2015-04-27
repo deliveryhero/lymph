@@ -1,6 +1,8 @@
+import unittest
+
 import blessings
 import gevent
-import unittest
+import six
 
 from lymph.cli.testing import CliIntegrationTestCase, CliTestMixin
 from lymph.core.decorators import rpc
@@ -22,7 +24,8 @@ class RequestCommandTests(CliIntegrationTestCase):
     def test_request(self):
         result = self.cli(['request', 'upper.upper', '{"text":"foo"}'])
         self.assertEqual(result.returncode, 0)
-        self.assertEqual(result.stdout, 'FOO\n')
+        output = "u'FOO'" if six.PY2 else "'FOO'"
+        self.assertEqual(result.stdout.rstrip(), output)
 
     def test_negative_request(self):
         result = self.cli(['request', 'no_exiting_container', '{}'])
