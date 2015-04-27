@@ -63,7 +63,7 @@ class SerialEventHandler(Component):
         return '%s.%s' % (self.consumer_func.__name__, index)
 
     def push(self, interface, event):
-        key = str(self.key(interface, event))
+        key = str(self.key(interface, event)).encode('utf-8')
         index = int(hashlib.md5(key).hexdigest(), 16) % self.partition_count
         logger.debug('PUBLISH %s %s', self.get_queue_name(index), event)
         self.interface.emit(self.get_queue_name(index), {'event': event.serialize()})
