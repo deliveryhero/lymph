@@ -20,7 +20,8 @@ IDLE = 'idle'
 
 
 class Connection(object):
-    def __init__(self, server, endpoint, heartbeat_interval=1, timeout=1, idle_timeout=10, unresponsive_disconnect=30, idle_disconnect=60):
+    def __init__(self, server, endpoint, heartbeat_interval=1, timeout=3, idle_timeout=10, unresponsive_disconnect=30, idle_disconnect=60):
+        assert heartbeat_interval < timeout < idle_timeout
         self.server = server
         self.endpoint = endpoint
         self.timeout = timeout
@@ -66,21 +67,23 @@ class Connection(object):
         while True:
             start = time.monotonic()
             channel = self.server.ping(self.endpoint)
+            error = False
             try:
                 channel.get(timeout=self.heartbeat_interval)
             except RpcError as e:
                 logger.debug('hearbeat error on %s: %r', self, e)
-                pass
-            else:
-                self.heartbeat_samples.add(time.monotonic() - start)
+                error = True
+            took = time.monotonic() - start
+            if not error:
+                self.heartbeat_samples.add(took)
                 self.explicit_heartbeat_count += 1
-            gevent.sleep(self.heartbeat_interval)
+            gevent.sleep(max(0, self.heartbeat_interval - took))
 
     def live_check_loop(self):
         while True:
             self.update_status()
             self.log_stats()
-            gevent.sleep(self.timeout)
+            gevent.sleep(1)
 
     def update_status(self):
         if self.last_seen:
@@ -96,8 +99,9 @@ class Connection(object):
     def log_stats(self):
         roundtrip_stats = 'window (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.stats)
         roundtrip_total_stats = 'total (mean rtt={mean:.1f} ms; stddev rtt={stddev:.1f})'.format(**self.heartbeat_samples.total.stats)
-        logger.debug("pid=%s; %s; %s; phi=%.3f; ping/s=%.2f; status=%s" % (
+        logger.debug("pid=%s; endpoint=%s; %s; %s; phi=%.3f; ping/s=%.2f; status=%s" % (
             self.pid,
+            self.endpoint,
             roundtrip_stats,
             roundtrip_total_stats,
             self.phi,
