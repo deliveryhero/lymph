@@ -11,7 +11,17 @@ Since Componentized objects themselves are components, they form a tree of
 of a Component is :class:`lymph.core.interfaces.Interface`.
 
 
-.. class:: Component
+.. class:: Component(error_hook=None, pool=None)
+
+    .. attribute:: error_hook
+
+        A Hook object that propagates exceptions for this component.
+        Defaults to the ``error_hook`` of the parent component.
+
+    .. attribute:: pool
+
+        A pool that holds greenlets related to the component.
+        Defaults to the ``pool`` of the parent component.
 
     .. method:: on_start()
 
@@ -20,6 +30,11 @@ of a Component is :class:`lymph.core.interfaces.Interface`.
     .. method:: on_stop()
 
         Called when the container is stopped.
+
+    .. method:: spawn(func, *args, **kwargs)
+
+        Spawns a new greenlet in the greenlet pool of this component.
+        If ``func`` exits with an exception, it is reported to the ``error_hook``.
 
     .. method:: _get_metrics()
 
