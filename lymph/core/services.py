@@ -18,7 +18,6 @@ class ServiceInstance(object):
     def __init__(self, endpoint=None, identity=None, **info):
         self.identity = identity if identity else hashlib.md5(endpoint.encode('utf-8')).hexdigest()
         self.info = info
-        self.connection = None
         self.update(endpoint, **info)
 
     def update(self, endpoint, **info):
@@ -33,6 +32,7 @@ class ServiceInstance(object):
             'log_endpoint': self.log_endpoint,
             'fqdn': self.fqdn,
         }
+        d.update(self.info)
         return d
 
 

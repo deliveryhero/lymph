@@ -12,6 +12,7 @@ class DiscoverCommand(Command):
     Options:
 
       --instances                  Show service instances.
+      --full                       Show all published instance meta data.
       --ip=<address>               Use this IP for all sockets.
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
@@ -37,5 +38,10 @@ class DiscoverCommand(Command):
                     for i, d in enumerate(interface_instances):
                         prefix = u'└─' if i == len(instances) - 1 else u'├─'
                         print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
+                        if self.args.get('--full'):
+                            for k, v in sorted(d.serialize().items()):
+                                if k == 'endpoint':
+                                    continue
+                                print(u'   %s: %r' % (k, v))
         else:
             print(u"No registered services found")

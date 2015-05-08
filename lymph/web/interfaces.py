@@ -23,7 +23,7 @@ class Request(DynamicCharsetRequestMixin, BaseRequest):
 
 
 class WebServiceInterface(Interface):
-    default_http_port = 4080
+    default_http_port = None
 
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
@@ -41,6 +41,13 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).apply_config(config)
         self.http_port = config.get('port', self.default_http_port)
         self.pool_size = config.get('wsgi_pool_size')
+        if self.http_port is None:
+            self.http_port = sockets.get_unused_port()
+
+    def get_description(self):
+        description = super(WebServiceInterface, self).get_description()
+        description['http_endpoint'] = 'http://%s:%s' % (self.container.server.ip, self.http_port)
+        return description
 
     def on_start(self):
         super(WebServiceInterface, self).on_start()
