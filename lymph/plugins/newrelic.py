@@ -2,6 +2,7 @@ from __future__ import absolute_import
 
 import newrelic.agent
 
+from lymph.core import trace
 from lymph.core.plugins import Plugin
 from lymph.web.interfaces import WebServiceInterface
 
@@ -20,5 +21,6 @@ class NewrelicPlugin(Plugin):
             interface.application = newrelic.agent.wsgi_application()(interface.application)
 
     def on_error(self, exc_info, **kwargs):
+        newrelic.agent.add_custom_parameter('trace_id', trace.get_id())
         newrelic.agent.record_exception(exc_info)
 
