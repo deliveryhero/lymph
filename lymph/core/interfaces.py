@@ -108,6 +108,9 @@ class Interface(Componentized):
     def apply_config(self, config):
         self.config = config
 
+    def get_description(self):
+        return {}
+
     def handle_request(self, func_name, channel):
         self.methods[func_name].rpc_call(self, channel, **channel.request.body)
 

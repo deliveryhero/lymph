@@ -128,14 +128,16 @@ class ServiceContainer(Componentized):
     def unsubscribe(self, handler):
         self.event_system.unsubscribe(handler)
 
-    def get_instance_description(self):
-        return {
+    def get_instance_description(self, interface):
+        description = interface.get_description()
+        description.update({
             'endpoint': self.endpoint,
             'identity': self.identity,
             'log_endpoint': self.log_endpoint,
             'backdoor_endpoint': self.backdoor_endpoint,
             'fqdn': self.fqdn,
-        }
+        })
+        return description
 
     def start(self, register=True):
         logger.info('starting %s (%s) at %s (pid=%s)', self.service_name, ', '.join(self.service_types), self.endpoint, os.getpid())
@@ -143,16 +145,15 @@ class ServiceContainer(Componentized):
         self.on_start()
         self.metrics_aggregator.add_tags(identity=self.identity)
 
-        self.instance = ServiceInstance(**self.get_instance_description())
-
         if register:
-            for interface_name, service in six.iteritems(self.installed_interfaces):
-                if not service.register_with_coordinator:
+            for interface_name, interface in six.iteritems(self.installed_interfaces):
+                if not interface.register_with_coordinator:
                     continue
+                instance = ServiceInstance(**self.get_instance_description(interface))
                 try:
-                    self.service_registry.register(interface_name, self.instance)
+                    self.service_registry.register(interface_name, instance)
                 except RegistrationFailure:
-                    logger.error("registration failed %s, %s", interface_name, service)
+                    logger.error("registration failed %s, %s", interface_name, interface)
                     self.stop()
 
     def stop(self, **kwargs):
