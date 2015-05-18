@@ -45,6 +45,8 @@ class ServiceContainer(Componentized):
         self.service_name = service_name
         self.fqdn = socket.getfqdn()
 
+        self.http_request_hook = Hook('http_request_hook')
+
         self.server = rpc
         self.service_registry = registry
         self.event_system = events

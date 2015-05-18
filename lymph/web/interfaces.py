@@ -74,6 +74,7 @@ class WebServiceInterface(Interface):
         request.urls = urls
         try:
             rule, kwargs = request.urls.match(return_rule=True)
+            self.container.http_request_hook(request, rule, kwargs)
             handler = self.get_handler(request, rule)
             if hasattr(handler, "dispatch"):
                 response = handler.dispatch(kwargs)
