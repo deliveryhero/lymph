@@ -18,6 +18,9 @@ from lymph.utils.sockets import get_unused_port
 logger = logging.getLogger(__name__)
 
 
+SIGNAL_NAMES = {getattr(signal, name): name for name in dir(signal) if name.startswith('SIG') and '_' not in name}
+
+
 def install_plugins(container, plugins):
     for name, plugin_config in six.iteritems(plugins):
         cls = import_object(plugin_config['class'])
@@ -109,7 +112,7 @@ class InstanceCommand(Command):
         gevent.signal(signal.SIGQUIT, self._handle_termination_signal, signal.SIGQUIT, prehook=partial(dump_stacks, output=sys.stderr.write))
 
     def _handle_termination_signal(self, signalnum, prehook=None):
-        logger.info('caught %s, pid=%s', signal.getsignal(signalnum), os.getpid())
+        logger.info('caught %s, pid=%s', SIGNAL_NAMES.get(signalnum, signalnum), os.getpid())
         if prehook:
             prehook()
         self.container.stop(signalnum=signalnum)
