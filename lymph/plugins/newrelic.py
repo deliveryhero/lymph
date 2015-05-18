@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, unicode_literals
 
 import newrelic.agent
 
@@ -12,6 +12,7 @@ class NewrelicPlugin(Plugin):
         super(NewrelicPlugin, self).__init__()
         self.container = container
         self.container.error_hook.install(self.on_error)
+        self.container.http_request_hook.install(self.on_http_request)
         newrelic.agent.initialize(config_file, environment)
 
     def on_interface_installation(self, interface):
@@ -24,3 +25,5 @@ class NewrelicPlugin(Plugin):
         newrelic.agent.add_custom_parameter('trace_id', trace.get_id())
         newrelic.agent.record_exception(exc_info)
 
+    def on_http_request(self, request, rule, kwargs):
+        newrelic.agent.set_transaction_name("%s %s" % (request.method, rule))
