@@ -69,6 +69,7 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).on_stop()
 
     def dispatch_request(self, request):
+        trace.set_id()
         logger.info('%s %s', request.method, request.path)
         urls = self.url_map.bind_to_environ(request.environ)
         request.urls = urls
