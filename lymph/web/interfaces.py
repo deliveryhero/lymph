@@ -46,7 +46,7 @@ class WebServiceInterface(Interface):
 
     def get_description(self):
         description = super(WebServiceInterface, self).get_description()
-        description['http_endpoint'] = 'http://%s:%s' % (self.container.server.ip, self.http_port)
+        description['http_port'] = self.http_port
         return description
 
     def on_start(self):
