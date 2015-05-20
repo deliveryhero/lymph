@@ -3,7 +3,7 @@ import json
 from werkzeug.exceptions import MethodNotAllowed
 
 
-http_methods = ('get', 'post', 'head', 'options', 'put', 'delete')
+http_methods = ('get', 'post', 'head', 'options', 'put', 'patch', 'delete')
 
 
 class RequestHandler(object):
