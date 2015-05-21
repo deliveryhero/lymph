@@ -138,6 +138,7 @@ class ServiceContainer(Componentized):
             'log_endpoint': self.log_endpoint,
             'backdoor_endpoint': self.backdoor_endpoint,
             'fqdn': self.fqdn,
+            'ip': self.server.ip,
         })
         return description
 
