@@ -92,7 +92,7 @@ class ConfigView(ConfigObject):
     def __len__(self):
         return len(self.root.get_raw(self.path))
 
-    def get_raw(self, key, default=None):
+    def get_raw(self, key, default=Undefined):
         return self.root.get_raw('%s.%s' % (self.path, key), default)
 
     def get(self, key, default=None):

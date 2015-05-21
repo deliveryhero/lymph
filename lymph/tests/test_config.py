@@ -57,6 +57,14 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(config.get('a'), 2)
         self.assertEqual(config.get('b.c'), 2)
 
+    def test_contains(self):
+        config = Configuration({'a': {'b': 1}})
+        self.assertTrue('a' in config)
+        self.assertFalse('foo' in config)
+        view = config.get('a')
+        self.assertTrue('b' in view)
+        self.assertFalse('foo' in view)
+
 
 class ConfigurableThing(object):
     def __init__(self, config):
