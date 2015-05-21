@@ -52,6 +52,7 @@ class EventHandler(Component):
         self.active = active
         self.interface = interface
         self.once = once
+        self.broadcast = broadcast
         self.unique_key = str(uuid4()) if once or broadcast else None
         self._queue_name = queue_name or func.__name__
 
