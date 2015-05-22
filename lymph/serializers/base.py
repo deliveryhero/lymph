@@ -7,6 +7,8 @@ import msgpack
 import six
 import uuid
 
+from lymph.utils import Undefined, UndefinedType
+
 
 @six.add_metaclass(abc.ABCMeta)
 class ExtensionTypeSerializer(object):
@@ -62,13 +64,22 @@ class SetSerializer(ExtensionTypeSerializer):
         return set(obj)
 
 
+class UndefinedSerializer(ExtensionTypeSerializer):
+    def serialize(self, obj):
+        return ''
+
+    def deserialize(self, obj):
+        return Undefined
+
+
 _extension_type_serializers = {
     'datetime': DatetimeSerializer(),
     'date': DateSerializer(),
     'time': TimeSerializer(),
     'Decimal': StrSerializer(decimal.Decimal),
     'UUID': StrSerializer(uuid.UUID),
-    'set': SetSerializer()
+    'set': SetSerializer(),
+    'UndefinedType': UndefinedSerializer(),
 }
 
 
