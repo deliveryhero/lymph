@@ -5,9 +5,13 @@ import unittest
 import uuid
 
 from lymph.serializers import base
+from lymph.utils import Undefined
 
 
 class SerializerBaseTest(unittest.TestCase):
+    def setUp(self):
+        self.json_serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
+
     def assertJsonEquals(self, a, b):
         self.assertEquals(json.loads(a), b)
 
@@ -138,7 +142,7 @@ class SerializerBaseTest(unittest.TestCase):
         )
 
     def test_BaseSerializer_loads(self):
-        serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
+        serializer = self.json_serializer
         normal_datetime = '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}'
         normal_date = '{"__type__": "date", "_": "2014-09-12"}'
         number = '{"__type__": "Decimal", "_": "3.1415"}'
@@ -158,3 +162,7 @@ class SerializerBaseTest(unittest.TestCase):
                          '{"__type__": "datetime", "_": "2015-09-12T08:33:12Z"}'
                          ']}'), set([datetime.datetime(2014, 9, 12, 8, 33, 12),
                                      datetime.datetime(2015, 9, 12, 8, 33, 12)]))
+
+    def test_undefined(self):
+        self.assertJsonEquals(self.json_serializer.dumps(Undefined), {'__type__': 'UndefinedType', '_': ''})
+        self.assertIs(self.json_serializer.loads('{"__type__": "UndefinedType", "_": ""}'), Undefined)

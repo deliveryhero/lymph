@@ -13,7 +13,7 @@ import traceback
 import uuid
 
 
-class Undefined(object):
+class UndefinedType(object):
     def __repr__(self):
         return "Undefined"
 
@@ -24,7 +24,7 @@ class Undefined(object):
         return False
 
 
-Undefined = Undefined()
+Undefined = UndefinedType()
 
 
 def import_object(module_name, object_path=None):
