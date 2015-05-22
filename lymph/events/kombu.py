@@ -97,11 +97,9 @@ class KombuEventSystem(BaseEventSystem):
         with self._get_connection() as conn:
             self.exchange(conn).declare()
             if handler.broadcast:
-                queue = kombu.Queue(handler.queue_name, exclusive=True,
-                                    durable=False)
+                queue = kombu.Queue(handler.queue_name, exclusive=True, durable=False)
             else:
-                queue = kombu.Queue(handler.queue_name, durable=True,
-                                    auto_delete=handler.once)
+                queue = kombu.Queue(handler.queue_name, durable=True, auto_delete=handler.once)
             queue(conn).declare()
             for event_type in handler.event_types:
                 queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
