@@ -43,7 +43,7 @@ class Event(object):
 
 class EventHandler(Component):
     def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True, once=False, broadcast=False):
-        assert (not (once and broadcast)), ("Once and broadcast cannot be enabled at the same time")
+        assert not (once and broadcast), "Once and broadcast cannot be enabled at the same time"
         super(EventHandler, self).__init__()
         self.func = func
         self.event_types = event_types
