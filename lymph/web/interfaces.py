@@ -21,6 +21,11 @@ logger = logging.getLogger(__name__)
 class Request(DynamicCharsetRequestMixin, BaseRequest):
     default_charset = 'utf-8'
 
+    @property
+    def full_path(self):
+        full_path = super(Request, self).full_path
+        return full_path.rstrip('?')
+
 
 class WebServiceInterface(Interface):
     default_http_port = None
