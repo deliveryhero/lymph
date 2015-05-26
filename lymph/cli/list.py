@@ -14,10 +14,14 @@ class ListCommand(Command):
     needs_config = False
 
     def run(self):
+        command_names = get_command_classes().keys()
+        max_command_name = max(command_names, key=len)
+        description_offset = len(max_command_name) + 2
         for name, cls in six.iteritems(get_command_classes()):
-            print(u'{t.bold}{name:<15}{t.normal}{description}'.format(
+            print(u'{t.bold}{name:<{offset}}{t.normal}{description}'.format(
                 t=self.terminal,
                 name=name,
-                description=cls.short_description
+                description=cls.short_description,
+                offset=description_offset
             ))
 
