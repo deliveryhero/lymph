@@ -18,6 +18,10 @@ class TestInterface(lymph.Interface):
     def on_foo(self, event):
         self.collected_events.append(event)
 
+    @lymph.event('foo_broadcast', broadcast=True)
+    def on_foo_broadcast(self, event):
+        self.collected_events.append(event)
+
 
 class TestEventBroadcastInterface(lymph.Interface):
     def __init__(self, *args, **kwargs):
@@ -37,15 +41,9 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
         self.exchange_name = 'test-%s' % uuid.uuid4()
         self.discovery_hub = StaticServiceRegistryHub()
 
-        self.the_container_unicast, self.the_interface_unicast = self.create_container(TestInterface, 'test')
-        self.lymph_client_unicast = self.create_client()
-
-        self.the_container_emitter, self.the_interface_emitter = self.create_container(TestEventBroadcastInterface, 'test')
-        self.lymph_client_emitter = self.create_client()
-
-        self.the_container_receiver, self.the_interface_receiver = self.create_container(TestEventBroadcastInterface, 'test')
-        self.create_client()
-
+        self.the_container, self.the_interface = self.create_container(TestInterface, 'test')
+        self.the_container_broadcast, self.the_interface_broadcast = self.create_container(TestEventBroadcastInterface, 'test')
+        self.lymph_client = self.create_client()
 
     def tearDown(self):
         super(LymphIntegrationTestCase, self).tearDown()
@@ -73,27 +71,27 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
 
     def received_check(self, n):
         def check():
-            return len(self.the_interface_unicast.collected_events) == n
+            return len(self.the_interface.collected_events) == n
         return check
 
     def received_broadcast_check(self, n):
         def check():
-            return (len(self.the_interface_emitter.collected_events) + len(self.the_interface_receiver.collected_events)) == n
+            return (len(self.the_interface.collected_events) + len(self.the_interface_broadcast.collected_events)) == n
         return check
 
     def test_emit(self):
-        self.lymph_client_unicast.emit('foo', {})
+        self.lymph_client.emit('foo', {})
         self.assert_eventually_true(self.received_check(1), timeout=2)
-        self.assertEqual(self.the_interface_unicast.collected_events[0].evt_type, 'foo')
+        self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo')
 
     def test_delayed_emit(self):
-        self.lymph_client_unicast.emit('foo', {}, delay=.5)
+        self.lymph_client.emit('foo', {}, delay=.5)
         self.assert_temporarily_true(self.received_check(0), timeout=.2)
         self.assert_eventually_true(self.received_check(1), timeout=.5)
-        self.assertEqual(self.the_interface_unicast.collected_events[0].evt_type, 'foo')
+        self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo')
 
     def test_broadcast_event(self):
-        self.lymph_client_emitter.emit('foo_broadcast', {})
+        self.lymph_client.emit('foo_broadcast', {})
         self.assert_eventually_true(self.received_broadcast_check(2), timeout=2)
-        self.assertEqual(self.the_interface_receiver.collected_events[0].evt_type, 'foo_broadcast')
-        self.assertEqual(self.the_interface_emitter.collected_events[0].evt_type, 'foo_broadcast')
+        self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo_broadcast')
+        self.assertEqual(self.the_interface_broadcast.collected_events[0].evt_type, 'foo_broadcast')
