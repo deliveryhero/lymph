@@ -45,17 +45,17 @@ class RequestCommandTests(CliIntegrationTestCase):
 class ListCommandTests(CliTestMixin, unittest.TestCase):
     def test_list(self):
         self.assert_lines_equal(['list'], u"""
-            {t.bold}tail           {t.normal}Stream the logs of one or more services.
-            {t.bold}emit           {t.normal}Manually emits an event.
-            {t.bold}request        {t.normal}Send a request message to some service and output the reply.
-            {t.bold}inspect        {t.normal}Describes the RPC interface of a service
-            {t.bold}discover       {t.normal}Show available services.
-            {t.bold}help           {t.normal}Display help information about lymph.
-            {t.bold}list           {t.normal}List available commands.
-            {t.bold}subscribe      {t.normal}Prints events to stdout.
-            {t.bold}instance       {t.normal}Run a single service instance (one process).
-            {t.bold}node           {t.normal}Run a node service that manages a group of processes on the same machine.
-            {t.bold}shell          {t.normal}Open an interactive Python shell locally or remotely.
+            {t.bold}tail       {t.normal}Stream the logs of one or more services.
+            {t.bold}emit       {t.normal}Manually emits an event.
+            {t.bold}request    {t.normal}Send a request message to some service and output the reply.
+            {t.bold}inspect    {t.normal}Describes the RPC interface of a service
+            {t.bold}discover   {t.normal}Show available services.
+            {t.bold}help       {t.normal}Display help information about lymph.
+            {t.bold}list       {t.normal}List available commands.
+            {t.bold}subscribe  {t.normal}Prints events to stdout.
+            {t.bold}instance   {t.normal}Run a single service instance (one process).
+            {t.bold}node       {t.normal}Run a node service that manages a group of processes on the same machine.
+            {t.bold}shell      {t.normal}Open an interactive Python shell locally or remotely.
         """.format(t=blessings.Terminal()), config=False)
 
 
