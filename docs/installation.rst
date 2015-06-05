@@ -23,12 +23,14 @@ lymph version cloned from the github repository.
 
     $ # for Python 2.7
     $ git clone https://github.com/deliveryhero/lymph.git
+    $ cd lymph
     $ pip install -r requirements/base2.txt
 
 .. code:: console
 
     $ # for Python 3.4
     $ git clone https://github.com/deliveryhero/lymph.git
+    $ cd lymph
     $ pip install cython
     $ pip install -r requirements/base3.txt
     $ pip install -e .
