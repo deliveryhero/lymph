@@ -8,7 +8,7 @@ def setup_config(args):
 
     config = Configuration({
         'container': {}
-    })
+    }, env=os.environ)
 
     if 'LYMPH_NODE_CONFIG' in os.environ:
         config.load_file(os.environ['LYMPH_NODE_CONFIG'], sections=['container', 'registry', 'event_system', 'plugins', 'dependencies'])
