@@ -46,7 +46,7 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
         self.lymph_client = self.create_client()
 
     def tearDown(self):
-        super(LymphIntegrationTestCase, self).tearDown()
+        super(KombuIntegrationTest, self).tearDown()
         connection = self.get_kombu_connection()
         exchange = kombu.Exchange(self.exchange_name)
         exchange(connection).delete()
@@ -81,17 +81,17 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
 
     def test_emit(self):
         self.lymph_client.emit('foo', {})
-        self.assert_eventually_true(self.received_check(1), timeout=2)
+        self.assert_eventually_true(self.received_check(1), timeout=10)
         self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo')
 
     def test_delayed_emit(self):
         self.lymph_client.emit('foo', {}, delay=.5)
         self.assert_temporarily_true(self.received_check(0), timeout=.2)
-        self.assert_eventually_true(self.received_check(1), timeout=.5)
+        self.assert_eventually_true(self.received_check(1), timeout=10)
         self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo')
 
     def test_broadcast_event(self):
         self.lymph_client.emit('foo_broadcast', {})
-        self.assert_eventually_true(self.received_broadcast_check(2), timeout=2)
+        self.assert_eventually_true(self.received_broadcast_check(2), timeout=10)
         self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo_broadcast')
         self.assertEqual(self.the_interface_broadcast.collected_events[0].evt_type, 'foo_broadcast')

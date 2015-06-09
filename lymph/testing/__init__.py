@@ -124,6 +124,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
             container.join()
         if self.use_zookeeper:
             self.teardown_zookeeper()
+        self._containers = []
 
     def create_client(self, **kwargs):
         container, interface = self.create_container(**kwargs)
