@@ -65,6 +65,20 @@ class ConfigurationTests(unittest.TestCase):
         self.assertTrue('b' in view)
         self.assertFalse('foo' in view)
 
+    def test_env_replacement(self):
+        config = Configuration({
+            'replace': 'prefix_$(env.FOO_BAR)_suffix',
+            'no_parens': '$env.FOO_BAR',
+            'no_namespace': '$(FOO_BAR)',
+            'missing': '$(env.MISSING)',
+            'bad_namespace': '$(bad.FOO_BAR)',
+        }, env={'FOO_BAR': '42'})
+        self.assertEqual(config.get('replace'), 'prefix_42_suffix')
+        self.assertEqual(config.get('no_parens'), '$env.FOO_BAR')
+        self.assertEqual(config.get('no_namespace'), '$(FOO_BAR)')
+        self.assertEqual(config.get('missing'), '')
+        self.assertEqual(config.get('bad_namespace'), '$(bad.FOO_BAR)')
+
 
 class ConfigurableThing(object):
     def __init__(self, config):

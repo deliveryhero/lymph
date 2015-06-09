@@ -5,7 +5,7 @@ import copy
 import six
 import yaml
 
-from lymph.utils import import_object, Undefined
+from lymph.utils import import_object, Undefined, replace_dollar_vars
 from lymph.exceptions import ConfigurationError
 
 
@@ -112,8 +112,9 @@ class ConfigView(ConfigObject):
 
 
 class Configuration(ConfigObject):
-    def __init__(self, values=None):
+    def __init__(self, values=None, **dollar_vars):
         self.values = values or {}
+        self.dollar_vars = dollar_vars
         self._instances_cache = {}
 
     def __iter__(self):
@@ -176,6 +177,8 @@ class Configuration(ConfigObject):
             return default
         if isinstance(value, dict):
             value = ConfigView(self, key)
+        if isinstance(value, six.string_types):
+            value = replace_dollar_vars(value, **self.dollar_vars)
         return value
 
     def __str__(self):

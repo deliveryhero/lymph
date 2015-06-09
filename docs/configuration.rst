@@ -21,6 +21,17 @@ Configuration
 You can find this sample configuration file in :file:`conf/sample-node.yml`.
 
 
+Environment Variables
+~~~~~~~~~~~~~~~~~~~~~~
+
+Lymph config files support environment variable substitution for string values:
+
+.. code-block:: yaml
+
+    key: protocol://$(env.USER):$(env.PASSWORD)@host/path
+
+
+
 Dependencies
 ------------
 
