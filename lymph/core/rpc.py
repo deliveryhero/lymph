@@ -44,7 +44,7 @@ class ZmqRPCServer(Component):
         else:
             pool = None
         return cls(
-            ip=config.get('ip', kwargs.get('ip', '127.0.0.1')),
+            ip=config.get('ip', kwargs.get('ip') or '127.0.0.1'),
             port=config.get('port', kwargs.get('port')),
             pool=pool,
         )
