@@ -31,6 +31,23 @@ Lymph config files support environment variable substitution for string values:
     key: protocol://$(env.USER):$(env.PASSWORD)@host/path
 
 
+You can also inject structured environment configuration from a YAML file,
+e.g. ``lymph -c conf.yml --vars=vars.yml command``:
+
+.. code-block:: yaml
+
+    # vars.yml
+    key: value
+    struct:
+        foo: bar
+
+.. code-block:: yaml
+
+    # conf.yml
+    foo: $(var.key)
+    var: $(var.struct)
+    interpolation: prefix_$(var.key)_suffix
+
 
 Dependencies
 ------------

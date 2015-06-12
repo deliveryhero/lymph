@@ -157,19 +157,3 @@ def dump_stacks(output=print):
     for i, (name, frame) in enumerate(get_greenlets_frames()):
         output('Greenlet #%d: %s' % (i, name))
         output(format_stack(frame))
-
-
-_dollar_var_re = re.compile(r'\$\(([\w.]+)\)')
-
-
-def replace_dollar_vars(text, **namespaces):
-    def replace(match):
-        try:
-            namespace, name = match.group(1).split('.', 1)
-        except ValueError:
-            return match.group(0)
-        try:
-            return namespaces[namespace].get(name)
-        except KeyError:
-            return match.group(0)
-    return _dollar_var_re.sub(replace, text)

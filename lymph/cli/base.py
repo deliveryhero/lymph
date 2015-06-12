@@ -21,6 +21,7 @@ Common Options:
   --version                    Show the lymph version and exit.
   --color                      Force colored output.
   --no-color                   Disable colored output.
+  --vars=<file>                Load environment variables from the given path.
     """,
     'INSTANCE_OPTIONS': """
 Instance Options:

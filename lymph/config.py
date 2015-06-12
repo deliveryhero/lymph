@@ -2,10 +2,11 @@ import collections
 
 import abc
 import copy
+import re
 import six
 import yaml
 
-from lymph.utils import import_object, Undefined, replace_dollar_vars
+from lymph.utils import import_object, Undefined
 from lymph.exceptions import ConfigurationError
 
 
@@ -111,10 +112,36 @@ class ConfigView(ConfigObject):
         return '%s(%r, %r)' % (self.__class__.__name__, self.root, self.path)
 
 
+_dollar_var_re = re.compile(r'\$\((\w+)\.([\w.]+)\)')
+
+
+def _replace_dollar_vars(obj, namespaces):
+    if isinstance(obj, dict):
+        return {key: _replace_dollar_vars(value, namespaces) for key, value in obj.items()}
+    elif isinstance(obj, (tuple, list)):
+        return [_replace_dollar_vars(value, namespaces) for value in obj]
+    elif not isinstance(obj, (six.text_type, six.string_types)):
+        return obj
+
+    match = _dollar_var_re.match(obj)
+    if match and match.group(0) == obj:
+        try:
+            return namespaces[match.group(1)][match.group(2)]
+        except KeyError:
+            raise ConfigurationError('Undefined environment variable %s' % obj)
+
+    def replace(match):
+        try:
+            return type(obj)(namespaces[match.group(1)][match.group(2)])
+        except KeyError:
+            return ConfigurationError('Undefined environment variable %s' % match.group(0))
+    return _dollar_var_re.sub(replace, obj)
+
+
 class Configuration(ConfigObject):
-    def __init__(self, values=None, **dollar_vars):
-        self.values = values or {}
-        self.dollar_vars = dollar_vars
+    def __init__(self, values=None, **env_vars):
+        self.values = _replace_dollar_vars(values or {}, env_vars)
+        self.env_vars = env_vars
         self._instances_cache = {}
 
     def __iter__(self):
@@ -132,7 +159,8 @@ class Configuration(ConfigObject):
             self.load(f, sections=sections)
 
     def load(self, f, sections=None):
-        for section, values in six.iteritems(yaml.load(f)):
+        values = _replace_dollar_vars(yaml.load(f), self.env_vars)
+        for section, values in six.iteritems(values):
             if sections is None or section in sections:
                 if section in self.values:
                     self.values[section].update(values)
@@ -177,8 +205,6 @@ class Configuration(ConfigObject):
             return default
         if isinstance(value, dict):
             value = ConfigView(self, key)
-        if isinstance(value, six.string_types):
-            value = replace_dollar_vars(value, **self.dollar_vars)
         return value
 
     def __str__(self):
