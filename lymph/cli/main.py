@@ -2,13 +2,18 @@
 def setup_config(args):
     import os
     import sys
+    import yaml
 
     from lymph.config import Configuration
     from lymph.utils.sockets import guess_external_ip
 
-    config = Configuration({
-        'container': {}
-    }, env=os.environ)
+    vars_file = args.get('--vars') or os.environ.get('LYMPH_VARS')
+    env_vars = Configuration()
+    if vars_file:
+        env_vars.load_file(vars_file)
+        os.environ['LYMPH_VARS'] = vars_file
+
+    config = Configuration({'container': {}}, env=os.environ, var=env_vars)
 
     if 'LYMPH_NODE_CONFIG' in os.environ:
         config.load_file(os.environ['LYMPH_NODE_CONFIG'], sections=['container', 'registry', 'event_system', 'plugins', 'dependencies'])
