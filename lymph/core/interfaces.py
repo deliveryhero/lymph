@@ -12,13 +12,16 @@ import gevent
 from gevent.event import AsyncResult
 
 
+REQUEST_TIMEOUT = 3  # seconds.
+
+
 class AsyncResultWrapper(object):
     def __init__(self, container, handler, async_result):
         self.container = container
         self.handler = handler
         self.result = async_result
 
-    def get(self, timeout=30):
+    def get(self, timeout=REQUEST_TIMEOUT):
         try:
             return self.result.get(timeout=timeout)
         except gevent.Timeout:
@@ -54,7 +57,7 @@ class ProxyMethod(object):
 
 
 class Proxy(Component):
-    def __init__(self, container, address, timeout=30, namespace='', error_map=None):
+    def __init__(self, container, address, timeout=REQUEST_TIMEOUT, namespace='', error_map=None):
         super(Proxy, self).__init__()
         self._container = container
         self._address = address
