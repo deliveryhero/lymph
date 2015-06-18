@@ -117,7 +117,7 @@ class Interface(Componentized):
     def handle_request(self, func_name, channel):
         self.methods[func_name].rpc_call(self, channel, **channel.request.body)
 
-    def request(self, address, subject, body, timeout=None):
+    def request(self, address, subject, body, timeout=REQUEST_TIMEOUT):
         channel = self.container.send_request(address, subject, body)
         return channel.get(timeout=timeout)
 
