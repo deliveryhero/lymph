@@ -113,10 +113,10 @@ class MockMixins(object):
         self.fail(msg)
 
 
-def _get_rpc_mock(rpc_mocks={}, original=Proxy._call):
+def _get_rpc_mock(rpc_mocks=None, original=Proxy._call):
     class ProxyCall(mock.MagicMock):
 
-        rpc_functions = rpc_mocks
+        rpc_functions = rpc_mocks or {}
 
         def __call__(self, proxy_inst, __name, **kwargs):
             # XXX (Mouad): We need to call MagicMock __call__ here else calls
@@ -149,7 +149,7 @@ class RpcMockTestCase(unittest.TestCase, MockMixins):
         self.rpc_patch.stop()
 
     def setup_rpc_mocks(self, rpc_functions):
-        self.rpc_mock.rpc_functions = rpc_functions
+        self.rpc_mock.rpc_functions.update(rpc_functions)
 
     def update_rpc_mock(self, func_name, return_value):
         self.rpc_mock.rpc_functions[func_name] = return_value
