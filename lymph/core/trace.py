@@ -17,14 +17,13 @@ def get_trace(greenlet=None):
 
 
 class GreenletWithTrace(gevent.Greenlet):
-
     def __init__(self, *args, **kwargs):
         super(GreenletWithTrace, self).__init__(*args, **kwargs)
         self._lymph_trace = get_trace().copy()
 
 
 class Group(NonBlockingPool):
-    greenlet_cls = GreenletWithTrace
+    greenlet_class = GreenletWithTrace
 
 
 def trace(**kwargs):
