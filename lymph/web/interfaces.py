@@ -109,6 +109,7 @@ class WebServiceInterface(Interface):
                 if self.container.debug:
                     raise
                 response = Response('', status=500)
+        response.headers['X-Trace-Id'] = trace.get_id()
         return response
 
     def get_handler(self, request, rule):
