@@ -12,6 +12,7 @@ from gevent.pool import Pool
 from lymph.client import Client
 from lymph.exceptions import Timeout
 from lymph.cli.base import Command, handle_request_errors
+from lymph.core import trace
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class RequestCommand(Command):
                                    use it instead of the provided address.
       --timeout=<seconds>          RPC timeout. [default: 2.0]
       --address=<addr>             Send the request to the given instance.
+      --trace-id=<trace_id>        Use the given trace_id.
       -N <number>                  Send a total of <N> requests [default: 1].
       -C <concurrency>             Send requests from <concurrency> concurrent greenlets [default: 1].
 
@@ -102,6 +104,7 @@ class RequestCommand(Command):
         client = Client.from_config(self.config)
 
         def request():
+            trace.set_id(self.args.get('--trace-id'))
             return client.request(address, subject, body, timeout=timeout)
 
         N, C = int(self.args['-N']), int(self.args['-C'])
