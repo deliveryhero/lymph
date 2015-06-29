@@ -4,6 +4,8 @@ import json
 import unittest
 import uuid
 
+import pytz
+
 from lymph.serializers import base
 from lymph.utils import Undefined
 
@@ -19,10 +21,16 @@ class SerializerBaseTest(unittest.TestCase):
         serializer = base.DatetimeSerializer()
         self.assertEqual(
             serializer.serialize(datetime.datetime(1900, 1, 1, 0, 0, 0, 1)),
-            "1900-01-01T00:00:00Z")
+            "1900-01-01T00:00:00Z"
+        )
         self.assertEqual(
             serializer.serialize(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
-            "2014-09-12T08:33:12Z")
+            "2014-09-12T08:33:12Z"
+        )
+        self.assertEqual(
+            serializer.serialize(pytz.timezone('Europe/Berlin').localize(datetime.datetime(2014, 9, 12, 8, 33, 12))),
+            ("Europe/Berlin", "2014-09-12T08:33:12Z")
+        )
 
     def test_DatetimeSerializer_deserialize(self):
         serializer = base.DatetimeSerializer()
@@ -30,9 +38,14 @@ class SerializerBaseTest(unittest.TestCase):
                          datetime.datetime(1900, 1, 1, 0, 0))
         self.assertEqual(serializer.deserialize("2014-09-12T08:33:12Z"),
                          datetime.datetime(2014, 9, 12, 8, 33, 12))
-        self.assertRaises(ValueError, serializer.deserialize, "2014-09-12T08:33:12")
-        self.assertRaises(ValueError, serializer.deserialize, "2014-09-12T25:33:12Z")
-        self.assertRaises(ValueError, serializer.deserialize, "2014-02-30T08:33:12Z")
+        self.assertEqual(serializer.deserialize(("Europe/Berlin", "2014-09-12T08:33:12Z")),
+                         pytz.timezone('Europe/Berlin').localize(datetime.datetime(2014, 9, 12, 8, 33, 12)))
+        with self.assertRaises(ValueError):
+            serializer.deserialize("2014-09-12T08:33:12")
+        with self.assertRaises(ValueError):
+            serializer.deserialize("2014-09-12T25:33:12Z")
+        with self.assertRaises(ValueError):
+            serializer.deserialize("2014-02-30t08:33:12z")
 
     def test_DateSerializer_serialize(self):
         serializer = base.DateSerializer()
