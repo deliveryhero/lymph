@@ -102,7 +102,8 @@ class ServiceContainer(Componentized):
         return self.server.identity
 
     def install_interface(self, cls, **kwargs):
-        interface = self.install(cls, **kwargs)
+        interface = cls(self, **kwargs)
+        self.add_component(interface)
         self.installed_interfaces[interface.name] = interface
         for plugin in self.installed_plugins:
             plugin.on_interface_installation(interface)
