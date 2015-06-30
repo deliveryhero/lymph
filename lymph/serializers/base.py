@@ -3,9 +3,11 @@ import datetime
 import decimal
 import functools
 import json
+import uuid
+
+import pytz
 import msgpack
 import six
-import uuid
 
 from lymph.utils import Undefined, UndefinedType
 
@@ -25,24 +27,40 @@ class DatetimeSerializer(ExtensionTypeSerializer):
     format = '%Y-%m-%dT%H:%M:%SZ'
 
     def serialize(self, obj):
+        result = obj.strftime(self.format)
+        if obj.tzinfo:
+            return str(obj.tzinfo), result
+        return result
+
+    def deserialize(self, obj):
+        try:
+            tzinfo, obj = obj
+        except ValueError:
+            tzinfo = None
+        result = datetime.datetime.strptime(obj, self.format)
+        if not tzinfo:
+            return result
+        return pytz.timezone(tzinfo).localize(result)
+
+
+class DateSerializer(ExtensionTypeSerializer):
+    format = '%Y-%m-%d'
+
+    def serialize(self, obj):
         return obj.strftime(self.format)
 
     def deserialize(self, obj):
-        return datetime.datetime.strptime(obj, self.format)
+        return datetime.datetime.strptime(obj, self.format).date()
 
 
-class DateSerializer(DatetimeSerializer):
-    format = '%Y-%m-%d'
-
-    def deserialize(self, obj):
-        return super(DateSerializer, self).deserialize(obj).date()
-
-
-class TimeSerializer(DatetimeSerializer):
+class TimeSerializer(ExtensionTypeSerializer):
     format = '%H:%M:%SZ'
 
+    def serialize(self, obj):
+        return obj.strftime(self.format)
+
     def deserialize(self, obj):
-        return super(TimeSerializer, self).deserialize(obj).time()
+        return datetime.datetime.strptime(obj, self.format).time()
 
 
 class StrSerializer(ExtensionTypeSerializer):
