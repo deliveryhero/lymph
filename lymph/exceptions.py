@@ -54,6 +54,10 @@ class SocketNotCreated(Exception):
     pass
 
 
+class NoSharedSockets(Exception):
+    pass
+
+
 class NotConnected(Exception):
     pass
 

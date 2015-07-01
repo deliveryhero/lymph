@@ -6,7 +6,7 @@ import socket
 
 import six
 
-from lymph.exceptions import RegistrationFailure, SocketNotCreated
+from lymph.exceptions import RegistrationFailure, SocketNotCreated, NoSharedSockets
 from lymph.core.components import Componentized
 from lymph.core.events import Event
 from lymph.core.monitoring import metrics
@@ -114,11 +114,15 @@ class ServiceContainer(Componentized):
         return plugin
 
     def get_shared_socket_fd(self, port):
-        fds = json.loads(os.environ.get('LYMPH_SHARED_SOCKET_FDS', '{}'))
+        try:
+            fds = os.environ['LYMPH_SHARED_SOCKET_FDS']
+        except KeyError:
+            raise NoSharedSockets()
+        fds = json.loads(fds)
         try:
             return fds[str(port)]
         except KeyError:
-            raise SocketNotCreated
+            raise SocketNotCreated()
 
     @property
     def service_types(self):

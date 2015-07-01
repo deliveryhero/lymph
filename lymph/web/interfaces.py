@@ -8,7 +8,7 @@ from werkzeug.exceptions import HTTPException
 from lymph.core.interfaces import Interface
 from lymph.core import trace
 from lymph.utils.logging import setup_logger
-from lymph.exceptions import SocketNotCreated
+from lymph.exceptions import SocketNotCreated, NoSharedSockets
 from lymph.utils import sockets
 from lymph.core.trace import Group
 from lymph.web.wsgi_server import LymphWSGIServer
@@ -28,8 +28,6 @@ class Request(DynamicCharsetRequestMixin, BaseRequest):
 
 
 class WebServiceInterface(Interface):
-    default_http_port = None
-
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
         self.application = Request.application(self.dispatch_request)
@@ -37,6 +35,8 @@ class WebServiceInterface(Interface):
             from werkzeug.debug import DebuggedApplication
             self.application = DebuggedApplication(self.application, evalex=True)
         self.wsgi_server = None
+        self.uses_static_port = True
+        self.http_socket = None
 
     def __call__(self, *args, **kwargs):
         # Make the object itself a WSGI app
@@ -44,9 +44,10 @@ class WebServiceInterface(Interface):
 
     def apply_config(self, config):
         super(WebServiceInterface, self).apply_config(config)
-        self.http_port = config.get('port', self.default_http_port)
+        self.http_port = config.get('port')
         self.pool_size = config.get('wsgi_pool_size')
-        if self.http_port is None:
+        if not self.http_port:
+            self.uses_static_port = False
             self.http_port = sockets.get_unused_port()
 
     def get_description(self):
@@ -58,14 +59,18 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).on_start()
         setup_logger('werkzeug')
         setup_logger('gevent')
-        try:
-            socket_fd = self.container.get_shared_socket_fd(self.http_port)
-        except SocketNotCreated:
-            logger.warning("socket for port %s wasn't created by node, binding from instance instead", self.http_port)
+        if self.uses_static_port:
+            try:
+                socket_fd = self.container.get_shared_socket_fd(self.http_port)
+            except NoSharedSockets:
+                pass
+            except SocketNotCreated:
+                logger.warning("socket for port %s wasn't created by node, binding from instance instead", self.http_port)
+            else:
+                self.http_socket = sockets.create_socket('fd://%s' % socket_fd)
+        if not self.http_socket:
             address = '%s:%s' % (self.container.server.ip, self.http_port)
             self.http_socket = sockets.create_socket(address)
-        else:
-            self.http_socket = sockets.create_socket('fd://%s' % socket_fd)
         self.wsgi_server = LymphWSGIServer(self.http_socket, self.application, spawn=Group(self.pool_size))
         self.wsgi_server.start()
 
