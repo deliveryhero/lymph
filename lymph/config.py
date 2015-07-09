@@ -112,7 +112,7 @@ class ConfigView(ConfigObject):
         return '%s(%r, %r)' % (self.__class__.__name__, self.root, self.path)
 
 
-_dollar_var_re = re.compile(r'\$\((\w+)\.([\w.]+)\)')
+_dollar_var_re = re.compile(r'\$\((\w+)\.([\w.-]+)\)')
 
 
 def _replace_dollar_vars(obj, namespaces):
