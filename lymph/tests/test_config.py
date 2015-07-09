@@ -75,11 +75,13 @@ class ConfigurationTests(unittest.TestCase):
             'no_parens': '$env.FOO_BAR',
             'no_namespace': '$(FOO_BAR)',
             'nested': '$(var.nested.foo)',
+            'dashes': '$(var.dashed-name)',
         }, env={
             'FOO_BAR': '42',
             'FOURTYTWO': 42,
             'DICT': {},
         }, var=Configuration({
+            'dashed-name': True,
             'nested': {
                 'foo': 1764,
             }
@@ -91,6 +93,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(config.get('no_parens'), '$env.FOO_BAR')
         self.assertEqual(config.get('no_namespace'), '$(FOO_BAR)')
         self.assertEqual(config.get('nested'), 1764)
+        self.assertEqual(config.get('dashes'), True)
 
     def test_missing_env_replacement(self):
         self.assertRaises(ConfigurationError, Configuration, {
