@@ -19,6 +19,8 @@ from lymph.events.local import LocalEventSystem
 from lymph.client import Client
 from lymph.utils.sockets import get_unused_port, create_socket
 
+from lymph.testing.mock_helpers import RpcMockTestCase, EventMockTestCase  # noqa
+
 import werkzeug.test
 from werkzeug.wrappers import BaseResponse
 
