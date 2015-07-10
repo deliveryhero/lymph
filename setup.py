@@ -43,6 +43,7 @@ setup(
     author=u'Delivery Hero Holding GmbH',
     maintainer=u'Johannes Dollinger',
     maintainer_email=u'johannes.dollinger@deliveryhero.com',
+    description=u'a service framework',
     long_description=description,
     include_package_data=True,
     install_requires=install_requires,
