@@ -27,10 +27,11 @@ The event broker service can be set in the :file:`.lymph.yml` configuration file
 
 .. code:: yaml
 
-    event_system:
-        class: lymph.events.kombu:KombuEventSystem
-        transport: amqp
-        hostname: 127.0.0.1
+    container:
+        events:
+            class: lymph.events.kombu:KombuEventSystem
+            transport: amqp
+            hostname: 127.0.0.1
 
 See :ref:`event-config` for details.
 

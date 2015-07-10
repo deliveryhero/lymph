@@ -26,11 +26,13 @@ def create_container(config):
     if 'registry' in config:
         logger.warning('global `registry` configuration is deprecated. please use `container.registry` instead.')
         config.set('container.registry', config.get_raw('registry'))
-    event_system = config.create_instance('event_system')
+    if 'event_system' in config:
+        logger.warning('global `event_sytem` configuration is deprecated. please use `container.events` instead.')
+        config.set('container.events', config.get_raw('event_system'))
     container = config.create_instance(
         'container',
         default_class='lymph.core.container:ServiceContainer',
-        events=event_system,
+        events=config.create_instance('container.events'),
     )
     return container
 
@@ -49,7 +51,7 @@ class ServiceContainer(Componentized):
 
         self.server = rpc
         self.service_registry = registry
-        self.event_system = events
+        self.events = events
 
         self.installed_interfaces = {}
         self.installed_plugins = []
@@ -62,9 +64,9 @@ class ServiceContainer(Componentized):
         if self.service_registry:
             self.add_component(self.service_registry)
 
-        if self.event_system:
-            self.add_component(self.event_system)
-            self.event_system.install(self)
+        if self.events:
+            self.add_component(self.events)
+            self.events.install(self)
 
         self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
 
@@ -130,10 +132,10 @@ class ServiceContainer(Componentized):
         return self.installed_interfaces.keys()
 
     def subscribe(self, handler, **kwargs):
-        return self.event_system.subscribe(handler, **kwargs)
+        return self.events.subscribe(handler, **kwargs)
 
     def unsubscribe(self, handler):
-        self.event_system.unsubscribe(handler)
+        self.events.unsubscribe(handler)
 
     def get_instance_description(self, interface):
         description = interface.get_description()
@@ -184,7 +186,7 @@ class ServiceContainer(Componentized):
         headers = headers or {}
         headers.setdefault('trace_id', trace.get_id())
         event = Event(event_type, payload, source=self.identity, headers=headers)
-        self.event_system.emit(event, **kwargs)
+        self.events.emit(event, **kwargs)
 
     def send_request(self, address, subject, body, headers=None):
         service = self.lookup(address)
