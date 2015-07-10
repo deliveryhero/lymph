@@ -2,12 +2,10 @@ from __future__ import absolute_import, division, print_function
 
 import collections
 import importlib
-import inspect
 import gc
 import gevent
 import math
 import os
-import re
 import sys
 import threading
 import traceback

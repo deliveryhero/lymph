@@ -170,11 +170,18 @@ class SerializerBaseTest(unittest.TestCase):
         self.assertEqual(serializer.loads(nan).number_class(), 'NaN')
         self.assertEqual(serializer.loads(some_set),
                          set([u'this', u'a', u'as', u'set', u'is']))
-        self.assertEqual(serializer.loads('{"__type__": "set", "_": ['
-                         '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}, '
-                         '{"__type__": "datetime", "_": "2015-09-12T08:33:12Z"}'
-                         ']}'), set([datetime.datetime(2014, 9, 12, 8, 33, 12),
-                                     datetime.datetime(2015, 9, 12, 8, 33, 12)]))
+        self.assertEqual(
+            serializer.loads(
+                '{"__type__": "set", "_": ['
+                '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}, '
+                '{"__type__": "datetime", "_": "2015-09-12T08:33:12Z"}'
+                ']}'
+            ),
+            {
+                datetime.datetime(2014, 9, 12, 8, 33, 12),
+                datetime.datetime(2015, 9, 12, 8, 33, 12)
+            }
+        )
 
     def test_undefined(self):
         self.assertJsonEquals(self.json_serializer.dumps(Undefined), {'__type__': 'UndefinedType', '_': ''})

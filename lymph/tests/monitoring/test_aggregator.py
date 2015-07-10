@@ -12,7 +12,7 @@ def _get_metrics_two(self):
     yield RawMetric('dummy', 'two')
 
 
-class AggregatorTestCase(object):
+class AggregatorTestCase(unittest.TestCase):
 
     def test_aggregator_one_component(self):
         aggr = Aggregator(_get_metrics_one, name='test')

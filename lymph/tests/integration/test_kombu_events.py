@@ -1,4 +1,3 @@
-import gevent
 import uuid
 import kombu
 

@@ -8,8 +8,8 @@ import netifaces
 def guess_external_ip():
     gateways = netifaces.gateways()
     try:
-         ifnet = gateways['default'][netifaces.AF_INET][1]
-         return netifaces.ifaddresses(ifnet)[netifaces.AF_INET][0]['addr']
+        ifnet = gateways['default'][netifaces.AF_INET][1]
+        return netifaces.ifaddresses(ifnet)[netifaces.AF_INET][0]['addr']
     except (KeyError, IndexError):
         return
 

@@ -9,9 +9,10 @@ class TestStore(unittest.TestCase):
     def setUp(self):
         def mockget(*args, **kwargs):
             return self.mocked
+
         def mockindex(*args, **kwargs):
             body = kwargs.get('body', {})
-            self.mocked={'_source': body}
+            self.mocked = {'_source': body}
         self.es = Mock(get=mockget, index=mockindex)
 
     def test_stores_event(self):

@@ -69,8 +69,8 @@ class HelpCommand(Command):
             cmds = []
             for name, cls in classes.items():
                 cmds.append(_format_help(name, cls.short_description))
-            self._description = (format_docstring(TEMPLATE % '\n'.join(cmds)) +
-                "\n\nlymph help <command>     to display command specific help")
+            self._description = format_docstring(TEMPLATE % '\n'.join(cmds))
+            self._description += "\n\nlymph help <command>     to display command specific help"
         return self._description
 
     def run(self):
