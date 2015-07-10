@@ -2,7 +2,6 @@
 def setup_config(args):
     import os
     import sys
-    import yaml
 
     from lymph.config import Configuration
     from lymph.utils.sockets import guess_external_ip

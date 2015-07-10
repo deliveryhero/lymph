@@ -4,15 +4,16 @@ from lymph.core.monitoring.metrics import RawMetric
 from lymph.core.monitoring.aggregator import Aggregator
 
 
-def _get_metrics_one(self):
+def _get_metrics_one():
     yield RawMetric('dummy', 'one')
 
 
-def _get_metrics_two(self):
+def _get_metrics_two():
     yield RawMetric('dummy', 'two')
 
 
-class AggregatorTestCase(object):
+@unittest.skip("This is unfortunately broken. Please fix it.")
+class AggregatorTestCase(unittest.TestCase):
 
     def test_aggregator_one_component(self):
         aggr = Aggregator(_get_metrics_one, name='test')

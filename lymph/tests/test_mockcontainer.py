@@ -1,5 +1,3 @@
-import unittest
-
 import lymph
 from lymph.core.interfaces import Interface
 from lymph.core.messages import Message

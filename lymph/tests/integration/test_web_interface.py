@@ -1,9 +1,5 @@
-import mock
-import unittest
-
 from werkzeug.routing import Map, Rule
-from werkzeug.test import Client
-from werkzeug.wrappers import Response, BaseResponse
+from werkzeug.wrappers import Response
 
 from lymph.testing import WebServiceTestCase
 from lymph.web.interfaces import WebServiceInterface

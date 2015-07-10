@@ -31,9 +31,7 @@ lymph version cloned from the github repository.
     $ # for Python 3.4
     $ git clone https://github.com/deliveryhero/lymph.git
     $ cd lymph
-    $ pip install cython
     $ pip install -r requirements/base3.txt
-    $ pip install -e .
 
 
 Configuring dependencies
@@ -80,7 +78,9 @@ Install and start RabbitMQ:
 Installing dependencies on Mac OS X
 ------------------------------------
 
-$ brew install zookeeper
+.. code:: bash
+
+    $ brew install zookeeper
 
 You can edit the config file at ``/usr/local/etc/zookeeper/zoo.cfg``.
 

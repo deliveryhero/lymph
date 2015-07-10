@@ -13,10 +13,10 @@ Configuration
             class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
             zkclient: dep:kazoo
 
-    event_system:
-        class: lymph.events.kombu:KombuEventSystem
-        transport: amqp
-        hostname: 127.0.0.1
+        events:
+            class: lymph.events.kombu:KombuEventSystem
+            transport: amqp
+            hostname: 127.0.0.1
 
 You can find this sample configuration file in :file:`conf/sample-node.yml`.
 
@@ -151,7 +151,7 @@ Interface Configuration
 Event Configuration
 -------------------
 
-.. describe:: event_system:class: lymph.events.kombu:KombuEventSystem
+.. describe:: container:events:class: lymph.events.kombu:KombuEventSystem
 
 
 Kombu
@@ -173,13 +173,14 @@ The null backend doesn't transport any events. Set ``class`` to ``lymph.events.n
 Components Configuration
 ------------------------
 
-Extra component can be defined under the conponents namespace e.g ``SerialEventHandler``.
+Extra component can be defined under the components namespace e.g ``SerialEventHandler``.
 
 
 .. code-block:: yaml
-  components:
-      SerialEventHandler:
-             zkclient: dep:kazoo
+
+    components:
+        SerialEventHandler:
+            zkclient: dep:kazoo
 
 
 

@@ -134,9 +134,9 @@ class CliIntegrationTestCase(CliTestMixin, LymphIntegrationTestCase):
                     "class": "lymph.discovery.zookeeper:ZookeeperServiceRegistry",
                     "zkclient": 'dep:kazoo',
                 },
-            },
-            "event_system": {
-                "class": "lymph.events.null:NullEventSystem",
+                "events": {
+                    "class": "lymph.events.null:NullEventSystem",
+                },
             },
             "dependencies": {
                 "kazoo": {

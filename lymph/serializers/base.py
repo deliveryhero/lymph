@@ -9,7 +9,7 @@ import pytz
 import msgpack
 import six
 
-from lymph.utils import Undefined, UndefinedType
+from lymph.utils import Undefined
 
 
 @six.add_metaclass(abc.ABCMeta)
