@@ -173,13 +173,14 @@ The null backend doesn't transport any events. Set ``class`` to ``lymph.events.n
 Components Configuration
 ------------------------
 
-Extra component can be defined under the conponents namespace e.g ``SerialEventHandler``.
+Extra component can be defined under the components namespace e.g ``SerialEventHandler``.
 
 
 .. code-block:: yaml
-  components:
-      SerialEventHandler:
-             zkclient: dep:kazoo
+
+    components:
+        SerialEventHandler:
+            zkclient: dep:kazoo
 
 
 

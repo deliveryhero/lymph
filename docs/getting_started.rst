@@ -10,14 +10,11 @@ Installing lymph can be as easy as:
 
     $ pip install lymph
 
-If you want use Python 3, you have to install the latest gevent version from github first:
-
-.. code:: bash
-
-    $ pip install git+https://github.com/surfly/gevent.git#egg=gevent
-
-
 Please refer to the :doc:`installation guide <installation>` for more detailed instructions.
+
+.. note::
+
+    You'll also need `ZooKeeper`_ and `RabbitMQ`_ on localhost to run the following examples.
 
 
 Write an echo service
@@ -40,6 +37,15 @@ Create a config file for this service (``echo.yml``):
 
 .. code:: yaml
 
+    container:
+        registry:
+            class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
+            zkclient:
+                class: kazoo.client:KazooClient
+
+        events:
+            class: lymph.events.kombu:KombuEventSystem
+
     interfaces:
         echo:
             class: echo:Echo
@@ -51,4 +57,7 @@ Run the service
 .. code:: bash
 
     $ lymph instance --config=echo.yml
-    
+
+
+.. _ZooKeeper: http://zookeeper.apache.org
+.. _RabbitMQ: http://www.rabbitmq.com/
