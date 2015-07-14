@@ -128,7 +128,7 @@ SERVER_EMAIL = 'root@localhost'
 
 # If this file ever becomes compromised, it's important to regenerate your SECRET_KEY
 # Changing this value will result in all current sessions being invalidated
-SECRET_KEY = 'vqTtCaUTQdlT6M+GfGfG4OrrqXVUmRHkrxvpWMIXO9ODPP40+dcOtw=='
+SECRET_KEY = 'CHANGEME'
 
 # http://twitter.com/apps/new
 # It's important that input a callback URL, even if its useless. We have no idea why, consult Twitter.
