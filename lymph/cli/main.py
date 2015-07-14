@@ -7,7 +7,7 @@ def setup_config(args):
     from lymph.utils.sockets import guess_external_ip
 
     vars_file = args.get('--vars') or os.environ.get('LYMPH_VARS')
-    env_vars = Configuration()
+    env_vars = Configuration(raw=True)
     if vars_file:
         env_vars.load_file(vars_file)
         os.environ['LYMPH_VARS'] = vars_file

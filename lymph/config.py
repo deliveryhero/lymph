@@ -139,8 +139,9 @@ def _replace_dollar_vars(obj, namespaces):
 
 
 class Configuration(ConfigObject):
-    def __init__(self, values=None, **env_vars):
+    def __init__(self, values=None, raw=False, **env_vars):
         self.values = _replace_dollar_vars(values or {}, env_vars)
+        self.raw = raw
         self.env_vars = env_vars
         self._instances_cache = {}
 
@@ -203,7 +204,7 @@ class Configuration(ConfigObject):
             value = self.get_raw(key)
         except KeyError:
             return default
-        if isinstance(value, dict):
+        if isinstance(value, dict) and not self.raw:
             value = ConfigView(self, key)
         return value
 
