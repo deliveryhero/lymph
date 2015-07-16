@@ -45,6 +45,7 @@ class RequestCommandTests(CliIntegrationTestCase):
 class ListCommandTests(CliTestMixin, unittest.TestCase):
     def test_list(self):
         self.assert_lines_equal(['list'], u"""
+            {t.bold}config     {t.normal}Show configuration.
             {t.bold}tail       {t.normal}Stream the logs of one or more services.
             {t.bold}emit       {t.normal}Manually emits an event.
             {t.bold}request    {t.normal}Send a request message to some service and output the reply.
