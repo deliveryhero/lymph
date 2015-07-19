@@ -33,8 +33,33 @@ The following options apply to all subcommands:
 
 .. program:: lymph discover
 
+
 ``lymph discover``
-~~~~~~~~~~~~~~~~~~
+------------------
+
+Prints a list of running services (and optionally instances).
+
+.. code::
+
+    $ lymph discover
+    echo [2]
+    demo [1]
+
+
+``lymph emit``
+---------------
+
+Emits an event from the commandline
+
+.. code:: bash
+
+    $ NAME=done JSON_BODY='{"key": "value"}' lymph emit $NAME $JSON_BODY
+
+
+``lymph help``
+---------------
+
+Prints usage instructions for ``lymph`` commands.
 
 
 .. _cli-lymph-inspect:
@@ -42,8 +67,27 @@ The following options apply to all subcommands:
 .. program:: lymph inspect
 
 ``lymph inspect``
-~~~~~~~~~~~~~~~~~
+------------------
 
+Lists the rpc methods of the given interface, including their docstrings:
+
+.. code:: console
+
+    $ lymph inspect echo
+
+    rpc echo.upper(text)
+        
+
+    rpc echo.echo(text)
+        Simple service relaying whatever comes in
+
+    rpc lymph.status()
+        
+
+    rpc lymph.inspect()
+        Returns a description of all available rpc methods of this service
+
+    rpc lymph.ping(payload)
 
 
 .. _cli-lymph-instance:
@@ -51,7 +95,7 @@ The following options apply to all subcommands:
 .. program:: lymph instance
 
 ``lymph instance``
-~~~~~~~~~~~~~~~~~~
+------------------
 
 .. cmdoption:: --ip <address>
 
@@ -75,7 +119,7 @@ The following options apply to all subcommands:
 .. program:: lymph node
 
 ``lymph node``
-~~~~~~~~~~~~~~
+------------------
 
 This command takes the same commandline options as ``lymph instance``.
 
@@ -85,18 +129,26 @@ This command takes the same commandline options as ``lymph instance``.
 .. program:: lymph request
 
 ``lymph request``
-~~~~~~~~~~~~~~~~~
+------------------
+
+Sends a single RPC request to a given address. The
+request message has to be JSON encoded. 
+
+.. code:: console
+
+    $ lymph request echo.upper '{"text": "foo"}'
+    FOO
 
 
 .. _cli-lymph-shell:
 
 ``lymph shell``
-~~~~~~~~~~~~~~~
+------------------
 
 Starts an interactive Python shell, locally or remotely.
 
-Locally:
---------
+Locally
+~~~~~~~
 
 In case shell was open locally the following objects will be available in the
 global namespace:
@@ -107,8 +159,8 @@ global namespace:
 ``config``
     a loaded :class:`lymph.config.Configuration` instance
 
-Remotely:
----------
+Remotely
+~~~~~~~~
 
 ``lymph shell --remote=<name>`` can open a remote shell in a running services, but only
 if this service was run in ``--debug`` mode.
@@ -117,7 +169,16 @@ In this shell you can have access to the current container instance as to some h
 functions for debugging purposes:
 
 ``container``
-    the :class:`lymph.core.container.Container`` instance
+    the :class:`lymph.core.container.Container` instance
 
 ``dump_stacks()``
     helper function to dump stack of all running greenlets and os threads.
+
+
+``lymph subscribe``
+-------------------
+
+``lymph tail``
+---------------
+
+``

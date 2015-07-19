@@ -130,10 +130,12 @@ Service API
 
     :param event_types: may contain wildcards, e.g. ``'subject.*'``
     :param sequential: force sequential event consumption
+    :param broadcast: receive every event in all instances
 
     Marks the decorated interface method as an event handler.
     The service container will automatically subscribe to given ``event_types``.
     If ``sequential=True``, events will be not be consumed in parallel, but one by one.
+    If ``broadcast=True``, every instance of the service will receive the event.
 
     .. code::
 

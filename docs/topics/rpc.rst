@@ -77,7 +77,7 @@ to the caller, as for exceptions there is two cases depending on the ``raises`` 
 :func:`lymph.rpc` :
 
 - If the exception raised inside the RPC function is an instance of a class that is part of the
-  ``raises`` argument then the client will see a :exc:`RemoteError``.
+  ``raises`` argument then the client will see a :exc:`RemoteError`.
 - Else the result will be a **NACK**.
 
 
@@ -168,8 +168,8 @@ answer or it times out. If you require asynchronous communication, please refer 
 Deferred RPC calls
 ------------------
 
-Classic RPC calls block until the response is received. A deferred RPC call mechanism
-is implemented in case you wish to consume the RPC response later, or simply ingore
+By default, RPC blocks until the response is received. A deferred RPC call mechanism
+is available if you wish to consume the RPC response later, or simply ingore
 it.
 
 The call interface is similar to making a regular RPC call, with the addition of
@@ -187,52 +187,5 @@ For instance:
         # do other stuff
         result = result_future.get()
         assert result == 'FOO'
-
-
-Command line interface
-----------------------
-
-
-lymph request
-^^^^^^^^^^^^^
-
-With this command you can send a single RPC request to a given address. The
-request message has to be JSON encoded. 
-
-.. code:: console
-
-    $ lymph request echo.upper '{"text": "foo"}'
-    FOO
-
-See ``lymph request --help`` for details.
-
-
-lymph inspect
-^^^^^^^^^^^^^
-
-With the inspect command, you can specify a service address and inspect which RPC calls are
-possible with the service. 
-
-.. code:: console
-
-    $ lymph inspect "echo"
-
-    rpc echo.upper(text)
-        
-
-    rpc echo.echo(text)
-        Simple service relaying whatever comes in
-
-    rpc lymph.status()
-        
-
-    rpc lymph.inspect()
-        Returns a description of all available rpc methods of this service
-
-    rpc lymph.ping(payload)
-    
-
-Inspect will list all the available methods of a service, together with its arguments and the short
-docstring description if provided with the :py:decorator:`lymph.rpc` decorator.
 
 

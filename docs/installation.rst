@@ -1,37 +1,18 @@
 Installation
 ============
 
-In order to use lymph, the following dependencies need to be met:
+Installing lymph itself (for Python 2.7 or 3.4) is as simple as
 
-- Python (2.7, 3.4)
-- pip (>=1.5)
-- Python headers
-- `ZooKeeper`_ (for service discovery)
-- `RabbitMQ`_ (for event passing)
+.. code:: bash
 
-If these are already set up, you can skip straight to the installation 
-of lymph itself, otherwise proceed with the following steps.
+    $ pip install lymph
 
+but in order to make full use of lymph you'll also need to install 
+`ZooKeeper`_ (for service discovery) and `RabbitMQ`_ (for events).
 
-Installing lymph from source
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In order to be able to install the requirements using pip, you need to have the latest
-lymph version cloned from the github repository.
-
-.. code:: console
-
-    $ # for Python 2.7
-    $ git clone https://github.com/deliveryhero/lymph.git
-    $ cd lymph
-    $ pip install -r requirements/base2.txt
-
-.. code:: console
-
-    $ # for Python 3.4
-    $ git clone https://github.com/deliveryhero/lymph.git
-    $ cd lymph
-    $ pip install -r requirements/base3.txt
+If these are already set up, you can skip straight to 
+:ref:`writing your first service <getting-started>`, otherwise proceed with the 
+following steps.
 
 
 Configuring dependencies
@@ -43,6 +24,8 @@ webpage and the `Getting Started Guide`_.
 
 Testing lymph
 ~~~~~~~~~~~~~
+
+.. FIXME move this somewhere else
 
 You can test if your installation of lymph has been successful by running the unittests. 
 You'll also have to set ``ZOOKEEPER_PATH`` to the directory that contains your ZooKeeper 
@@ -58,7 +41,7 @@ Installing dependencies on Ubuntu
 
 	$ sudo apt-get install build-essential python-dev python-pip
 
-Install and start zookeeper using:
+Install and start ZooKeeper using:
 
 .. code:: bash
 
