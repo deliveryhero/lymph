@@ -71,36 +71,36 @@ using the ``dep:<name>`` format, as shown in the example above.
 Container Configuration
 -----------------------
 
-.. describe:: container:ip:
+.. describe:: container.ip
 
     use this IP address. The :option:`--ip <lymph --ip>` option for 
     :program:`lymph` takes precedence. Default: ``127.0.0.1``.
 
 
-.. describe:: container:port:
+.. describe:: container.port
 
     Use this port for the service endpoint. The :option:`--port <lymph --port>` 
     option for :program:`lymph` takes precedence. If no port is configured, lymph
     will pick a random port.
 
 
-.. describe:: container:class:
+.. describe:: container.class
 
     the container implementation. You probably don't have to change this.
     Default: ``lymph.core.container:Container``
 
 .. _config-container-log_endpoint:
 
-.. describe:: container:log_endpoint:
+.. describe:: container.log_endpoint
 
     the local ZeroMQ endpoint that should be used to publish logs via 
     the :ref:`_zmqpub <config-logging-_zmqpub>` handler.
 
-.. describe:: container:monitor_endpoint:
+.. describe:: container.monitor_endpoint
 
     the ZeroMQ endpoint that monitoring data should be sent to.
 
-.. describe:: container:pool_size:
+.. describe:: container.pool_size
 
     Size of the pool of Greenlets, default is unlimited.
 
@@ -110,7 +110,7 @@ Container Configuration
 Registry Configuration
 ----------------------
 
-.. describe:: container:registry:class:
+.. describe:: container.registry.class
 
 Defaults to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``
 
@@ -121,29 +121,11 @@ ZooKeeper
 To use `ZooKeeper`_ for serivce discovery set ``class`` to ``lymph.discovery.zookeeper:ZookeeperServiceRegistry``.
 
 
-.. describe:: container:registry:zkclient:
+.. describe:: container.registry.zkclient
 
 A reference to zookeeper client either as a dependency or a class.
 
 .. _ZooKeeper: http://zookeeper.apache.org/
-
-
-.. _interface-config:
-
-
-Interface Configuration
------------------------
-
-.. describe:: interfaces:<name>
-
-    Mapping the name to instance which will be used to send requests
-    and discover this interface.
-    This name is also configuration that will be passed to the implementation's
-    :meth:`lymph.Interface.apply_config()` method.
-
-.. describe:: interfaces:<name>:class:
-
-    The class that implements this interface, e.g. a subclass of :class:`lymph.Interface`.
 
 
 .. _event-config:
@@ -151,7 +133,7 @@ Interface Configuration
 Event Configuration
 -------------------
 
-.. describe:: container:events:class: lymph.events.kombu:KombuEventSystem
+.. describe:: container.events.class
 
 
 Kombu
@@ -168,6 +150,24 @@ Null
 ~~~~
 
 The null backend doesn't transport any events. Set ``class`` to ``lymph.events.null.NullEventSystem`` if that is what you want.
+
+
+.. _interface-config:
+
+
+Interface Configuration
+-----------------------
+
+.. describe:: interfaces.<name>
+
+    Mapping the name to instance which will be used to send requests
+    and discover this interface.
+    This name is also configuration that will be passed to the implementation's
+    :meth:`lymph.Interface.apply_config()` method.
+
+.. describe:: interfaces.<name>.class
+
+    The class that implements this interface, e.g. a subclass of :class:`lymph.Interface`.
 
 
 Components Configuration
@@ -187,7 +187,7 @@ Extra component can be defined under the components namespace e.g ``SerialEventH
 Logging Configuration
 ---------------------
 
-.. describe:: logging:
+.. describe:: logging
 
 Logging can be configured in standard `dictConfig`_ format. 
 In addition to the setup provided via ``logging``, one formatter and two 
@@ -213,6 +213,6 @@ The ``_console`` handler writes messages to either stdout or the file given by
 Debugging Configuration
 -----------------------
 
-.. describe:: debug:backdoor_ip
+.. describe:: debug.backdoor_ip
 
 Specify which ip address the backdoor terminal should listen too.

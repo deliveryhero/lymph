@@ -1,3 +1,6 @@
+.. _getting-started:
+
+
 Getting Started
 ================
 
@@ -59,5 +62,12 @@ Run the service
     $ lymph instance --config=echo.yml
 
 
+Next Steps
+~~~~~~~~~~
+
+You can find a more complete introduction to lymph in Max Brauer's `import lymph`_ presentation.
+
+
 .. _ZooKeeper: http://zookeeper.apache.org
 .. _RabbitMQ: http://www.rabbitmq.com/
+.. _import lymph: http://import-lymph.link
