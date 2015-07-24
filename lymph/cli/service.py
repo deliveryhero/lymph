@@ -63,9 +63,9 @@ class InstanceCommand(Command):
 
         self._register_signals()
 
-        self._set_process_title()
-
         self.container.start(register=not self.args.get('--isolated', False))
+
+        self._set_process_title()
 
         if self.args.get('--reload'):
             set_source_change_callback(self.container.stop)
