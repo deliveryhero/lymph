@@ -140,11 +140,29 @@ class BaseSerializer(object):
         return self._load(f, object_hook=self.load_object)
 
 
+EMBEDDED_MSGPACK_TYPE = 101
+
+
+def raw_embed(data):
+    return msgpack.ExtType(EMBEDDED_MSGPACK_TYPE, data)
+
+
+def ext_hook(code, data):
+    if code == EMBEDDED_MSGPACK_TYPE:
+        return msgpack_serializer.loads(data)
+    return msgpack.ExtType(code, data)
+
+
+def _msgpack_load(stream, *args, **kwargs):
+    # temporary workaround for https://github.com/msgpack/msgpack-python/pull/143
+    return msgpack.loads(stream.read(), *args, **kwargs)
+
+
 msgpack_serializer = BaseSerializer(
     dumps=functools.partial(msgpack.dumps, use_bin_type=True),
-    loads=functools.partial(msgpack.loads, encoding='utf-8'),
+    loads=functools.partial(msgpack.loads, encoding='utf-8', ext_hook=ext_hook),
     dump=functools.partial(msgpack.dump, use_bin_type=True),
-    load=functools.partial(msgpack.load, encoding='utf-8'),
+    load=functools.partial(_msgpack_load, encoding='utf-8', ext_hook=ext_hook),
 )
 
 json_serializer = BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
