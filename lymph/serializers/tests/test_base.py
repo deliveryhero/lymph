@@ -7,6 +7,7 @@ import uuid
 import pytz
 
 from lymph.serializers import base
+from lymph.serializers import msgpack_serializer, raw_embed
 from lymph.utils import Undefined
 
 
@@ -186,3 +187,11 @@ class SerializerBaseTest(unittest.TestCase):
     def test_undefined(self):
         self.assertJsonEquals(self.json_serializer.dumps(Undefined), {'__type__': 'UndefinedType', '_': ''})
         self.assertIs(self.json_serializer.loads('{"__type__": "UndefinedType", "_": ""}'), Undefined)
+
+
+class TestRawEmbed(unittest.TestCase):
+    def test_raw_is_transparent(self):
+        data = {'foo': 42}
+        raw_data = msgpack_serializer.dumps(data)
+        packed = msgpack_serializer.dumps([raw_embed(raw_data)])
+        self.assertEqual(msgpack_serializer.loads(packed), [data])
