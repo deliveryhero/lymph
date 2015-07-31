@@ -1,45 +1,38 @@
+
 Installation
 ============
 
-Installing lymph itself (for Python 2.7 or 3.4) is as simple as
+Installing lymph itself (for Python 2.7 or 3.4) is as simple as:
 
 .. code:: bash
 
-    $ pip install lymph
+    pip install lymph
 
-but in order to make full use of lymph you'll also need to install 
-`ZooKeeper`_ (for service discovery) and `RabbitMQ`_ (for events).
+Yet, in order to make full use of lymph you'll also need to install lymph's dependencies: 
+`ZooKeeper`_ (for service discovery) and `RabbitMQ`_ (for events) and have them
+running.
 
-If these are already set up, you can skip straight to 
-:ref:`writing your first service <getting-started>`, otherwise proceed with the 
-following steps.
-
-
-Configuring dependencies
-~~~~~~~~~~~~~~~~~~~~~~~~
-The RabbitMQ default configuration is usually enough for development and testing.
-For detailed information on how to configure ZooKeeper refer to the `ZooKeeper`_
-webpage and the `Getting Started Guide`_.
+If these are already set up, you can skip straight to :ref:`user guide
+<user-guide>`, otherwise continue reading.
 
 
-Testing lymph
-~~~~~~~~~~~~~
+Installing dependencies
+~~~~~~~~~~~~~~~~~~~~~~~
 
-.. FIXME move this somewhere else
-
-You can test if your installation of lymph has been successful by running the unittests. 
-You'll also have to set ``ZOOKEEPER_PATH`` to the directory that contains your ZooKeeper 
-binaries (e.g. ``/usr/share/java`` on Ubuntu).
-
-You can then run the tests with either `tox`_ or ``nosetests`` directly.
+The RabbitMQ server's default configuration is enough for development and
+testing.  For detailed information on how to configure ZooKeeper refer to the
+`ZooKeeper`_ webpage and the `Getting Started Guide`_. However, it's default
+configuration should also be enough.
 
 
-Installing dependencies on Ubuntu
-----------------------------------
+On Ubuntu
+---------
 
 .. code:: bash
 
 	$ sudo apt-get install build-essential python-dev python-pip
+
+.. FIXME is this necessary? ^
 
 Install and start ZooKeeper using:
 
@@ -48,24 +41,27 @@ Install and start ZooKeeper using:
 	$ sudo apt-get install zookeeper zookeeperd
 	$ sudo service zookeeper start
     
-You can edit the config file at ``/etc/zookeeper/conf/zoo.cfg``.
+ZooKeeper's configuration file is located at ``/etc/zookeeper/conf/zoo.cfg``.
 
-Install and start RabbitMQ:
+Install and start the RabbitMQ server:
 
 .. code:: bash
 
     $ sudo apt-get install rabbitmq-server
-    $ service rabbitmq-server start
+    $ sudo service rabbitmq-server start
 
 
-Installing dependencies on Mac OS X
-------------------------------------
+On OSX
+------
 
 .. code:: bash
 
     $ brew install zookeeper
 
-You can edit the config file at ``/usr/local/etc/zookeeper/zoo.cfg``.
+ZooKeeper's configuration file is located at
+``/usr/local/etc/zookeeper/zoo.cfg``.
+
+.. FIXME how's RabbitMQ being installed?
 
 
 .. _ZooKeeper: http://zookeeper.apache.org
