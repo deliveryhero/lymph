@@ -1,18 +1,20 @@
+.. _config:
+
 Configuration
 =============
 
-.. code-block:: yaml
+Lymph needs to be configured so that it knows how and where to find its service
+registry and its event system.
 
-    dependencies:
-        kazoo:
-            class: kazoo.client:KazooClient
-            hosts: 127.0.0.1:2181
+.. code-block:: yaml
 
     container:
         registry:
             class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
-            zkclient: dep:kazoo
-
+            zkclient:
+                class: kazoo.client:KazooClient
+                hosts: 120.0.0.1:2181
+    
         events:
             class: lymph.events.kombu:KombuEventSystem
             transport: amqp
