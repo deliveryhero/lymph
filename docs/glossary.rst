@@ -1,9 +1,5 @@
-Overview
+Glossary
 ========
-
-
-Terms
-~~~~~
 
 .. glossary::
 
