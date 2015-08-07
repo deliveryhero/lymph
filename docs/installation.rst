@@ -28,11 +28,11 @@ configuration should also be enough.
 On Ubuntu
 ---------
 
+If you haven't already install Python essentials:
+
 .. code:: bash
 
 	$ sudo apt-get install build-essential python-dev python-pip
-
-.. FIXME is this necessary? ^
 
 Install and start ZooKeeper using:
 
@@ -54,14 +54,14 @@ Install and start the RabbitMQ server:
 On OSX
 ------
 
+Install RabbitMQ and ZooKeeper:
+
 .. code:: bash
 
-    $ brew install zookeeper
+    $ brew install rabbitmq zookeeper
 
 ZooKeeper's configuration file is located at
 ``/usr/local/etc/zookeeper/zoo.cfg``.
-
-.. FIXME how's RabbitMQ being installed?
 
 
 .. _ZooKeeper: http://zookeeper.apache.org
