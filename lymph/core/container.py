@@ -27,7 +27,7 @@ def create_container(config):
         logger.warning('global `registry` configuration is deprecated. please use `container.registry` instead.')
         config.set('container.registry', config.get_raw('registry'))
     if 'event_system' in config:
-        logger.warning('global `event_sytem` configuration is deprecated. please use `container.events` instead.')
+        logger.warning('global `event_system` configuration is deprecated. please use `container.events` instead.')
         config.set('container.events', config.get_raw('event_system'))
     container = config.create_instance(
         'container',
