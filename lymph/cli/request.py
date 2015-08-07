@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 class RequestCommand(Command):
     """
-    Usage: lymph request [options] <subject> <params>
+    Usage: lymph request [options] <subject> <params> [-]
 
     Description:
         Sends a single RPC request to <address>. Parameters have to be JSON encoded.
@@ -90,7 +90,10 @@ class RequestCommand(Command):
 
     @handle_request_errors
     def run(self):
-        body = json.loads(self.args.get('<params>', '{}'))
+        params = self.args.get('<params>')
+        if params == '-':
+            params = sys.stdin.read()
+        body = json.loads(params)
         try:
             timeout = float(self.args.get('--timeout'))
         except ValueError:
@@ -113,4 +116,3 @@ class RequestCommand(Command):
             return self._run_one_request(request)
         else:
             return self._run_many_requests(request, N, C)
-
