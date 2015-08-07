@@ -7,12 +7,13 @@ class ConfigCommand(Command):
     """
     Usage: lymph config [options]
 
-    Outputs the configuration.
+    Prints configuration for inspection
 
     {COMMON_OPTIONS}
+
     """
     
-    short_description = 'Show configuration.'
+    short_description = 'Prints configuration for inspection'
 
     def run(self):
         print(yaml.safe_dump(self.config.values))
