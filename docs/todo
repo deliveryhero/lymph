@@ -1,12 +1,1 @@
-Installation
-User guide
-cli
-configuration
-testing
-lymph's protocol
-api reference
-faq
-contributing
-
-
-how to automatically document cli / docopt?
+improve cli docstrings and include more details and examples
