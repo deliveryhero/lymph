@@ -124,6 +124,14 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         path = self._get_zk_path(service_name, instance.identity)
         value = json.dumps(instance.serialize())
 
+        # XXX(Mouad): In case path already exist delete it before registering,
+        # this is protecting mechanism for when dev machine go to sleep or service
+        # restart too fast (before zookeeper detect service is gone).
+        try:
+            self.client.delete(path)
+        except NoNodeError:
+            pass
+
         result = self.client.create_async(
             path,
             value.encode('utf-8'),
