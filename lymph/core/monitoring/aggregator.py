@@ -1,5 +1,5 @@
 from lymph.core.monitoring.metrics import Aggregate
-from lymph.core.monitoring.global_metrics import RUsageMetrics, GeventMetrics, GarbageCollectionMetrics
+from lymph.core.monitoring.global_metrics import RUsageMetrics, GeventMetrics, GarbageCollectionMetrics, ProcessMetrics
 
 
 class Aggregator(Aggregate):
@@ -11,4 +11,5 @@ class Aggregator(Aggregate):
             RUsageMetrics(),
             GarbageCollectionMetrics(),
             GeventMetrics(),
+            ProcessMetrics(),
         ], tags=tags)

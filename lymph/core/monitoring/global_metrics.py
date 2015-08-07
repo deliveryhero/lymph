@@ -1,9 +1,8 @@
 import gc
-
 import resource
-import gevent
 
-from . import metrics
+import gevent
+import psutil
 
 
 RUSAGE_ATTRS = (
@@ -48,3 +47,38 @@ class GeventMetrics(object):
         yield 'gevent.active', loop.activecnt, {}
         yield 'gevent.pending', loop.pendingcnt, {}
         yield 'gevent.depth', loop.depth, {}
+
+
+class ProcessMetrics(object):
+    def __init__(self):
+        self.proc = psutil.Process()
+
+    def __iter__(self):
+        meminfo = self.proc.memory_info()._asdict()
+        yield 'proc.mem.rss', meminfo['rss'], {}
+        yield 'proc.mem.vms', meminfo['vms'], {}
+
+        # Not available in OSX and solaris.
+        if hasattr(self.proc, 'io_counters'):
+            io_counts = self.proc.io_counters()
+            yield 'proc.io.read_count', io_counts.read_count, {}
+            yield 'proc.io.write_count', io_counts.write_count, {}
+            yield 'proc.io.read_bytes', io_counts.read_bytes, {}
+            yield 'proc.io.write_bytes', io_counts.write_bytes, {}
+
+        ctxt_switches = self.proc.num_ctx_switches()
+        yield 'proc.ctxt_switches.voluntary', ctxt_switches.voluntary, {}
+        yield 'proc.ctxt_switches.involuntary', ctxt_switches.involuntary, {}
+
+        cpu_times = self.proc.cpu_times()
+        yield 'proc.cpu.user', cpu_times.user, {}
+        yield 'proc.cpu.system', cpu_times.system, {}
+
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        yield 'proc.files.count', self.proc.num_fds(), {}
+        yield 'proc.files.soft_limit', soft_limit, {}
+        yield 'proc.files.hard_limit', hard_limit, {}
+
+        yield 'proc.threads.count', self.proc.num_threads(), {}
+
+        yield 'proc.sockets.count', len(self.proc.connections()), {}
