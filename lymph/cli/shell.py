@@ -14,12 +14,39 @@ class ShellCommand(Command):
     """
     Usage: lymph shell [options]
 
+    Starts an interactive Python shell, locally or remotely.
+
     Options:
       --remote=<name:identity-prefix>     Service instance name and identity.
       --guess-external-ip, -g             Guess the public facing IP of this machine and
                                           use it instead of the provided address.
 
     {COMMON_OPTIONS}
+
+    Locally:
+
+      In case the shell was open locally the following objects will be
+      available in the global namespace:
+
+      ``client``
+          a configured :class:`lymph.client.Client` instance
+
+      ``config``
+          a loaded :class:`lymph.config.Configuration` instance
+
+    Remotely:
+
+      ``lymph shell --remote=<name>`` can open a remote shell in a running
+      service instance, but only if this service is run in ``--debug`` mode.
+
+      In this shell you have access to the current container instance and
+      helper functions for debugging purposes:
+
+      ``container``
+          the :class:`lymph.core.container.Container` instance
+
+      ``dump_stacks()``
+          dumps stack of all running greenlets and os threads
 
     Example:
 
