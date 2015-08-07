@@ -8,4 +8,3 @@ contains your ZooKeeper binaries (e.g. ``/usr/share/java`` on Ubuntu).
 You can then run the tests with either `tox`_ or ``nosetests`` directly.
 
 .. FIXME add unittesting coverage as well
-

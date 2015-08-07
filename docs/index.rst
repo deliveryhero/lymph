@@ -26,19 +26,16 @@ This is what a service looks like with lymph:
 Contents:
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    installation
    user_guide
-   configuration
-   cli/index
-   start_services
-   testing
+   cli
+   topic_guides/index
    api/index
-   topics/index
-   faq
-   internals/index
+   protocol
    glossary
+   faq
    contributing
 
 

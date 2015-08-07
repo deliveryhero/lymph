@@ -1,3 +1,4 @@
+:tocdepth: 1
 
 Installation
 ============
@@ -12,8 +13,8 @@ Yet, in order to make full use of lymph you'll also need to install lymph's depe
 `ZooKeeper`_ (for service discovery) and `RabbitMQ`_ (for events) and have them
 running.
 
-If these are already set up, you can skip straight to :ref:`user guide
-<user-guide>`, otherwise continue reading.
+If these are already set up, you can skip straight and continue the next
+chapter.
 
 
 Installing dependencies
