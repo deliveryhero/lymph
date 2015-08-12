@@ -23,9 +23,9 @@ install_requires = [
     'blessings>=1.5.1',
     'netifaces>=0.10.4',
     'mock>=1.0.1',
-    'PyHamcrest==1.8.2',
-    'pytz==2015.4',
-    'iso8601==0.1.10',
+    'PyHamcrest>=1.8.2',
+    'pytz',
+    'iso8601>=0.1.10',
 ]
 
 if sys.version_info.major == 2:
