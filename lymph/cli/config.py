@@ -10,7 +10,6 @@ class ConfigCommand(Command):
     Prints configuration for inspection
 
     {COMMON_OPTIONS}
-
     """
     
     short_description = 'Prints configuration for inspection'

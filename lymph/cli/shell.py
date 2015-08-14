@@ -14,7 +14,7 @@ class ShellCommand(Command):
     """
     Usage: lymph shell [options]
 
-    Starts an interactive Python shell, locally or remotely.
+    Starts an interactive Python shell, locally or remotely
 
     Options:
       --remote=<name:identity-prefix>     Service instance name and identity.
@@ -51,10 +51,9 @@ class ShellCommand(Command):
     Example:
 
         $ lymph shell --remote=echo:38428b071a6 --guess-external-ip
-
     """
 
-    short_description = 'Open an interactive Python shell locally or remotely.'
+    short_description = 'Starts an interactive Python shell, locally or remotely'
 
     def run(self, **kwargs):
         self.client = Client.from_config(self.config)

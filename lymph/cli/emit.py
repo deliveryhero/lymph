@@ -9,13 +9,15 @@ class EmitCommand(Command):
     """
     Usage: lymph emit <event-type> [<body>] [options]
 
+    Emits an event in the event system
+
     Options:
       --trace-id=<trace_id>        Use the given trace_id.
 
     {COMMON_OPTIONS}
     """
 
-    short_description = 'Manually emits an event.'
+    short_description = 'Emits an event in the event system'
 
     def run(self):
         event_type = self.args.get('<event-type>')

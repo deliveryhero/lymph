@@ -9,7 +9,7 @@ class DiscoverCommand(Command):
     """
     Usage: lymph discover [--instances] [--ip=<address> | --guess-external-ip | -g] [--only-running] [options]
 
-    Show available services
+    Shows available services
 
     Options:
 
@@ -22,10 +22,9 @@ class DiscoverCommand(Command):
       --only-running               Show only running services.
 
     {COMMON_OPTIONS}
-
     """
 
-    short_description = 'Show available services.'
+    short_description = 'Shows available services'
 
     def run(self):
         client = Client.from_config(self.config)

@@ -56,9 +56,11 @@ def _format_help(name, description, indent='  ', spaces=13, min_spaces=2):
 class HelpCommand(Command):
     """
     Usage: lymph help [<command>]
+
+    Displays help information about lymph commands
     """
 
-    short_description = 'Display help information about lymph.'
+    short_description = 'Displays help information about lymph'
     needs_config = False
     _description = None
 

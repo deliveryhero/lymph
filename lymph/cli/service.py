@@ -45,13 +45,15 @@ class InstanceCommand(Command):
                          [--port <port> | -p <port>] [--reload] [--debug]
                          [--interface=<cls>]... [options]
 
+    Runs a single service instance
+
     {INSTANCE_OPTIONS}
 
     {COMMON_OPTIONS}
     """
 
     proctitle = 'lymph-instance'
-    short_description = 'Run a single service instance (one process).'
+    short_description = 'Runs a single service instance'
 
     def run(self):
         debug = self.args.get('--debug')
@@ -131,13 +133,15 @@ class NodeCommand(InstanceCommand):
     """
     Usage: lymph node [--debug] [options]
 
+    Runs a node service that manages a group of processes on the same machine
+
     {INSTANCE_OPTIONS}
 
     {COMMON_OPTIONS}
     """
 
     proctitle = 'lymph-node'
-    short_description = 'Run a node service that manages a group of processes on the same machine.'
+    short_description = 'Runs a node service that manages a group of processes on the same machine'
 
     def run(self):
         self.config.update({
