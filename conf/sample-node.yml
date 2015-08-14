@@ -1,12 +1,9 @@
-dependencies:
-    kazoo:
-        class: kazoo.client:KazooClient
-        hosts: 127.0.0.1:2181
-
 container:
     registry:
         class: lymph.discovery.zookeeper:ZookeeperServiceRegistry
-        zkclient: dep:kazoo
+        zkclient:
+            class: kazoo.client:KazooClient
+            hosts: 127.0.0.1:2181
 
     events:
         class: lymph.events.kombu:KombuEventSystem

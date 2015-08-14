@@ -7,10 +7,12 @@ class SubscribeCommand(Command):
     """
     Usage: lymph subscribe <event-type>... [options]
 
+    Subscribes to event types and prints occurences on stdout
+
     {COMMON_OPTIONS}
     """
 
-    short_description = 'Prints events to stdout.'
+    short_description = 'Subscribes to event types and prints occurences on stdout'
 
     def run(self):
         event_type = self.args.get('<event-type>')

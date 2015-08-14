@@ -8,13 +8,14 @@ class InspectCommand(Command):
     """
     Usage: lymph inspect [--ip=<address> | --guess-external-ip | -g] <address> [options]
 
+    Describes the RPC interface of a service
+
     Options:
       --ip=<address>               Use this IP for all sockets.
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
 
     {COMMON_OPTIONS}
-
     """
 
     short_description = 'Describes the RPC interface of a service'

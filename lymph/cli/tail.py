@@ -80,16 +80,15 @@ class TailCommand(Command):
     """
     Usage: lymph tail [options] [--level=<level> | -l <level>] <address>...
 
-    Description:
-        Shows the log output of <address> on stderr
+    Streams the log output of services to stderr
 
-    Tail Options:
+    Options:
       --level=<level>, -l <level>  Log level to subscribe to [default: INFO]
 
     {COMMON_OPTIONS}
     """
 
-    short_description = 'Stream the logs of one or more services.'
+    short_description = 'Streams the log output of services to stderr'
 
     def run(self):
         client = Client.from_config(self.config)

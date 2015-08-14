@@ -22,8 +22,9 @@ class RequestCommand(Command):
     """
     Usage: lymph request [options] <subject> <params> [-]
 
-    Description:
-        Sends a single RPC request to <address>. Parameters have to be JSON encoded.
+    Sends a single RPC request to a service and outputs the response
+
+    Parameters have to be JSON encoded
 
     Options:
       --ip=<address>               Use this IP for all sockets.
@@ -38,7 +39,7 @@ class RequestCommand(Command):
     {COMMON_OPTIONS}
     """
 
-    short_description = 'Send a request message to some service and output the reply.'
+    short_description = 'Sends a single RPC request to a service and outputs the response'
 
     def _run_one_request(self, request):
         pprint.pprint(request().body)

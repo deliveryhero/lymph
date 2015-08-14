@@ -5,10 +5,12 @@ class ListCommand(Command):
     """
     Usage: lymph list [options]
 
+    Lists all available commands
+
     {COMMON_OPTIONS}
     """
 
-    short_description = 'List available commands.'
+    short_description = 'Lists all available commands'
     needs_config = False
 
     def run(self):

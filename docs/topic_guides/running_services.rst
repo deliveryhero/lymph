@@ -1,5 +1,5 @@
-Starting services
-=================
+Running services
+================
 
 Overview
 ~~~~~~~~
@@ -7,7 +7,8 @@ Overview
 There are two ways to start services with lymph. You can either start a lymph
 service directly from the command line using ``lymph instance`` or define
 all the services to start in a configuration file and start them all with
-``lymph node``.
+lymph's development server ``lymph node``.
+
 
 lymph instance
 ~~~~~~~~~~~~~~
