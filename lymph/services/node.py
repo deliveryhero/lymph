@@ -61,8 +61,6 @@ class Process(object):
 
 
 class Node(Interface):
-    register_with_coordinator = False
-
     def __init__(self, *args, **kwargs):
         super(Node, self).__init__(*args, **kwargs)
         self.sockets = {}

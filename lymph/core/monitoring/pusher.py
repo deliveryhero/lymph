@@ -6,25 +6,21 @@ import msgpack
 import zmq.green as zmq
 
 from lymph.core.components import Component
+from lymph.utils.sockets import bind_zmq_socket
 
 
 logger = logging.getLogger(__name__)
 
 
-DEFAULT_MONITOR_ENDPOINT = 'tcp://127.0.0.1:44044'
-
-
 class MonitorPusher(Component):
-    def __init__(self, container, aggregator, endpoint=None, interval=2):
+    def __init__(self, container, aggregator, endpoint='127.0.0.1', interval=2):
         super(MonitorPusher, self).__init__()
         self.container = container
         self.interval = interval
-        self.endpoint = endpoint or DEFAULT_MONITOR_ENDPOINT
-        logger.info('connecting to monitor endpoint %s', self.endpoint)
         ctx = zmq.Context.instance()
         self.socket = ctx.socket(zmq.PUB)
-        self.socket.connect(self.endpoint)
-
+        self.endpoint, port = bind_zmq_socket(self.socket, endpoint)
+        logger.info('binding monitoring endpoint %s', self.endpoint)
         self.aggregator = aggregator
 
     def on_start(self):
