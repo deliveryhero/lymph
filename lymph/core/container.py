@@ -145,6 +145,7 @@ class ServiceContainer(Componentized):
             'log_endpoint': self.log_endpoint,
             'backdoor_endpoint': self.backdoor_endpoint,
             'fqdn': self.fqdn,
+            'hostname': socket.gethostname(),
             'ip': self.server.ip,
         })
         return description
