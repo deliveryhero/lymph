@@ -1,3 +1,2 @@
-gevent==1.1a2
 -r shared.txt
 -e .
