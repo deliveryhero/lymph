@@ -39,7 +39,7 @@ class MockServiceNetwork(object):
         container = MockServiceContainer(
             registry=registry,
             events=self.events,
-            rpc=MockRPCServer(ip='300.0.0.1', port=port, mock_network=self),
+            rpc=MockRPCServer(ip='127.0.0.1', port=port, mock_network=self),
             **kwargs)
         container.install_interface(cls, name=interface_name)
         self.service_containers[container.endpoint] = container

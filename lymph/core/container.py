@@ -38,7 +38,7 @@ def create_container(config):
 
 
 class ServiceContainer(Componentized):
-    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, monitor_endpoint=None, pool=None):
+    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None):
         if pool is None:
             pool = trace.Group()
         super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
@@ -57,7 +57,6 @@ class ServiceContainer(Componentized):
         self.installed_plugins = []
 
         self.debug = debug
-        self.monitor_endpoint = monitor_endpoint
 
         self.metrics_aggregator = Aggregator(self._get_metrics, service=self.service_name, host=self.fqdn)
 
@@ -68,7 +67,7 @@ class ServiceContainer(Componentized):
             self.add_component(self.events)
             self.events.install(self)
 
-        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=self.monitor_endpoint, interval=5)
+        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=rpc.ip, interval=5)
 
         self.add_component(rpc)
         rpc.request_handler = self.handle_request
@@ -79,7 +78,6 @@ class ServiceContainer(Componentized):
     def from_config(cls, config, **explicit_kwargs):
         kwargs = dict(config)
         kwargs.pop('class', None)
-        kwargs.setdefault('monitor_endpoint', os.environ.get('LYMPH_MONITOR'))
         kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
         kwargs['registry'] = config.create_instance('registry')
 
@@ -143,6 +141,7 @@ class ServiceContainer(Componentized):
             'endpoint': self.endpoint,
             'identity': self.identity,
             'log_endpoint': self.log_endpoint,
+            'monitoring_endpoint': self.monitor.endpoint,
             'backdoor_endpoint': self.backdoor_endpoint,
             'fqdn': self.fqdn,
             'hostname': socket.gethostname(),

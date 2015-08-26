@@ -98,10 +98,6 @@ Container Configuration
     the local ZeroMQ endpoint that should be used to publish logs via 
     the :ref:`_zmqpub <config-logging-_zmqpub>` handler.
 
-.. describe:: container.monitor_endpoint
-
-    the ZeroMQ endpoint that monitoring data should be sent to.
-
 .. describe:: container.pool_size
 
     Size of the pool of Greenlets, default is unlimited.

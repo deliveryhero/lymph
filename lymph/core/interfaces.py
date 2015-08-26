@@ -147,8 +147,6 @@ class Interface(Componentized):
 
 
 class DefaultInterface(Interface):
-    register_with_coordinator = False
-
     @rpc()
     def ping(self, payload=None):
         return payload
