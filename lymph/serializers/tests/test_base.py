@@ -4,6 +4,7 @@ import json
 import unittest
 import uuid
 
+import iso8601
 import pytz
 
 from lymph.serializers import base
@@ -22,30 +23,31 @@ class SerializerBaseTest(unittest.TestCase):
         serializer = base.DatetimeSerializer()
         self.assertEqual(
             serializer.serialize(datetime.datetime(1900, 1, 1, 0, 0, 0, 1)),
-            "1900-01-01T00:00:00Z"
+            "1900-01-01T00:00:00"
         )
         self.assertEqual(
             serializer.serialize(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
-            "2014-09-12T08:33:12Z"
+            "2014-09-12T08:33:12"
         )
         self.assertEqual(
             serializer.serialize(pytz.timezone('Europe/Berlin').localize(datetime.datetime(2014, 9, 12, 8, 33, 12))),
-            ("Europe/Berlin", "2014-09-12T08:33:12Z")
+            "2014-09-12T08:33:12+0200"
         )
 
     def test_DatetimeSerializer_deserialize(self):
         serializer = base.DatetimeSerializer()
-        self.assertEqual(serializer.deserialize("1900-01-01T00:00:00Z"),
+        de = serializer.deserialize("1900-01-01T00:00:00")
+        self.assertEqual(serializer.deserialize("1900-01-01T00:00:00"),
                          datetime.datetime(1900, 1, 1, 0, 0))
-        self.assertEqual(serializer.deserialize("2014-09-12T08:33:12Z"),
+        self.assertEqual(serializer.deserialize("2014-09-12T08:33:12"),
                          datetime.datetime(2014, 9, 12, 8, 33, 12))
-        self.assertEqual(serializer.deserialize(("Europe/Berlin", "2014-09-12T08:33:12Z")),
+        self.assertEqual(serializer.deserialize(("2014-09-12T08:33:12+0200")),
                          pytz.timezone('Europe/Berlin').localize(datetime.datetime(2014, 9, 12, 8, 33, 12)))
-        with self.assertRaises(ValueError):
-            serializer.deserialize("2014-09-12T08:33:12")
-        with self.assertRaises(ValueError):
-            serializer.deserialize("2014-09-12T25:33:12Z")
-        with self.assertRaises(ValueError):
+        with self.assertRaises(iso8601.ParseError):
+            serializer.deserialize("2014-09-12T08:33:1200")
+        with self.assertRaises(iso8601.ParseError):
+            serializer.deserialize("2014-09-12T25:33:12")
+        with self.assertRaises(iso8601.ParseError):
             serializer.deserialize("2014-02-30t08:33:12z")
 
     def test_DateSerializer_serialize(self):
@@ -107,7 +109,7 @@ class SerializerBaseTest(unittest.TestCase):
     def test_BaseSerializer_dump_object(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
         self.assertEqual(serializer.dump_object(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
-                         {'__type__': 'datetime', '_': '2014-09-12T08:33:12Z'})
+                         {'__type__': 'datetime', '_': '2014-09-12T08:33:12'})
         self.assertEqual(serializer.dump_object(datetime.date(2014, 9, 12)),
                          {'__type__': 'date', '_': '2014-09-12'})
         self.assertEqual(serializer.dump_object(decimal.Decimal('3.1415')),
@@ -121,7 +123,7 @@ class SerializerBaseTest(unittest.TestCase):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
         self.assertJsonEquals(
             serializer.dumps(datetime.datetime(2014, 9, 12, 8, 33, 12, 34)),
-            {"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}
+            {"__type__": "datetime", "_": "2014-09-12T08:33:12"}
         )
         self.assertJsonEquals(
             serializer.dumps(decimal.Decimal('NaN')),
@@ -129,13 +131,13 @@ class SerializerBaseTest(unittest.TestCase):
         )
         self.assertJsonEquals(
             serializer.dumps(set([datetime.datetime(2014, 9, 12, 8, 33, 12, 34)])),
-            {"__type__": "set", "_": [{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}]}
+            {"__type__": "set", "_": [{"__type__": "datetime", "_": "2014-09-12T08:33:12"}]}
         )
 
     def test_BaseSerializer_load_object(self):
         serializer = base.BaseSerializer(dumps=json.dumps, loads=json.loads, dump=json.dump, load=json.load)
         self.assertEqual(serializer.load_object(
-                         {'__type__': 'datetime', '_': '2014-09-12T08:33:12Z'}),
+                         {'__type__': 'datetime', '_': '2014-09-12T08:33:12'}),
                          datetime.datetime(2014, 9, 12, 8, 33, 12))
         self.assertEqual(serializer.load_object(
                          {'__type__': 'date', '_': '2014-09-12'}),
@@ -157,7 +159,7 @@ class SerializerBaseTest(unittest.TestCase):
 
     def test_BaseSerializer_loads(self):
         serializer = self.json_serializer
-        normal_datetime = '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}'
+        normal_datetime = '{"__type__": "datetime", "_": "2014-09-12T08:33:12"}'
         normal_date = '{"__type__": "date", "_": "2014-09-12"}'
         number = '{"__type__": "Decimal", "_": "3.1415"}'
         nan = '{"__type__": "Decimal", "_": "NaN"}'
@@ -174,8 +176,8 @@ class SerializerBaseTest(unittest.TestCase):
         self.assertEqual(
             serializer.loads(
                 '{"__type__": "set", "_": ['
-                '{"__type__": "datetime", "_": "2014-09-12T08:33:12Z"}, '
-                '{"__type__": "datetime", "_": "2015-09-12T08:33:12Z"}'
+                '{"__type__": "datetime", "_": "2014-09-12T08:33:12"}, '
+                '{"__type__": "datetime", "_": "2015-09-12T08:33:12"}'
                 ']}'
             ),
             {
