@@ -8,6 +8,7 @@ import uuid
 import pytz
 import msgpack
 import six
+import iso8601
 
 from lymph.utils import Undefined
 
@@ -24,23 +25,13 @@ class ExtensionTypeSerializer(object):
 
 
 class DatetimeSerializer(ExtensionTypeSerializer):
-    format = '%Y-%m-%dT%H:%M:%SZ'
+    format = '%Y-%m-%dT%H:%M:%S%z'
 
     def serialize(self, obj):
-        result = obj.strftime(self.format)
-        if obj.tzinfo:
-            return str(obj.tzinfo), result
-        return result
+        return obj.strftime(self.format)
 
     def deserialize(self, obj):
-        try:
-            tzinfo, obj = obj
-        except ValueError:
-            tzinfo = None
-        result = datetime.datetime.strptime(obj, self.format)
-        if not tzinfo:
-            return result
-        return pytz.timezone(tzinfo).localize(result)
+        return iso8601.parse_date(obj, default_timezone=None)
 
 
 class DateSerializer(ExtensionTypeSerializer):

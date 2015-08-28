@@ -25,6 +25,7 @@ install_requires = [
     'mock>=1.0.1',
     'PyHamcrest==1.8.2',
     'pytz==2015.4',
+    'iso8601==0.1.10',
 ]
 
 if sys.version_info.major == 2:
