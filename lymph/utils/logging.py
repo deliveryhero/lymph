@@ -58,7 +58,7 @@ def setup_logging(config, loglevel, logfile):
 
     This function also set the container.log_endpoint in case it wasn't set.
     """
-    logconf = dict(config.get('logging', {}))
+    logconf = dict(config.get_raw('logging', {}))
     log_endpoint = config.get('container.log_endpoint')
     log_socket = None
     # Get log_endpoint in case it wasn't set in the config.
