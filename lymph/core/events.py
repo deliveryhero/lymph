@@ -1,7 +1,8 @@
+import functools
 import re
 import logging
 from uuid import uuid4
-from lymph.core.interfaces import Component
+from lymph.core.components import Component
 from lymph.core import trace
 
 
@@ -66,13 +67,33 @@ class EventHandler(Component):
     def queue_name(self, value):
         self._queue_name = value
 
+    def should_start(self):
+        return not self.interface.container.worker
+
     def on_start(self):
-        self.interface.container.subscribe(self, consume=self.active)
+        if self.should_start():
+            self.interface.container.subscribe(self, consume=self.active)
 
     def __call__(self, event, *args, **kwargs):
         trace.set_id(event.headers.get('trace_id'))
         logger.debug('<E %s', event)
         return self.func(self.interface, event, *args, **kwargs)
+
+
+class TaskHandler(EventHandler):
+    def __init__(self, interface, func, **kwargs):
+        interface.worker = True
+        self.name = 'lymph.tasks.%s.%s' % (interface.base_name, func.__name__)
+        @functools.wraps(func)
+        def wrapped_func(interface, event):
+            return func(interface, **event.body)
+        super(TaskHandler, self).__init__(interface, wrapped_func, (self.name,), **kwargs)
+
+    def should_start(self):
+        return self.interface.container.worker
+
+    def apply(self, **kwargs):
+        self.interface.emit(self.name, kwargs)
 
 
 class EventDispatcher(object):

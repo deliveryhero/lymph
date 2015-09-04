@@ -11,7 +11,7 @@ import six
 from lymph.utils import import_object, dump_stacks
 from lymph.autoreload import set_source_change_callback
 from lymph.cli.base import Command
-from lymph.core.container import create_container
+from lymph.core.container import create_container, InterfaceSkipped
 from lymph.utils.sockets import get_unused_port
 
 
@@ -35,8 +35,13 @@ def install_interfaces(container, interfaces):
             print("no instance class for '%s'" % name)
             sys.exit(1)
         cls = import_object(cls_name)
-        instance = container.install_interface(cls, name=name)
-        instance.apply_config(instance_config)
+        try:
+            interface = container.install_interface(cls, name=name)
+        except InterfaceSkipped as e:
+            logger.info("skipping interface %s: %s", name, e)
+            continue
+
+        interface.apply_config(instance_config)
 
 
 class InstanceCommand(Command):
@@ -54,6 +59,8 @@ class InstanceCommand(Command):
 
     proctitle = 'lymph-instance'
     short_description = 'Runs a single service instance'
+
+    worker = False
 
     def run(self):
         debug = self.args.get('--debug')
@@ -75,7 +82,7 @@ class InstanceCommand(Command):
         self.container.join()
 
     def _setup_container(self, debug):
-        self.container = create_container(self.config)
+        self.container = create_container(self.config, worker=self.worker)
         self.container.debug = debug
         # Set global exception hook to send unhandled exception to the container's error_hook.
         sys.excepthook = self.container.excepthook
@@ -127,6 +134,23 @@ class InstanceCommand(Command):
             self.container.endpoint,
             self.config.source,
         ))
+
+
+class WorkerCommand(InstanceCommand):
+    """
+    Usage: lymph worker [options]
+
+    Runs a single worker instance.
+
+    {INSTANCE_OPTIONS}
+
+    {COMMON_OPTIONS}
+    """    
+
+    proctitle = 'lymph-worker'
+    short_description = 'Runs a worker instance'
+
+    worker = True
 
 
 class NodeCommand(InstanceCommand):

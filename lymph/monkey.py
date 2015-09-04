@@ -21,11 +21,11 @@ def _export():
     lymph.__version__ = '0.8.0-dev'
 
     from lymph.exceptions import RpcError, LookupFailure, Timeout
-    from lymph.core.decorators import rpc, raw_rpc, event
+    from lymph.core.decorators import rpc, raw_rpc, event, task
     from lymph.core.interfaces import Interface
     from lymph.core.declarations import proxy
 
-    for obj in (RpcError, LookupFailure, Timeout, rpc, raw_rpc, event, Interface, proxy):
+    for obj in (RpcError, LookupFailure, Timeout, rpc, raw_rpc, event, Interface, proxy, task):
         setattr(lymph, obj.__name__, obj)
 
 

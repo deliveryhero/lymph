@@ -3,7 +3,8 @@ from lymph.core.interfaces import Interface
 
 
 class ClientInterface(Interface):
-    register_with_coordinator = False
+    def should_register(self):
+        return False
 
 
 class Client(object):
