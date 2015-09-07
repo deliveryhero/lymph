@@ -29,8 +29,10 @@ class RPCMethodDocumenter(MethodDocumenter):
         # If RPC decorator define exception to raise (e.g. _RPCDecorator),
         # include this laters in the documentation of the method.
         raises = getattr(self.object, 'raises', ())
+        if not isinstance(raises, tuple):
+            raises = (raises, )
         for ex in raises:
-            self.add_line(u':raises %s: ' % ex.__name__, '<autodoc>')
+            self.add_line(u':raises %s: %s' % (ex.__name__, ex.__doc__), '<autodoc>')
 
 
 class RPCInterfaceDocumenter(ClassDocumenter):
