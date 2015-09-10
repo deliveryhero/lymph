@@ -13,10 +13,6 @@ class RequestHandler(object):
         self.interface = interface
         self._json = None
 
-    @property
-    def allowed_methods(self):
-        return [method.upper() for method in http_methods if callable(getattr(self, method, None))]
-
     def json(self):
         if not "application/json" == self.request.mimetype:
             raise ValueError("The request Content-Type is not JSON")
@@ -28,9 +24,9 @@ class RequestHandler(object):
     def dispatch(self, args):
         method = self.request.method.lower()
         if method not in http_methods:
-            raise MethodNotAllowed(self.allowed_methods)
+            raise MethodNotAllowed()
         try:
             func = getattr(self, method)
         except AttributeError:
-            raise MethodNotAllowed(self.allowed_methods)
+            raise MethodNotAllowed()
         return func(**args)

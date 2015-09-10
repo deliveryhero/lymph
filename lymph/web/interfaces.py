@@ -3,7 +3,7 @@ import sys
 
 from werkzeug.contrib.wrappers import DynamicCharsetRequestMixin
 from werkzeug.wrappers import Request as BaseRequest, Response
-from werkzeug.exceptions import HTTPException
+from werkzeug.exceptions import HTTPException, NotFound, MethodNotAllowed
 
 from lymph.core.interfaces import Interface
 from lymph.core import trace
@@ -28,6 +28,10 @@ class Request(DynamicCharsetRequestMixin, BaseRequest):
 
 
 class WebServiceInterface(Interface):
+
+    NotFound = NotFound
+    MethodNotAllowed = MethodNotAllowed
+
     def __init__(self, *args, **kwargs):
         super(WebServiceInterface, self).__init__(*args, **kwargs)
         self.application = Request.application(self.dispatch_request)
@@ -84,13 +88,26 @@ class WebServiceInterface(Interface):
         urls = self.url_map.bind_to_environ(request.environ)
         request.urls = urls
         try:
-            rule, kwargs = request.urls.match(return_rule=True)
+            rule, kwargs = request.urls.match(method=request.method, return_rule=True)
+        except NotFound:
+            response = self.NotFound().get_response(request.environ)
+        except MethodNotAllowed:
+            response = self.MethodNotAllowed().get_response(request.environ)
+        else:
+            response = self.handle(request, rule, kwargs)
+        response.headers['X-Trace-Id'] = trace.get_id()
+        return response
+
+    def handle(self, request, rule, kwargs):
+        try:
             self.container.http_request_hook(request, rule, kwargs)
             handler = self.get_handler(request, rule)
             if hasattr(handler, "dispatch"):
                 response = handler.dispatch(kwargs)
             else:
                 response = handler(request, **kwargs)
+        except MethodNotAllowed:
+            response = self.MethodNotAllowed().get_response(request.environ)
         except HTTPException as e:
             response = e.get_response(request.environ)
         except Exception as e:
@@ -114,7 +131,6 @@ class WebServiceInterface(Interface):
                 if self.container.debug:
                     raise
                 response = Response('', status=500)
-        response.headers['X-Trace-Id'] = trace.get_id()
         return response
 
     def get_handler(self, request, rule):
