@@ -57,6 +57,11 @@ class WebIntegrationTest(WebServiceTestCase):
         self.assertEqual(response.data.decode("utf8"), "method test")
         self.assertEqual(response.status_code, 200)
 
+    def test_dispatch_rule_with_no_trailing_slash(self):
+        response = self.client.get("/test", follow_redirects=True)
+        self.assertEqual(response.data.decode("utf8"), "method test")
+        self.assertEqual(response.status_code, 200)
+
     def test_dispatch_rule_with_callable_endpoint(self):
         response = self.client.get("/foo/")
         self.assertEqual(response.data.decode("utf8"), "Rule Handler")

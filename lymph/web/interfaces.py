@@ -93,6 +93,8 @@ class WebServiceInterface(Interface):
             response = self.NotFound().get_response(request.environ)
         except MethodNotAllowed:
             response = self.MethodNotAllowed().get_response(request.environ)
+        except HTTPException as ex:
+            response = ex.get_response(request.environ)
         else:
             response = self.handle(request, rule, kwargs)
         response.headers['X-Trace-Id'] = trace.get_id()
