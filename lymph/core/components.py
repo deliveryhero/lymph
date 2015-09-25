@@ -50,9 +50,6 @@ class Declaration(object):
     def __init__(self, factory):
         self.factory = factory
 
-    def install(self, componentized):
-        return componentized.install(self)
-
     def __call__(self, *args, **kwargs):
         return self.factory(*args, **kwargs)
 
@@ -62,7 +59,7 @@ class Declaration(object):
         try:
             return componentized._declared_components[self]
         except KeyError:
-            return self.install(componentized)
+            return componentized.install(self)
 
 
 class ComponentizedBase(type):

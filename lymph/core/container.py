@@ -22,7 +22,7 @@ from lymph.core import trace
 logger = logging.getLogger(__name__)
 
 
-def create_container(config):
+def create_container(config, **kwargs):
     if 'registry' in config:
         logger.warning('global `registry` configuration is deprecated. please use `container.registry` instead.')
         config.set('container.registry', config.get_raw('registry'))
@@ -33,12 +33,17 @@ def create_container(config):
         'container',
         default_class='lymph.core.container:ServiceContainer',
         events=config.create_instance('container.events'),
+        **kwargs
     )
     return container
 
 
+class InterfaceSkipped(Exception):
+    pass
+
+
 class ServiceContainer(Componentized):
-    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None):
+    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None, worker=False):
         if pool is None:
             pool = trace.Group()
         super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
@@ -46,6 +51,7 @@ class ServiceContainer(Componentized):
         self.backdoor_endpoint = None
         self.service_name = service_name
         self.fqdn = socket.getfqdn()
+        self.worker = worker
 
         self.http_request_hook = Hook('http_request_hook')
 
@@ -72,7 +78,7 @@ class ServiceContainer(Componentized):
         self.add_component(rpc)
         rpc.request_handler = self.handle_request
 
-        self.install_interface(DefaultInterface, name='lymph')
+        self.install_interface(DefaultInterface, name='lymph', builtin=True)
 
     @classmethod
     def from_config(cls, config, **explicit_kwargs):
@@ -103,6 +109,8 @@ class ServiceContainer(Componentized):
 
     def install_interface(self, cls, **kwargs):
         interface = cls(self, **kwargs)
+        if not interface.should_install():
+            raise InterfaceSkipped('not a worker interface')
         self.add_component(interface)
         self.installed_interfaces[interface.name] = interface
         for plugin in self.installed_plugins:
@@ -146,25 +154,30 @@ class ServiceContainer(Componentized):
             'fqdn': self.fqdn,
             'hostname': socket.gethostname(),
             'ip': self.server.ip,
+            'type': self.worker
         })
         return description
 
     def start(self, register=True):
-        logger.info('starting %s (%s) at %s (pid=%s)', self.service_name, ', '.join(self.service_types), self.endpoint, os.getpid())
+        logger.info('starting %s (%s)', self.service_name, ', '.join(self.service_types))
+        if all(i.builtin for i in self.installed_interfaces.values()):
+            logger.warning('only builtin interfaces installed')
 
         self.on_start()
         self.metrics_aggregator.add_tags(identity=self.identity)
-
         if register:
-            for interface_name, interface in six.iteritems(self.installed_interfaces):
-                if not interface.register_with_coordinator:
-                    continue
-                instance = ServiceInstance(**self.get_instance_description(interface))
-                try:
-                    self.service_registry.register(interface_name, instance)
-                except RegistrationFailure:
-                    logger.error("registration failed %s, %s", interface_name, interface)
-                    self.stop()
+            self.register()
+
+    def register(self):
+        for interface_name, interface in six.iteritems(self.installed_interfaces):
+            if not interface.should_register():
+                continue
+            instance = ServiceInstance(**self.get_instance_description(interface))
+            try:
+                self.service_registry.register(interface_name, instance)
+            except RegistrationFailure:
+                logger.error("registration failed %s, %s", interface_name, interface)
+                self.stop()
 
     def stop(self, **kwargs):
         self.on_stop()

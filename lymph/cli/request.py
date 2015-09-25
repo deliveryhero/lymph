@@ -103,7 +103,7 @@ class RequestCommand(Command):
         subject = self.args['<subject>']
         address = self.args.get('--address')
         if not address:
-            address = subject.split('.', 1)[0]
+            address = subject.rsplit('.', 1)[0]
 
         client = Client.from_config(self.config)
 

@@ -57,6 +57,7 @@ class ListCommandTests(CliTestMixin, unittest.TestCase):
             {t.bold}instance   {t.normal}Runs a single service instance
             {t.bold}node       {t.normal}Runs a node service that manages a group of processes on the same machine
             {t.bold}shell      {t.normal}Starts an interactive Python shell, locally or remotely
+            {t.bold}worker     {t.normal}Runs a worker instance
         """.format(t=blessings.Terminal()), config=False)
 
 

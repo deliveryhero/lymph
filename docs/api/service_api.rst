@@ -145,3 +145,12 @@ Service API
             @lymph.event('task_done')
             def on_task_done(self, event):
                 assert isinstance(event, lymph.core.events.Event)
+
+
+.. decorator:: task()
+
+    :param sequential: force sequential task execution per instance
+    :param broadcast: execute the task in all instances
+
+    Marks the decorated interface method as a :ref:`task <topic-tasks>` handler.
+

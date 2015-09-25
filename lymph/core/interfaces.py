@@ -3,10 +3,11 @@ import functools
 
 import six
 
-from lymph.core.decorators import rpc, RPCBase
-from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 from lymph.core.components import Component, Componentized, ComponentizedBase
+from lymph.core.decorators import rpc, RPCBase
+from lymph.core.events import TaskHandler
 from lymph.core.monitoring import metrics
+from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 
 import gevent
 from gevent.event import AsyncResult
@@ -32,14 +33,19 @@ class AsyncResultWrapper(object):
 class InterfaceBase(ComponentizedBase):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
+        is_worker = False
         for base in bases:
             if isinstance(base, InterfaceBase):
                 methods.update(base.methods)
+                is_worker |= base.worker
         for name, value in six.iteritems(attrs):
             if isinstance(value, RPCBase):
                 methods[name] = value
+            if issubclass(getattr(value, 'cls', object), TaskHandler):
+                is_worker = True
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
+        new_cls.worker = is_worker
         return new_cls
 
 
@@ -99,14 +105,24 @@ class Proxy(Component):
         yield self.exception_counts
 
 
+
+
 @six.add_metaclass(InterfaceBase)
 class Interface(Componentized):
-    register_with_coordinator = True
-
-    def __init__(self, container, name=None):
+    def __init__(self, container, name=None, builtin=False):
         super(Interface, self).__init__()
         self.container = container
         self.name = name or self.__class__.__name__
+        self.base_name = self.name
+        self.builtin = builtin
+        if container.worker and not builtin:
+            self.name = '%s.worker' % self.name
+
+    def should_register(self):
+        return True
+
+    def should_install(self):
+        return not self.container.worker or self.worker or self.builtin
 
     def apply_config(self, config):
         self.config = config

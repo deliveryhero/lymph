@@ -103,14 +103,28 @@ def rpc(raises=()):
     return functools.partial(_RPCDecorator, raises=raises)
 
 
-def event(*event_types, **kwargs):
+def event_handler(cls, *args, **kwargs):
     def decorator(func):
         from lymph.core.events import EventHandler
         if isinstance(func, EventHandler):
-            raise TypeError('lymph.event() decorators cannot be stacked')
+            raise TypeError('lymph.event() and lymph.task() decorators cannot be stacked')
 
         def factory(interface):
-            return EventHandler(interface, func, event_types, **kwargs)
-        return Declaration(factory)
+            return cls(interface, func, *args, **kwargs)
+        declaration = Declaration(factory)
+        # FIXME(emulbreh): we attach the class here to make TaskHandlers
+        # identifyable in the Interface meta class. This isn't pretty and
+        # should be cleaned up together with the whole Declaration mess.
+        declaration.cls = cls
+        return declaration
     return decorator
 
+
+def event(*event_types, **kwargs):
+    from lymph.core.events import EventHandler
+    return event_handler(EventHandler, event_types, **kwargs)
+
+
+def task(sequential=False):
+    from lymph.core.events import TaskHandler
+    return event_handler(TaskHandler, sequential=sequential)
