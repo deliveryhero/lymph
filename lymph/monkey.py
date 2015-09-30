@@ -18,7 +18,7 @@ patch._initialized = False
 
 def _export():
     import lymph
-    lymph.__version__ = '0.8.0'
+    lymph.__version__ = '0.9.0-dev'
 
     from lymph.exceptions import RpcError, LookupFailure, Timeout
     from lymph.core.decorators import rpc, raw_rpc, event, task
