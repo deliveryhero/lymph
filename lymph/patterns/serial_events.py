@@ -45,11 +45,11 @@ class SerialEventHandler(Component):
         for i in range(partition_count):
             queue = self.get_queue_name(i)
             e = lymph.event(queue, queue_name=queue, sequential=True, active=False)(_consume)
-            handler = e.install(interface)
+            handler = interface.install(e)
             self.consumers[handler] = interface.container.subscribe(handler, consume=False)
         self.partition = set()
         push_queue = self.get_queue_name('push')
-        lymph.event(*event_types, queue_name=push_queue)(self.push).install(interface)
+        interface.install(lymph.event(*event_types, queue_name=push_queue)(self.push))
 
     def on_start(self):
         super(SerialEventHandler, self).on_start()
