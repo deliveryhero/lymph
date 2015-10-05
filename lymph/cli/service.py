@@ -145,7 +145,7 @@ class WorkerCommand(InstanceCommand):
     {INSTANCE_OPTIONS}
 
     {COMMON_OPTIONS}
-    """    
+    """
 
     proctitle = 'lymph-worker'
     short_description = 'Runs a worker instance'
