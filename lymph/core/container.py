@@ -43,7 +43,7 @@ class InterfaceSkipped(Exception):
 
 
 class ServiceContainer(Componentized):
-    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None, worker=False):
+    def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None, worker=False, metrics=None):
         if pool is None:
             pool = trace.Group()
         super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
@@ -64,7 +64,10 @@ class ServiceContainer(Componentized):
 
         self.debug = debug
 
-        self.metrics_aggregator = Aggregator(self._get_metrics, service=self.service_name, host=self.fqdn)
+        self.metrics_aggregator = metrics
+        metrics.add_tags(service=self.service_name, host=self.fqdn)
+        metrics.add(self._get_metrics)
+        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=rpc.ip, interval=5)
 
         if self.service_registry:
             self.add_component(self.service_registry)
@@ -72,8 +75,6 @@ class ServiceContainer(Componentized):
         if self.events:
             self.add_component(self.events)
             self.events.install(self)
-
-        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=rpc.ip, interval=5)
 
         self.add_component(rpc)
         rpc.request_handler = self.handle_request
@@ -89,6 +90,7 @@ class ServiceContainer(Componentized):
 
         kwargs['rpc'] = config.create_instance('rpc', default_class=ZmqRPCServer, ip=kwargs.pop('ip', None), port=kwargs.pop('port', None))
         kwargs['pool'] = config.create_instance('pool', default_class='lymph.core.trace:Group')
+        kwargs['metrics'] = config.create_instance('metrics', default_class=Aggregator)
 
         for key, value in six.iteritems(explicit_kwargs):
             if value is not None:

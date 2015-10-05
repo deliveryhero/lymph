@@ -11,6 +11,14 @@ class Aggregator(object):
         ] + list(getters)
         self._tags = tags
 
+    @classmethod
+    def from_config(cls, config):
+        tags = config.get_raw('tags', {})
+        return cls(**tags)
+
+    def add(self, getter):
+        self._metrics_getters.append(getter)
+
     def add_tags(self, **tags):
         self._tags.update(tags)
 
