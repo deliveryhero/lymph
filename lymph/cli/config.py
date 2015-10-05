@@ -11,7 +11,7 @@ class ConfigCommand(Command):
 
     {COMMON_OPTIONS}
     """
-    
+
     short_description = 'Prints configuration for inspection'
 
     def run(self):

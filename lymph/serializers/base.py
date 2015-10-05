@@ -5,7 +5,6 @@ import functools
 import json
 import uuid
 
-import pytz
 import msgpack
 import six
 import iso8601

@@ -36,7 +36,6 @@ class SerializerBaseTest(unittest.TestCase):
 
     def test_DatetimeSerializer_deserialize(self):
         serializer = base.DatetimeSerializer()
-        de = serializer.deserialize("1900-01-01T00:00:00")
         self.assertEqual(serializer.deserialize("1900-01-01T00:00:00"),
                          datetime.datetime(1900, 1, 1, 0, 0))
         self.assertEqual(serializer.deserialize("2014-09-12T08:33:12"),

@@ -10,6 +10,12 @@ from lymph.utils import import_object, Undefined
 from lymph.exceptions import ConfigurationError
 
 
+def to_dict(value):
+    if hasattr(value, 'as_dict'):
+        return value.as_dict()
+    return dict(value)
+
+
 @six.add_metaclass(abc.ABCMeta)
 class ConfigObject(collections.Mapping):
 
@@ -39,11 +45,11 @@ class ConfigObject(collections.Mapping):
         value = self.get(key)
         if value is None:
             self.set(key, default)
-            return default
+            return self.get(key)
         return value
 
     def create_instance(self, key, default_class=None, **kwargs):
-        instance_config = self.get(key, {})
+        instance_config = self.setdefault(key, {})
         return self._create_instance(key, instance_config, default_class=default_class, **kwargs)
 
     def _create_instance(self, key, instance_config, default_class=None, **kwargs):
@@ -63,7 +69,7 @@ class ConfigObject(collections.Mapping):
         if hasattr(cls, 'from_config'):
             return cls.from_config(instance_config, **kwargs)
         else:
-            instance_config = copy.deepcopy(dict(instance_config))
+            instance_config = copy.deepcopy(to_dict(instance_config))
             instance_config.pop('class', None)
             instance_config.update(kwargs)
             return cls(**instance_config)
@@ -92,6 +98,9 @@ class ConfigView(ConfigObject):
 
     def __len__(self):
         return len(self.root.get_raw(self.path))
+
+    def as_dict(self):
+        return self.root.get_raw(self.path)
 
     def get_raw(self, key, default=Undefined):
         return self.root.get_raw('%s.%s' % (self.path, key), default)
@@ -154,6 +163,9 @@ class Configuration(ConfigObject):
     @property
     def root(self):
         return self
+
+    def as_dict(self):
+        return self.values
 
     def load_file(self, filename, sections=None):
         with open(filename, 'r') as f:

@@ -105,8 +105,6 @@ class Proxy(Component):
         yield self.exception_counts
 
 
-
-
 @six.add_metaclass(InterfaceBase)
 class Interface(Componentized):
     def __init__(self, container, name=None, builtin=False):

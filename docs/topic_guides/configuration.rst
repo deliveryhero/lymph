@@ -153,6 +153,21 @@ The null backend doesn't transport any events. Set ``class`` to ``lymph.events.n
 .. _interface-config:
 
 
+Metrics Configuration
+---------------------
+
+.. describe:: container.metrics.tags
+
+A dictionary of tags to be sent with all monitoring data from this container, e.g.
+
+.. code:: yaml
+
+    container:
+        metrics:
+            tags:
+                env: $(env.NAMESPACE)
+
+
 Interface Configuration
 -----------------------
 

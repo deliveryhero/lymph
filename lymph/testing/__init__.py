@@ -14,6 +14,7 @@ from lymph.core.connection import Connection
 from lymph.core.interfaces import Interface, Proxy
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
+from lymph.core.monitoring.aggregator import Aggregator
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.client import Client
@@ -40,6 +41,7 @@ class MockServiceNetwork(object):
             registry=registry,
             events=self.events,
             rpc=MockRPCServer(ip='127.0.0.1', port=port, mock_network=self),
+            metrics=Aggregator(),
             **kwargs)
         container.install_interface(cls, name=interface_name)
         self.service_containers[container.endpoint] = container
@@ -143,6 +145,7 @@ class LymphIntegrationTestCase(KazooTestHarness):
             events=events,
             registry=registry,
             rpc=ZmqRPCServer(),
+            metrics=Aggregator(),
             **kwargs)
         interface = None
         if interface_cls:

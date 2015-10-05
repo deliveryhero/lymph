@@ -84,6 +84,7 @@ class TaskHandler(EventHandler):
     def __init__(self, interface, func, **kwargs):
         interface.worker = True
         self.name = 'lymph.tasks.%s.%s' % (interface.base_name, func.__name__)
+
         @functools.wraps(func)
         def wrapped_func(interface, event):
             return func(interface, **event.body)

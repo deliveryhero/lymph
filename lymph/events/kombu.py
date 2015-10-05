@@ -227,7 +227,7 @@ class KombuEventSystem(BaseEventSystem):
     def safe_declare(conn, queue):
         try:
             queue(conn).declare()
-        except conn.connection.channel_errors as exc:
+        except conn.connection.channel_errors:
             # XXX(Mouad): Redeclare queue since a race condition may happen
             # when declaring queues in failover situation, more info check:
             # https://bugs.launchpad.net/neutron/+bug/1318721.
