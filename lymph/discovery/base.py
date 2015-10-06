@@ -5,6 +5,9 @@ from lymph.core.services import Service
 from lymph.core.components import Component
 
 
+SERVICE_NAMESPACE = 'services'
+
+
 @six.add_metaclass(abc.ABCMeta)
 class BaseServiceRegistry(Component):
     def __init__(self, **kwargs):
@@ -29,9 +32,9 @@ class BaseServiceRegistry(Component):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def register(self, service_name, instance):
+    def register(self, service_name, instance, namespace=SERVICE_NAMESPACE):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def unregister(self, service_name, instance):
+    def unregister(self, service_name, instance, namespace=SERVICE_NAMESPACE):
         raise NotImplementedError

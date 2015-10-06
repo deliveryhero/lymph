@@ -15,22 +15,18 @@ UPDATED = 'UPDATED'
 
 
 class ServiceInstance(object):
-    def __init__(self, endpoint=None, identity=None, **info):
-        self.identity = identity if identity else hashlib.md5(endpoint.encode('utf-8')).hexdigest()
+    def __init__(self, identity=None, **info):
+        self.identity = identity if identity else hashlib.md5(info.get('endpoint').encode('utf-8')).hexdigest()
         self.info = info
-        self.update(endpoint, **info)
+        self.update(**info)
 
-    def update(self, endpoint, **info):
-        self.endpoint = endpoint
+    def update(self, **info):
         self.__dict__.update(info)
         self.info.update(info)
 
     def serialize(self):
         d = {
-            'endpoint': self.endpoint,
             'identity': self.identity,
-            'log_endpoint': self.log_endpoint,
-            'fqdn': self.fqdn,
         }
         d.update(self.info)
         return d

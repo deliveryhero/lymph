@@ -1,4 +1,5 @@
 import logging
+import socket
 import sys
 
 from werkzeug.contrib.wrappers import DynamicCharsetRequestMixin
@@ -7,6 +8,7 @@ from werkzeug.exceptions import HTTPException, NotFound, MethodNotAllowed
 from werkzeug.routing import Rule
 
 from lymph.core.interfaces import Interface
+from lymph.core.services import ServiceInstance
 from lymph.core import trace
 from lymph.utils.logging import setup_logger
 from lymph.exceptions import SocketNotCreated, NoSharedSockets
@@ -81,6 +83,14 @@ class WebServiceInterface(Interface):
             self.http_socket = sockets.create_socket(address)
         self.wsgi_server = LymphWSGIServer(self.http_socket, self.application, spawn=Group(self.pool_size))
         self.wsgi_server.start()
+
+        web_instance = ServiceInstance(
+            identity=self.container.identity,
+            hostname=socket.gethostname(),
+            ip=self.container.server.ip,
+            http_port=self.http_port,
+        )
+        self.container.service_registry.register(self.name, web_instance, namespace='http')
 
     def on_stop(self, **kwargs):
         self.wsgi_server.stop()
