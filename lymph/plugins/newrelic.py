@@ -29,11 +29,15 @@ class NewrelicPlugin(Plugin):
             setattr(ServiceContainer, method, newrelic.agent.function_trace()(getattr(ServiceContainer, method)))
 
     def on_interface_installation(self, interface):
-        for name, method in interface.methods.items():
-            method.decorate(with_trace_id)
-            method.decorate(newrelic.agent.background_task())
+        self._wrap_methods(interface.methods)
+        self._wrap_methods(interface.event_handlers)
         if isinstance(interface, WebServiceInterface):
             interface.application = newrelic.agent.wsgi_application()(interface.application)
+
+    def _wrap_methods(self, methods):
+        for name, method in methods.items():
+            method.decorate(with_trace_id)
+            method.decorate(newrelic.agent.background_task())
 
     def on_error(self, exc_info, **kwargs):
         newrelic.agent.add_custom_parameter('trace_id', trace.get_id())

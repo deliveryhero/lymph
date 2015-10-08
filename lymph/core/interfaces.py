@@ -5,7 +5,7 @@ import six
 
 from lymph.core.components import Component, Componentized, ComponentizedBase
 from lymph.core.decorators import rpc, RPCBase
-from lymph.core.events import TaskHandler
+from lymph.core.events import TaskHandler, EventHandler
 from lymph.core.monitoring import metrics
 from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 
@@ -33,6 +33,7 @@ class AsyncResultWrapper(object):
 class InterfaceBase(ComponentizedBase):
     def __new__(cls, clsname, bases, attrs):
         methods = {}
+        event_handlers = {}
         is_worker = False
         for base in bases:
             if isinstance(base, InterfaceBase):
@@ -41,10 +42,13 @@ class InterfaceBase(ComponentizedBase):
         for name, value in six.iteritems(attrs):
             if isinstance(value, RPCBase):
                 methods[name] = value
+            if issubclass(getattr(value, 'cls', object), EventHandler):
+                event_handlers[name] = value
             if issubclass(getattr(value, 'cls', object), TaskHandler):
                 is_worker = True
         new_cls = super(InterfaceBase, cls).__new__(cls, clsname, bases, attrs)
         new_cls.methods = methods
+        new_cls.event_handlers = event_handlers
         new_cls.worker = is_worker
         return new_cls
 
