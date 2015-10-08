@@ -49,9 +49,16 @@ class Component(object):
 class Declaration(object):
     def __init__(self, factory):
         self.factory = factory
+        self._decorators = []
 
     def __call__(self, *args, **kwargs):
-        return self.factory(*args, **kwargs)
+        component = self.factory(*args, **kwargs)
+        for decorator in self._decorators:
+            component.func = decorator(component.func)
+        return component
+
+    def decorate(self, decorator):
+        self._decorators.append(decorator)
 
     def __get__(self, componentized, cls):
         if componentized is None:
