@@ -1,4 +1,0 @@
-gevent==1.0.2
-http://py-monotime.googlecode.com/archive/5fb3eb35a8e25140204e957bd010991bfe8758e3.zip#egg=monotime
--r shared.txt
--e .
