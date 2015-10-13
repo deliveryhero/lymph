@@ -35,23 +35,15 @@ Development (of lymph itself)
 
     $ git clone https://github.com/deliveryhero/lymph.git
     $ cd lymph
-    $ pip install -r requirements/base2.txt -r requirements/dev.txt
-    $ pip install -e .
+    $ pip install -r requirements/dev.txt
 
 Run tests with ``tox``, build documentation with ``fab docs``.
-
-.. note:: For Python 3
-   you need to install cython first
-   and use a different requirements file::
-    
-        $ pip install cython
-        $ pip install -r requirements/base3.txt -r requirements/dev.txt
 
 
 Running services
 ~~~~~~~~~~~~~~~~
 
-To run the example services, you can use the example node config in 
+To run the example services, you can use the example node config in
 ``conf/sample-node.yml``. You'll also need a local installation
 of `ZooKeeper`_ (with the configuration provided in the
 `Getting Started Guide`_) and `RabbitMQ`_::
@@ -76,4 +68,3 @@ To see the log output of a running service, try::
 .. _ZooKeeper: http://zookeeper.apache.org
 .. _Getting Started Guide: http://zookeeper.apache.org/doc/trunk/zookeeperStarted.html
 .. _RabbitMQ: http://www.rabbitmq.com/
-

@@ -5,3 +5,5 @@ nose-progressive==1.5.1
 Sphinx==1.2.2
 sphinx-rtd-theme==0.1.5
 tox==1.7.1
+
+-e .

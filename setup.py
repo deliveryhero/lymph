@@ -11,7 +11,7 @@ install_requires = [
     'docopt>=0.6.1',
     'kazoo>=1.3.1',
     'kombu>=3.0.16',
-    'gevent',
+    'gevent>=1.0.2',
     'msgpack-python>=0.4.0',
     'psutil>=2.1.1',
     'PyYAML>=3.11',
@@ -24,15 +24,15 @@ install_requires = [
     'netifaces>=0.10.4',
     'mock>=1.0.1',
     'PyHamcrest>=1.8.2',
-    'pytz',
+    'pytz>=2015.4',
     'iso8601>=0.1.10',
 ]
 
 if sys.version_info.major == 2:
     install_requires.append('Monotime>=1.0')
 elif sys.version_info.major == 3:
-    install_requires.remove('gevent')
-    install_requires.append('gevent>=1.1a2')
+    install_requires.remove('gevent>=1.0.2')
+    install_requires.append('gevent==1.1b5')
 
 setup(
     name='lymph',
