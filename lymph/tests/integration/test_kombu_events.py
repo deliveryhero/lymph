@@ -17,6 +17,11 @@ class TestInterface(lymph.Interface):
     def on_foo(self, event):
         self.collected_events.append(event)
 
+    @lymph.event('retryable_foo', retry=2)
+    def on_retryable_foo(self, event):
+        self.collected_events.append(event)
+        raise Exception()
+
     @lymph.event('foo_broadcast', broadcast=True)
     def on_foo_broadcast(self, event):
         self.collected_events.append(event)
@@ -94,3 +99,7 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
         self.assert_eventually_true(self.received_broadcast_check(2), timeout=10)
         self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo_broadcast')
         self.assertEqual(self.the_interface_broadcast.collected_events[0].evt_type, 'foo_broadcast')
+
+    def test_retryable_event(self):
+        self.lymph_client.emit('retryable_foo', {})
+        self.assert_eventually_true(self.received_check(3), timeout=10)

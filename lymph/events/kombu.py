@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 DEFAULT_SERIALIZER = 'lymph-msgpack'
 DEFAULT_EXCHANGE = 'lymph'
 DEFAULT_MAX_RETRIES = 3
+RETRY_HEADER = 'retry_count'
 
 # Info of where the queue master server, so that we can redeclare the queue
 # when we failover to another master.
@@ -35,6 +36,11 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
         self.greenlet = None
         self.event_system = event_system
         self.connect_max_retries = max_retries
+        self.retry_producer = EventProducer(
+            exchange=self.event_system.retry_exchange,
+            routing_key=handler.queue_name,
+            event_system=event_system,
+        )
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_kombu_message])]
@@ -53,6 +59,7 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
             self.event_system.safe_declare(conn, self.queue)
             for event_type in self.handler.event_types:
                 self.queue(conn).bind_to(exchange=self.exchange, routing_key=event_type)
+                self.queue(conn).bind_to(exchange=self.event_system.retry_exchange, routing_key=self.handler.queue_name)
 
     def on_kombu_message(self, body, message):
         logger.debug("received kombu message %r", body)
@@ -67,14 +74,22 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
             self.handler(event)
             message.ack()
         except:
-            logger.exception('failed to handle event from queue %r', self.handler.queue_name)
-            # FIXME: add requeue support here. Make sure what we don't requeue
-            # forever.
-            message.reject()
-            self.event_system.container.error_hook(sys.exc_info())
+            self._handle_fail(message, event)
         finally:
             if self.handler.once:
                 self.event_system.unsubscribe(self.handler)
+
+    def _handle_fail(self, message, event):
+        retry = event.headers.get(RETRY_HEADER, self.handler.retry) - 1
+        if retry >= 0:
+            self._requeue(event, retry)
+        message.reject()
+        logger.exception('failed to handle event from queue %r (tries_left=%s)', self.handler.queue_name, retry)
+        self.event_system.container.error_hook(sys.exc_info())
+
+    def _requeue(self, event, retry):
+        event.headers[RETRY_HEADER] = retry
+        self.retry_producer.emit(event)
 
     def start(self):
         if self.greenlet:
@@ -92,11 +107,10 @@ class EventConsumer(kombu.mixins.ConsumerMixin):
 
 
 class EventProducer(object):
-    def __init__(self, event_system, event_type, max_retries=DEFAULT_MAX_RETRIES):
+    def __init__(self, exchange, routing_key, event_system, max_retries=DEFAULT_MAX_RETRIES):
+        self.routing_key = routing_key
+        self.exchange = exchange
         self.event_system = event_system
-        self.routing_key = event_type
-        self.exchange = self.event_system.exchange
-        self.serializer = self.event_system.serializer
         self.max_retries = max_retries
 
     @contextmanager
@@ -106,7 +120,7 @@ class EventProducer(object):
 
     def _get_producer(self, conn):
         return conn.Producer(
-            serializer=self.serializer, routing_key=self.routing_key,
+            serializer=self.event_system.serializer, routing_key=self.routing_key,
             exchange=self.exchange)
 
     def emit(self, event):
@@ -128,7 +142,6 @@ class EventProducerWithDelay(EventProducer):
     def __init__(self, delay, *args, **kwargs):
         super(EventProducerWithDelay, self).__init__(*args, **kwargs)
         self.delay = delay  # Delay in ms.
-        self.exchange = kombu.Exchange('%s_waiting' % self.event_system.exchange_name, 'direct', durable=True)
         self._intermediate_queue = None
 
     def _get_producer(self, conn):
@@ -144,7 +157,6 @@ class EventProducerWithDelay(EventProducer):
             'x-dead-letter-routing-key': self.routing_key,
             'x-message-ttl': self.delay,
         })
-        self.exchange(conn).declare()
         self.event_system.safe_declare(conn, queue)
         queue(conn).bind_to(exchange=self.exchange, routing_key=self.routing_key)
         return queue
@@ -156,6 +168,8 @@ class KombuEventSystem(BaseEventSystem):
         self.connection = connection
         self.exchange_name = exchange_name
         self.exchange = kombu.Exchange(exchange_name, 'topic', durable=True)
+        self.waiting_exchange = kombu.Exchange('%s_waiting' % exchange_name, 'direct', durable=True)
+        self.retry_exchange = kombu.Exchange('%s_retry' % exchange_name, 'direct', durable=True)
         self.serializer = serializer
         self.connect_max_retries = connect_max_retries
         self._producers = {}
@@ -170,6 +184,10 @@ class KombuEventSystem(BaseEventSystem):
 
     def on_start(self):
         setup_logger('kombu')
+        with self.get_connection() as conn:
+            self.exchange(conn).declare()
+            self.waiting_exchange(conn).declare()
+            self.retry_exchange(conn).declare()
 
     def on_stop(self, **kwargs):
         for consumer in self.consumers_by_queue.values():
@@ -200,12 +218,10 @@ class KombuEventSystem(BaseEventSystem):
         del self.consumers_by_queue[queue_name]
 
     def setup_consumer(self, handler):
-        with self.get_connection() as conn:
-            self.exchange(conn).declare()
-            if handler.broadcast:
-                queue = self.get_queue(handler.queue_name, auto_delete=True, durable=False)
-            else:
-                queue = self.get_queue(handler.queue_name, auto_delete=handler.once, durable=False)
+        if handler.broadcast:
+            queue = self.get_queue(handler.queue_name, auto_delete=True, durable=False)
+        else:
+            queue = self.get_queue(handler.queue_name, auto_delete=handler.once, durable=False)
         consumer = EventConsumer(self, self.connection, queue, handler, self.exchange, max_retries=self.connect_max_retries)
         self.consumers_by_queue[handler.queue_name] = consumer
         return consumer
@@ -242,8 +258,17 @@ class KombuEventSystem(BaseEventSystem):
             return self._producers[event_type, delay]
         except KeyError:
             if delay:
-                producer = EventProducerWithDelay(int(1000 * delay), self, event_type)
+                producer = EventProducerWithDelay(
+                    delay=int(1000 * delay),
+                    exchange=self.waiting_exchange,
+                    routing_key=event_type,
+                    event_system=self,
+                )
             else:
-                producer = EventProducer(self, event_type)
+                producer = EventProducer(
+                    exchange=self.exchange,
+                    routing_key=event_type,
+                    event_system=self,
+                )
         self._producers[event_type, delay] = producer
         return producer
