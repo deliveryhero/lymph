@@ -2,17 +2,35 @@
 <html>
 <head></head>
 <body>
-    <h1>jsonrpc</h1>
-    <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
-    <script type="text/javascript" src="/static/jquery.json.js"></script>
-    <script type="text/javascript" src="/static/jquery.jsonrpcclient.js"></script>
-    <script type="text/javascript">
-        LymphClient = function(serviceType){
-            this.jsonrpc = new $.JsonRpcClient({ajaxUrl: '/api/jsonrpc/' + serviceType + '/'});
-        };
-        LymphClient.prototype.call = function(method, args, callback){
-            this.jsonrpc.call(method, [args], callback || console.log, function(){});
-        };
-    </script>
+  <h1>jsonrpc</h1>
+  <label>Service Type <input type="text" id="serviceType" value="echo" /></label><br />
+  <label>Method <input type="text" id="method" value="echo.upper" /></label><br />
+  <label>Arguments <input type="text" id="args" value='{ "text": "hello" }' /></label><br />
+  <input type="button" id="doIt" value="Submit" onClick="doItFunction()" />
+  
+  <br />
+
+  <p id="output" style="border-style:solid; border-width: 1px; width: 500px; height: 500px;"></p>
+
+  <script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+  <script type="text/javascript" src="/static/jquery.json.js"></script>
+  <script type="text/javascript" src="/static/jquery.jsonrpcclient.js"></script>
+  <script type="text/javascript">
+    LymphClient = function(serviceType){
+    this.jsonrpc = new $.JsonRpcClient({ajaxUrl: '/api/jsonrpc/' + serviceType + '/'});
+    };
+    LymphClient.prototype.call = function(method, args, callback){
+    this.jsonrpc.call(method, [args], callback || console.log, function(){});
+    };
+
+    doItFunction = function() {
+    var client = new LymphClient($("#serviceType").val());
+    client.call($("#method").val(), JSON.parse($("#args").val()),
+      function(data) {
+        console.log(data);
+        $("#output").text(data.result);
+      });
+    };
+  </script>
 </body>
 </html>
