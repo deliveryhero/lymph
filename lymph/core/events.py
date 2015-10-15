@@ -43,7 +43,7 @@ class Event(object):
 
 
 class EventHandler(Component):
-    def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True, once=False, broadcast=False):
+    def __init__(self, interface, func, event_types, sequential=False, queue_name=None, active=True, once=False, broadcast=False, retry=0):
         assert not (once and broadcast), "Once and broadcast cannot be enabled at the same time"
         super(EventHandler, self).__init__()
         self.func = func
@@ -54,6 +54,7 @@ class EventHandler(Component):
         self.once = once
         self.broadcast = broadcast
         self.unique_key = str(uuid4()) if once or broadcast else None
+        self.retry = retry
         self._queue_name = queue_name or func.__name__
 
     @property
