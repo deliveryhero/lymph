@@ -9,6 +9,9 @@ class Component(object):
         self.__error_hook = error_hook
         self.__pool = pool
 
+    def set_parent(self, parent):
+        self._parent_component = parent
+
     def on_start(self):
         pass
 
@@ -92,7 +95,7 @@ class Componentized(Component):
         self.__all_components = []
 
     def add_component(self, component):
-        component._parent_component = self
+        component.set_parent(self)
         self.__all_components.append(component)
 
     def install(self, factory, **kwargs):
