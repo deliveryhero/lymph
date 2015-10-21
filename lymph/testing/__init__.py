@@ -11,7 +11,7 @@ from kazoo.testing.harness import KazooTestHarness
 
 from lymph.core.container import ServiceContainer
 from lymph.core.connection import Connection
-from lymph.core.interfaces import Interface, Proxy
+from lymph.core.interfaces import Interface
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.core.monitoring.aggregator import Aggregator
@@ -218,7 +218,7 @@ class RPCServiceTestCase(unittest.TestCase):
         return self.service_class.__name__
 
     def get_proxy(self, **kwargs):
-        return Proxy(self.container, self.service_name, **kwargs)
+        return self.service.proxy(self.service_name, **kwargs)
 
     client = property(get_proxy)
 
