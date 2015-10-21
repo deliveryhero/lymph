@@ -54,7 +54,8 @@ class InterfaceBase(ComponentizedBase):
 
 
 class ProxyMethod(object):
-    def __init__(self, func):
+    def __init__(self, proxy, func):
+        self.proxy = proxy
         self.func = func
 
     def __call__(self, *args, **kwargs):
@@ -62,7 +63,7 @@ class ProxyMethod(object):
 
     def defer(self, *args, **kwargs):
         result = AsyncResult()
-        gevent.spawn(self, *args, **kwargs).link(result)
+        self.proxy.spawn(self, *args, **kwargs).link(result)
         return result
 
 
@@ -100,7 +101,7 @@ class Proxy(Component):
         try:
             return self._method_cache[name]
         except KeyError:
-            method = ProxyMethod(functools.partial(self._call, '%s.%s' % (self._namespace, name)))
+            method = ProxyMethod(self, functools.partial(self._call, '%s.%s' % (self._namespace, name)))
             self._method_cache[name] = method
             return method
 
@@ -143,7 +144,9 @@ class Interface(Componentized):
         self.container.emit_event(event_type, payload, delay=delay)
 
     def proxy(self, address, **kwargs):
-        return Proxy(self.container, address, **kwargs)
+        proxy = Proxy(self.container, address, **kwargs)
+        self.add_component(proxy)
+        return proxy
 
     def subscribe(self, *event_types, **kwargs):
         def decorator(func):

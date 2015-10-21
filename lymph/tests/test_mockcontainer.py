@@ -1,4 +1,5 @@
 import lymph
+from lymph.core import trace
 from lymph.core.interfaces import Interface
 from lymph.core.messages import Message
 from lymph.testing import RPCServiceTestCase
@@ -37,6 +38,10 @@ class Upper(Interface):
     @lymph.event('foo')
     def on_foo_event(self, event):
         self.eventlog.append((event.evt_type, event.body))
+
+    @lymph.rpc()
+    def get_trace_id(self):
+        return trace.get_id()
 
 
 class BasicMockTest(RPCServiceTestCase):
@@ -95,5 +100,13 @@ class BasicMockTest(RPCServiceTestCase):
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
             'lymph.status', 'lymph.inspect', 'lymph.ping', 'upper.indirect_upper',
-            'lymph.get_metrics',
+            'lymph.get_metrics', 'upper.get_trace_id',
         ]))
+
+    def test_trace_id_propagates_via_rpc(self):
+        trace_id = trace.get_id()
+        self.assertEqual(trace_id, self.client.get_trace_id())
+
+    def test_trace_id_propagates_via_deferred_rpc(self):
+        trace_id = trace.get_id()
+        self.assertEqual(trace_id, self.client.get_trace_id.defer().get())

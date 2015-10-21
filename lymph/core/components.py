@@ -23,7 +23,7 @@ class Component(object):
         if self.__pool is not None:
             return self.__pool
         if not self._parent_component:
-            raise AttributeError("root component without pool")
+            raise TypeError("root component without pool")
         return self._parent_component.pool
 
     @property
@@ -31,7 +31,7 @@ class Component(object):
         if self.__error_hook:
             return self.__error_hook
         if not self._parent_component:
-            raise AttributeError("root component without error_hook")
+            raise TypeError("root component without error_hook")
         return self._parent_component.error_hook
 
     def spawn(self, func, *args, **kwargs):
