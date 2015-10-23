@@ -1,5 +1,6 @@
 import textwrap
 import functools
+import logging
 
 import six
 
@@ -13,6 +14,7 @@ import gevent
 from gevent.event import AsyncResult
 
 
+logger = logging.getLogger(__name__)
 REQUEST_TIMEOUT = 3  # seconds.
 
 
@@ -195,6 +197,18 @@ class DefaultInterface(Interface):
         return {
             'methods': methods,
         }
+
+    @rpc()
+    def change_loglevel(self, qualname, loglevel, period=60):
+        curr_logger = logging.getLogger(qualname)
+
+        def reset():
+            logger.info("Resetting logger %s level to %s", qualname, self.container.loglevel)
+            curr_logger.setLevel(self.container.loglevel)
+
+        gevent.spawn_later(period, reset)
+        curr_logger.setLevel(loglevel)
+        logger.info("Changing logger %s level to %s", qualname, loglevel)
 
     @rpc()
     def get_metrics(self):
