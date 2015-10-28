@@ -56,6 +56,10 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
                 self.spawn(self.register, name, instance)
             for service in six.itervalues(self.cache):
                 self.spawn(self.lookup, service, timeout=None)
+        elif state == KazooState.LOST:
+            logger.warning('zookeeper connection lost')
+        elif state == KazooState.SUSPENDED:
+            logger.info('zookeeper connection suspended')
 
     def on_service_name_watch(self, service, event):
         try:
@@ -91,6 +95,8 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             return []
 
     def lookup(self, service, timeout=1):
+        if self.client.state != KazooState.CONNECTED:
+            return service
         service_name = service.name
         result = self.client.get_children_async(
             path='/services/%s' % (service_name, ),
@@ -99,9 +105,9 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         try:
             names = result.get(timeout=timeout)
         except NoNodeError:
-            raise LookupFailure("failed to resolve %s" % service.name)
-        except ConnectionLoss:
-            logger.warning("lost zookeeper connection")
+            raise LookupFailure("failed to resolve %s", service.name)
+        except KazooException as e:
+            logger.warning("zookeeper lookup failure: %s", e)
             return service
         logger.info("lookup %s %r", service_name, names)
         identities = set(service.identities())
