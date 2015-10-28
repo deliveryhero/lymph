@@ -1,3 +1,13 @@
+0.10.0
+======
+- Added retry support for event handlers.
+- Added event handler tracking for the newrelic plugin.
+- Fixed trace id propagation for deferred rpc calls.
+
+0.9.0
+=====
+- Added support for configurable metrics tags.
+
 0.8.0
 =====
 - Added lymph.task() decorator.
