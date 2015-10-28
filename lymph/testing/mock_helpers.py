@@ -1,8 +1,7 @@
-import unittest
 import functools
+import unittest
 
 from lymph.exceptions import RemoteError
-from lymph.core.interfaces import Proxy
 from lymph.core.container import ServiceContainer
 
 import mock
@@ -113,35 +112,49 @@ class MockMixins(object):
         self.fail(msg)
 
 
-def _get_rpc_mock(rpc_mocks=None, original=Proxy._call):
-    class ProxyCall(mock.MagicMock):
+class FakeChannel(object):
+    class Reply(object):
+        def __init__(self, body):
+            self.body = body
 
+    def __init__(self, result, request):
+        self.request = request
+        self.result = result
+
+    def get(self, **_):
+        if isinstance(self.result, Exception):
+            raise getattr(RemoteError, self.result.__class__.__name__)('', '')
+        if callable(self.result):
+            body = self.result(**self.request)
+        else:
+            body = self.result
+        return self.Reply(body)
+
+
+def _get_rpc_mock(rpc_mocks=None, original=ServiceContainer.send_request):
+    class RequestSender(mock.MagicMock):
         rpc_functions = rpc_mocks or {}
 
-        def __call__(self, proxy_inst, __name, **kwargs):
+        def __call__(self, container, address, subject, body):
             # XXX (Mouad): We need to call MagicMock __call__ here else calls
             # will not be tracked, and we do it for all calls mocked or not.
-            super(ProxyCall, self).__call__(__name, **kwargs)
+            super(RequestSender, self).__call__(subject, **body)
             try:
-                result = self.rpc_functions[__name]
+                result = self.rpc_functions[subject]
             except KeyError:
-                return original(proxy_inst, __name, **kwargs)
-            else:
-                if isinstance(result, Exception):
-                    raise getattr(RemoteError, result.__class__.__name__)('', '')
-                if callable(result):
-                    return result(**kwargs)
-                return result
+                return original(container, address, subject, body)
+            return FakeChannel(result, body)
 
         def __get__(self, obj, type=None):
             return functools.partial(self.__call__, obj)
-    return ProxyCall()
+
+    return RequestSender()
 
 
 class RpcMockTestCase(unittest.TestCase, MockMixins):
     def setUp(self):
         super(RpcMockTestCase, self).setUp()
-        self.rpc_patch = mock.patch.object(Proxy, '_call', new_callable=_get_rpc_mock)
+        self.rpc_patch = mock.patch.object(ServiceContainer, 'send_request', new_callable=_get_rpc_mock)
         self.rpc_mock = self.rpc_patch.start()
 
     def tearDown(self):
