@@ -7,6 +7,7 @@ import newrelic.agent
 from lymph.core import trace
 from lymph.core.plugins import Plugin
 from lymph.core.container import ServiceContainer
+from lymph.core.interfaces import ProxyMethod
 from lymph.web.interfaces import WebServiceInterface
 
 
@@ -18,6 +19,17 @@ def with_trace_id(func):
     return wrapped
 
 
+def patch_proxy_methods():
+    proxy_call = ProxyMethod.__call__
+
+    @functools.wraps(proxy_call)
+    def wrapped_proxy_call(self, **kwargs):
+        transaction = newrelic.agent.current_transaction()
+        with newrelic.agent.FunctionTrace(transaction, name=self.subject, group='Python/RPC'):
+            return proxy_call(self, **kwargs)
+    ProxyMethod.__call__ = wrapped_proxy_call
+
+
 class NewrelicPlugin(Plugin):
     def __init__(self, container, config_file=None, environment=None, **kwargs):
         super(NewrelicPlugin, self).__init__()
@@ -25,8 +37,7 @@ class NewrelicPlugin(Plugin):
         self.container.error_hook.install(self.on_error)
         self.container.http_request_hook.install(self.on_http_request)
         newrelic.agent.initialize(config_file, environment)
-        for method in ('send_request', 'emit_event', 'lookup'):
-            setattr(ServiceContainer, method, newrelic.agent.function_trace()(getattr(ServiceContainer, method)))
+        patch_proxy_methods()
 
     def on_interface_installation(self, interface):
         self._wrap_methods(interface.methods)
