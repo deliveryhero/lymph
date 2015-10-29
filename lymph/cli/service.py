@@ -64,8 +64,9 @@ class InstanceCommand(Command):
 
     def run(self):
         debug = self.args.get('--debug')
+        loglevel = self.args.get('--loglevel', 'ERROR')
 
-        self._setup_container(debug)
+        self._setup_container(debug, loglevel)
 
         if debug:
             self._start_backdoor_terminal()
@@ -81,9 +82,10 @@ class InstanceCommand(Command):
 
         self.container.join()
 
-    def _setup_container(self, debug):
+    def _setup_container(self, debug, loglevel):
         self.container = create_container(self.config, worker=self.worker)
         self.container.debug = debug
+        self.container.loglevel = loglevel
         # Set global exception hook to send unhandled exception to the container's error_hook.
         sys.excepthook = self.container.excepthook
 

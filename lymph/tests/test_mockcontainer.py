@@ -100,7 +100,7 @@ class BasicMockTest(RPCServiceTestCase):
         self.assertEqual(set(m['name'] for m in methods), set([
             'upper.fail', 'upper.upper', 'upper.auto_nack', 'upper.just_ack',
             'lymph.status', 'lymph.inspect', 'lymph.ping', 'upper.indirect_upper',
-            'lymph.get_metrics', 'upper.get_trace_id',
+            'lymph.get_metrics', 'upper.get_trace_id', 'lymph.change_loglevel',
         ]))
 
     def test_trace_id_propagates_via_rpc(self):

@@ -45,19 +45,20 @@ class RequestCommandTests(CliIntegrationTestCase):
 class ListCommandTests(CliTestMixin, unittest.TestCase):
     def test_list(self):
         self.assert_lines_equal(['list'], u"""
-            {t.bold}config     {t.normal}Prints configuration for inspection
-            {t.bold}tail       {t.normal}Streams the log output of services to stderr
-            {t.bold}emit       {t.normal}Emits an event in the event system
-            {t.bold}request    {t.normal}Sends a single RPC request to a service and outputs the response
-            {t.bold}inspect    {t.normal}Describes the RPC interface of a service
-            {t.bold}discover   {t.normal}Shows available services
-            {t.bold}help       {t.normal}Displays help information about lymph
-            {t.bold}list       {t.normal}Lists all available commands
-            {t.bold}subscribe  {t.normal}Subscribes to event types and prints occurences on stdout
-            {t.bold}instance   {t.normal}Runs a single service instance
-            {t.bold}node       {t.normal}Runs a node service that manages a group of processes on the same machine
-            {t.bold}shell      {t.normal}Starts an interactive Python shell, locally or remotely
-            {t.bold}worker     {t.normal}Runs a worker instance
+            {t.bold}config           {t.normal}Prints configuration for inspection
+            {t.bold}tail             {t.normal}Streams the log output of services to stderr
+            {t.bold}emit             {t.normal}Emits an event in the event system
+            {t.bold}request          {t.normal}Sends a single RPC request to a service and outputs the response
+            {t.bold}inspect          {t.normal}Describes the RPC interface of a service
+            {t.bold}discover         {t.normal}Shows available services
+            {t.bold}help             {t.normal}Displays help information about lymph
+            {t.bold}list             {t.normal}Lists all available commands
+            {t.bold}subscribe        {t.normal}Subscribes to event types and prints occurences on stdout
+            {t.bold}instance         {t.normal}Runs a single service instance
+            {t.bold}node             {t.normal}Runs a node service that manages a group of processes on the same machine
+            {t.bold}shell            {t.normal}Starts an interactive Python shell, locally or remotely
+            {t.bold}worker           {t.normal}Runs a worker instance
+            {t.bold}change-loglevel  {t.normal}Set logging level of a service logger
         """.format(t=blessings.Terminal()), config=False)
 
 

@@ -85,7 +85,7 @@ def setup_logging(config, loglevel, logfile):
     console_logconf = {
         'class': 'logging.StreamHandler',
         'formatter': '_trace',
-        'level': loglevel.upper(),
+        'level': 'DEBUG',
     }
     if logfile:
         console_logconf.update({
@@ -96,6 +96,6 @@ def setup_logging(config, loglevel, logfile):
     loggers = logconf.setdefault('loggers', {})
     loggers.setdefault('lymph', {
         'handlers': ['_console', '_zmqpub'],
-        'level': 'DEBUG',
+        'level': loglevel.upper(),
     })
     dictConfig(logconf)

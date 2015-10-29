@@ -68,6 +68,7 @@ setup(
             'tail = lymph.cli.tail:TailCommand',
             'config = lymph.cli.config:ConfigCommand',
             'worker = lymph.cli.service:WorkerCommand',
+            'change-loglevel = lymph.cli.loglevel:LogLevelCommand',
         ],
         'nose.plugins.0.10': ['lymph = lymph.testing.nose:LymphPlugin'],
         'pytest11': ['lymph = lymph.testing.pytest'],
