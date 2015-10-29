@@ -37,7 +37,7 @@ elif sys.version_info.major == 3:
 setup(
     name='lymph',
     url='http://github.com/deliveryhero/lymph/',
-    version='0.10.0-dev',
+    version='0.10.0',
     namespace_packages=['lymph'],
     packages=find_packages(),
     license=u'Apache License (2.0)',
