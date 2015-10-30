@@ -11,7 +11,7 @@ Since Componentized objects themselves are components, they form a tree of
 of a Component is :class:`lymph.core.interfaces.Interface`.
 
 
-.. class:: Component(error_hook=None, pool=None)
+.. class:: Component(error_hook=None, pool=None, metrics=None)
 
     .. attribute:: error_hook
 
@@ -22,6 +22,11 @@ of a Component is :class:`lymph.core.interfaces.Interface`.
 
         A pool that holds greenlets related to the component.
         Defaults to the ``pool`` of the parent component.
+
+    .. attribute:: metrics
+
+        An :class:`Aggregate <lymph.core.monitoring.metrics.Aggregate>` of metrics for this component.
+        Defaults to the ``metrics`` of the parent component.
 
     .. method:: on_start()
 
@@ -35,11 +40,6 @@ of a Component is :class:`lymph.core.interfaces.Interface`.
 
         Spawns a new greenlet in the greenlet pool of this component.
         If ``func`` exits with an exception, it is reported to the ``error_hook``.
-
-    .. method:: _get_metrics()
-
-        Is being called to get metrics. Returns an iterable or yields
-        values of type :class:`lymph.core.monitoring.metrics.RawMetric`.
 
 
 .. class:: Componentized()

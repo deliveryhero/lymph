@@ -4,10 +4,11 @@ import six
 
 
 class Component(object):
-    def __init__(self, error_hook=None, pool=None):
+    def __init__(self, error_hook=None, pool=None, metrics=None):
         self._parent_component = None
         self.__error_hook = error_hook
         self.__pool = pool
+        self.__metrics = metrics
 
     def set_parent(self, parent):
         self._parent_component = parent
@@ -17,9 +18,6 @@ class Component(object):
 
     def on_stop(self, **kwargs):
         pass
-
-    def _get_metrics(self):
-        return []
 
     @property
     def pool(self):
@@ -36,6 +34,14 @@ class Component(object):
         if not self._parent_component:
             raise TypeError("root component without error_hook")
         return self._parent_component.error_hook
+
+    @property
+    def metrics(self):
+        if self.__metrics is not None:
+            return self.__metrics
+        if not self._parent_component:
+            raise TypeError("root component without metrics")
+        return self._parent_component.metrics
 
     def spawn(self, func, *args, **kwargs):
         def _inner():
@@ -120,10 +126,3 @@ class Componentized(Component):
     def on_stop(self, **kwargs):
         for component in reversed(self.__all_components):
             component.on_stop(**kwargs)
-
-    def _get_metrics(self):
-        for metric in super(Componentized, self)._get_metrics():
-            yield metric
-        for component in self.__all_components:
-            for metric in component._get_metrics():
-                yield metric

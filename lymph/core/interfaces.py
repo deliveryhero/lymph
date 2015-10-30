@@ -78,9 +78,11 @@ class Proxy(Component):
         self._timeout = timeout
         self._namespace = namespace or address
         self._error_map = error_map or {}
-
-        self.timeout_counts = metrics.Counter('timeout', {'address': address})
-        self.exception_counts = metrics.TaggedCounter('exceptions', {'address': address})
+    
+    def on_start(self):
+        super(Proxy, self).on_start()
+        self.timeout_counts = self.metrics.add(metrics.Counter('rpc.timeout_count', {'address': self._address}))
+        self.exception_counts = self.metrics.add(metrics.TaggedCounter('rpc.exception_count', {'address': self._address}))
 
     def _call(self, __name, **kwargs):
         channel = self._container.send_request(self._address, __name, kwargs)
@@ -106,10 +108,6 @@ class Proxy(Component):
             method = ProxyMethod(self, functools.partial(self._call, '%s.%s' % (self._namespace, name)))
             self._method_cache[name] = method
             return method
-
-    def _get_metrics(self):
-        yield self.timeout_counts
-        yield self.exception_counts
 
 
 @six.add_metaclass(InterfaceBase)
@@ -212,4 +210,4 @@ class DefaultInterface(Interface):
 
     @rpc()
     def get_metrics(self):
-        return list(self.container.metrics_aggregator.get_metrics())
+        return list(self.container.metrics)

@@ -4,19 +4,6 @@ import unittest
 from lymph.core.monitoring import metrics
 
 
-class RawMetricsTest(unittest.TestCase):
-
-    def test_repr(self):
-        raw = metrics.RawMetric('raw', 'foobar', {})
-
-        self.assertEqual(repr(raw), "RawMetric(name='raw', value='foobar', tags={})")
-
-    def test_iter(self):
-        raw = metrics.RawMetric('raw', 'foobar', {})
-
-        self.assertEqual(list(raw), [('raw', 'foobar', {})])
-
-
 class CounterMetricsTest(unittest.TestCase):
 
     def test_get(self):
@@ -28,7 +15,7 @@ class CounterMetricsTest(unittest.TestCase):
         counter = metrics.Counter('requests')
 
         self.assertEqual(str(counter), repr(counter))
-        self.assertEqual(repr(counter), "Counter(name='requests', value=0, tags={})")
+        self.assertEqual(repr(counter), "Counter(name='requests', tags={})")
 
     def test_increment_by_one(self):
         counter = metrics.Counter('requests')
@@ -67,3 +54,31 @@ class TaggedCounterMetricsTest(unittest.TestCase):
                 ('exception', 1, {'type': 'Nack'}),
                 ('exception', 2, {'type': 'ValueError'}),
             ])
+
+
+class AggregateMetricsTest(unittest.TestCase):
+    def test_aggregate(self):
+        agg = metrics.Aggregate([
+            metrics.Gauge('a', 1, tags={'x': '1'}),
+            metrics.Gauge('b', 2)
+        ], tags={'y': '2'})
+
+        self.assertEqual(sorted(list(agg)), [
+            ('a', 1, {'x': '1', 'y': '2'}),
+            ('b', 2, {'y': '2'}),
+        ])
+
+
+class GeneratorMetricsTest(unittest.TestCase):
+    def test_generator(self):
+        def get_metrics():
+            yield 'name', 42, {}
+            yield 'name', 41, {'x': '1'}
+
+        agg = metrics.Generator(get_metrics)
+        expected = [
+            ('name', 42, {}),
+            ('name', 41, {'x': '1'}),
+        ]
+        self.assertEqual(list(agg), expected)
+        self.assertEqual(list(agg), expected)

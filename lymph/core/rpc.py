@@ -30,7 +30,6 @@ class ZmqRPCServer(Component):
         self.zctx = zmq.Context.instance()
         self.endpoint = None
         self.bound = False
-        self.request_counts = metrics.TaggedCounter('rpc')
         self.recv_loop_greenlet = None
         self.channels = {}
         self.connections = {}
@@ -102,6 +101,9 @@ class ZmqRPCServer(Component):
             self.send_sock.disconnect(endpoint)
 
     def on_start(self):
+        super(ZmqRPCServer, self).on_start()
+        self.metrics.add(metrics.Callable('rpc.connection_count', lambda: len(self.connections)))
+        self.request_counts = self.metrics.add(metrics.TaggedCounter('rpc'))
         self._bind()
         self.running = True
         self.recv_loop_greenlet = self.spawn(self._recv_loop)
@@ -228,7 +230,3 @@ class ZmqRPCServer(Component):
 
     def ping(self, address):
         return self.send_request(address, 'lymph.ping', {'payload': ''})
-
-    def _get_metrics(self):
-        yield metrics.RawMetric('rpc.connection_count', len(self.connections))
-        yield self.request_counts

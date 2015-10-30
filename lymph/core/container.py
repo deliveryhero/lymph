@@ -46,7 +46,9 @@ class ServiceContainer(Componentized):
     def __init__(self, rpc=None, registry=None, events=None, log_endpoint=None, service_name=None, debug=False, pool=None, worker=False, metrics=None):
         if pool is None:
             pool = trace.Group()
-        super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool)
+        if metrics is None:
+            metrics = Aggregator()
+        super(ServiceContainer, self).__init__(error_hook=Hook('error_hook'), pool=pool, metrics=metrics)
         self.log_endpoint = log_endpoint
         self.backdoor_endpoint = None
         self.service_name = service_name
@@ -64,10 +66,8 @@ class ServiceContainer(Componentized):
 
         self.debug = debug
 
-        self.metrics_aggregator = metrics
-        metrics.add_tags(service=self.service_name, host=self.fqdn)
-        metrics.add(self._get_metrics)
-        self.monitor = self.install(MonitorPusher, aggregator=self.metrics_aggregator, endpoint=rpc.ip, interval=5)
+        self.metrics.add_tags(service=self.service_name, host=self.fqdn)
+        self.monitor = self.install(MonitorPusher, aggregator=self.metrics, endpoint=rpc.ip, interval=5)
 
         if self.service_registry:
             self.add_component(self.service_registry)
@@ -166,9 +166,10 @@ class ServiceContainer(Componentized):
             logger.warning('only builtin interfaces installed')
 
         self.on_start()
-        self.metrics_aggregator.add_tags(identity=self.identity)
+        self.metrics.add_tags(identity=self.identity)
         if register:
             self.register()
+        self.metrics.add(metrics.Callable('greenlets.count', lambda: len(self.pool)))
 
     def register(self):
         for interface_name, interface in six.iteritems(self.installed_interfaces):
@@ -233,8 +234,3 @@ class ServiceContainer(Componentized):
                 channel.nack(True)
             except:
                 logger.exception('failed to send automatic NACK')
-
-    def _get_metrics(self):
-        for metric in super(ServiceContainer, self)._get_metrics():
-            yield metric
-        yield metrics.RawMetric('greenlets.count', len(self.pool))
