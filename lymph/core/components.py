@@ -93,10 +93,13 @@ class Componentized(Component):
         super(Componentized, self).__init__(**kwargs)
         self._declared_components = {}
         self.__all_components = []
+        self.__started = False
 
     def add_component(self, component):
         component.set_parent(self)
         self.__all_components.append(component)
+        if self.__started:
+            component.on_start()
 
     def install(self, factory, **kwargs):
         if factory in self._declared_components:
@@ -107,6 +110,7 @@ class Componentized(Component):
         return component
 
     def on_start(self):
+        self.__started = True
         for declaration in self.declarations:
             # FIXME: is this the right place to force declaration resolution?
             declaration.__get__(self, type(self))
