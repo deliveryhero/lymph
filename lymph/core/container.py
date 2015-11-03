@@ -85,7 +85,7 @@ class ServiceContainer(Componentized):
     def from_config(cls, config, **explicit_kwargs):
         kwargs = dict(config)
         kwargs.pop('class', None)
-        kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME'))
+        kwargs.setdefault('service_name', os.environ.get('LYMPH_SERVICE_NAME', config.root.get('name')))
         kwargs['registry'] = config.create_instance('registry')
 
         kwargs['rpc'] = config.create_instance('rpc', default_class=ZmqRPCServer, ip=kwargs.pop('ip', None), port=kwargs.pop('port', None))
