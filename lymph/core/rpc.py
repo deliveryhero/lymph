@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 class ZmqRPCServer(Component):
-    def __init__(self, ip='127.0.0.1', port=None, pool=None):
+    def __init__(self, ip='127.0.0.1', port=None, pool=None, connection_config=None):
         super(ZmqRPCServer, self).__init__(pool=pool)
         self.ip = ip
         self.port = port
@@ -36,6 +36,7 @@ class ZmqRPCServer(Component):
         self.connections = {}
         self.running = False
         self.request_handler = lambda channel: None
+        self.connection_config = connection_config or {}
 
     @classmethod
     def from_config(cls, config, **kwargs):
@@ -47,6 +48,7 @@ class ZmqRPCServer(Component):
             ip=config.get('ip', kwargs.get('ip') or '127.0.0.1'),
             port=config.get('port', kwargs.get('port')),
             pool=pool,
+            connection_config=config.get_raw('connection', {}),
         )
 
     @property
@@ -85,7 +87,7 @@ class ZmqRPCServer(Component):
     def connect(self, endpoint):
         if endpoint not in self.connections:
             logger.debug("connecting to %s", endpoint)
-            self.connections[endpoint] = Connection(self, endpoint)
+            self.connections[endpoint] = Connection(self, endpoint, **self.connection_config)
             self.send_sock.connect(endpoint)
             gevent.sleep(0.02)
         return self.connections[endpoint]
