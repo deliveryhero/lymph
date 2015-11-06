@@ -42,8 +42,12 @@ class Connection(object):
         self.received_message_count = 0
         self.sent_message_count = 0
 
-        self.heartbeat_loop_greenlet = self.server.spawn(self.heartbeat_loop)
-        self.live_check_loop_greenlet = self.server.spawn(self.live_check_loop)
+        if self.heartbeat_interval:
+            self.heartbeat_loop_greenlet = self.server.spawn(self.heartbeat_loop)
+            self.live_check_loop_greenlet = self.server.spawn(self.live_check_loop)
+        else:
+            self.heartbeat_loop_greenlet = None
+            self.live_check_loop_greenlet = None
 
         self.pid = os.getpid()
 
@@ -113,8 +117,9 @@ class Connection(object):
         if self.status == CLOSED:
             return
         self.status = CLOSED
-        self.heartbeat_loop_greenlet.kill()
-        self.live_check_loop_greenlet.kill()
+        if self.heartbeat_loop_greenlet:
+            self.heartbeat_loop_greenlet.kill()
+            self.live_check_loop_greenlet.kill()
         self.server.disconnect(self.endpoint)
 
     def on_recv(self, msg):
