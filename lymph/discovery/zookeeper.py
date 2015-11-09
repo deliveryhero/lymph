@@ -5,7 +5,7 @@ import six
 
 from kazoo.protocol.states import EventType, KazooState
 from kazoo.handlers.gevent import SequentialGeventHandler
-from kazoo.exceptions import NoNodeError, ConnectionLoss
+from kazoo.exceptions import NoNodeError, KazooException
 
 from .base import BaseServiceRegistry
 from lymph.exceptions import LookupFailure, RegistrationFailure
