@@ -11,4 +11,4 @@ class Aggregator(Aggregate):
             RUsageMetrics(),
             GarbageCollectionMetrics(),
             GeventMetrics(),
-        ], **tags)
+        ], tags=tags)
