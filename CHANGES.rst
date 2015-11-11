@@ -1,3 +1,8 @@
+0.11.0
+======
+- Made rpc connection properties configurable
+- Simplified collecting custom metrics
+
 0.10.0
 ======
 - Added retry support for event handlers.
