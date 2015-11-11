@@ -8,7 +8,7 @@ from gevent import subprocess
 from six.moves import range
 
 from lymph.core.interfaces import Interface
-from lymph.core.monitoring.metrics import RawMetric
+from lymph.core.monitoring.metrics import Generator
 from lymph.utils.sockets import create_socket
 
 
@@ -47,15 +47,16 @@ class Process(object):
         self.stop()
         self.start()
 
-    def _get_metrics(self):
+    def get_metrics(self):
         if not self.is_running():
             return
+        tags = {'service_type': self.service_type}
         try:
             memory = self._process.memory_info()
-            yield RawMetric('node.process.memory.rss', memory.rss, {'service_type': self.service_type})
-            yield RawMetric('node.process.memory.vms', memory.vms, {'service_type': self.service_type})
+            yield 'node.process.memory.rss', memory.rss, tags
+            yield 'node.process.memory.vms', memory.vms, tags
             cpu = self._process.cpu_percent(interval=2.0)
-            yield RawMetric('node.process.cpu', cpu, {'service_type': self.service_type})
+            yield 'node.process.cpu', cpu, tags
         except psutil.NoSuchProcess:
             pass
 
@@ -95,6 +96,7 @@ class Node(Interface):
             for i in range(num):
                 p = Process(cmd.split(' '), env=env, service_type=service_type)
                 self.processes.append(p)
+                self.metrics.add(Generator(p.get_metrics))
                 logger.info('starting %s', cmd)
                 p.start()
         self.container.spawn(self.watch_processes)
@@ -129,8 +131,3 @@ class Node(Interface):
                     if self.running:
                         process.restart()
             gevent.sleep(1)
-
-    def _get_metrics(self):
-        for process in self.processes:
-            for metric in process._get_metrics():
-                yield metric

@@ -34,7 +34,7 @@ class MonitorPusher(Component):
         while True:
             gevent.sleep(self.interval)
             dt = time.monotonic() - last_stats
-            series = list(self.aggregator.get_metrics())
+            series = list(self.aggregator)
             stats = {
                 'time': time.time(),
                 'series': series,
