@@ -55,6 +55,12 @@ class InterfaceBase(ComponentizedBase):
         return new_cls
 
 
+class DeferredReply(AsyncResult):
+    def __init__(self, subject):
+        super(DeferredReply, self).__init__()
+        self.subject = subject
+
+
 class ProxyMethod(object):
     def __init__(self, proxy, subject):
         self.proxy = proxy
@@ -64,7 +70,7 @@ class ProxyMethod(object):
         return self.proxy._call(self.subject, **kwargs)
 
     def defer(self, *args, **kwargs):
-        result = AsyncResult()
+        result = DeferredReply(self.subject)
         self.proxy.spawn(self, *args, **kwargs).link(result)
         return result
 
