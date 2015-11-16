@@ -65,6 +65,8 @@ class Connection(object):
         return -math.log10(p)
 
     def set_status(self, status):
+        if status != self.status:
+            logger.info('changing connection status to %r endpoint=%s', status, self.endpoint)
         self.status = status
 
     def heartbeat_loop(self):
