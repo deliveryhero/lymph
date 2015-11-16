@@ -7,6 +7,8 @@ import newrelic.agent
 from lymph.core import trace
 from lymph.core.plugins import Plugin
 from lymph.core.container import ServiceContainer
+from lymph.core.channels import RequestChannel
+from lymph.core.interfaces import DeferredReply
 from lymph.web.interfaces import WebServiceInterface
 
 
@@ -18,6 +20,16 @@ def with_trace_id(func):
     return wrapped
 
 
+def trace_rpc_method(method, get_subject):
+    @functools.wraps(method)
+    def wrapped(self, *args, **kwargs):
+        transaction = newrelic.agent.current_transaction()
+        with newrelic.agent.FunctionTrace(transaction, name=get_subject(self), group='Python/RPC'):
+            return method(self, *args, **kwargs)
+
+    return wrapped
+
+
 class NewrelicPlugin(Plugin):
     def __init__(self, container, config_file=None, environment=None, **kwargs):
         super(NewrelicPlugin, self).__init__()
@@ -25,8 +37,8 @@ class NewrelicPlugin(Plugin):
         self.container.error_hook.install(self.on_error)
         self.container.http_request_hook.install(self.on_http_request)
         newrelic.agent.initialize(config_file, environment)
-        for method in ('send_request', 'emit_event', 'lookup'):
-            setattr(ServiceContainer, method, newrelic.agent.function_trace()(getattr(ServiceContainer, method)))
+        RequestChannel.get = trace_rpc_method(RequestChannel.get, lambda channel: channel.request.subject)
+        DeferredReply.get = trace_rpc_method(DeferredReply.get, lambda deferred: deferred.subject)
 
     def on_interface_installation(self, interface):
         self._wrap_methods(interface.methods)

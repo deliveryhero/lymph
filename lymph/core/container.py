@@ -120,6 +120,7 @@ class ServiceContainer(Componentized):
         return interface
 
     def install_plugin(self, cls, **kwargs):
+        logger.info('installing plugin %s:%s', cls.__module__, cls.__name__)
         plugin = self.install(cls, **kwargs)
         self.installed_plugins.append(plugin)
         return plugin

@@ -55,16 +55,22 @@ class InterfaceBase(ComponentizedBase):
         return new_cls
 
 
-class ProxyMethod(object):
-    def __init__(self, proxy, func):
-        self.proxy = proxy
-        self.func = func
+class DeferredReply(AsyncResult):
+    def __init__(self, subject):
+        super(DeferredReply, self).__init__()
+        self.subject = subject
 
-    def __call__(self, *args, **kwargs):
-        return self.func(*args, **kwargs)
+
+class ProxyMethod(object):
+    def __init__(self, proxy, subject):
+        self.proxy = proxy
+        self.subject = subject
+
+    def __call__(self, **kwargs):
+        return self.proxy._call(self.subject, **kwargs)
 
     def defer(self, *args, **kwargs):
-        result = AsyncResult()
+        result = DeferredReply(self.subject)
         self.proxy.spawn(self, *args, **kwargs).link(result)
         return result
 
@@ -105,7 +111,7 @@ class Proxy(Component):
         try:
             return self._method_cache[name]
         except KeyError:
-            method = ProxyMethod(self, functools.partial(self._call, '%s.%s' % (self._namespace, name)))
+            method = ProxyMethod(self, '%s.%s' % (self._namespace, name))
             self._method_cache[name] = method
             return method
 
