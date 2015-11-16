@@ -4,6 +4,7 @@ import sys
 from werkzeug.contrib.wrappers import DynamicCharsetRequestMixin
 from werkzeug.wrappers import Request as BaseRequest, Response
 from werkzeug.exceptions import HTTPException, NotFound, MethodNotAllowed
+from werkzeug.routing import Rule
 
 from lymph.core.interfaces import Interface
 from lymph.core import trace
@@ -53,6 +54,9 @@ class WebServiceInterface(Interface):
         if not self.http_port:
             self.uses_static_port = False
             self.http_port = sockets.get_unused_port()
+        if config.get('healthcheck.enabled', True):
+            endpoint = config.get('healthcheck.endpoint', '/_health/')
+            self.url_map.add(Rule(endpoint, endpoint='get_health_check_response'))
 
     def get_description(self):
         description = super(WebServiceInterface, self).get_description()
@@ -146,3 +150,9 @@ class WebServiceInterface(Interface):
 
     def get_wsgi_application(self):
         return self.application
+
+    def is_healthy(self):
+        return True
+
+    def get_health_check_response(self, request):
+        return Response(status=200 if self.is_healthy() else 503)
