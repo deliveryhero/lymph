@@ -1,3 +1,12 @@
+0.13.0
+======
+- Added ``--json`` option for ``lymph request``
+
+0.12.0
+======
+- Added monitoring for psutil metrics
+- Added RPC call entries in New Relic traces
+
 0.11.0
 ======
 - Made rpc connection properties configurable
