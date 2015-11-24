@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import functools
 
 import newrelic.agent
+import newrelic.config
 
 from lymph.core import trace
 from lymph.core.plugins import Plugin
@@ -31,12 +32,20 @@ def trace_rpc_method(method, get_subject):
 
 
 class NewrelicPlugin(Plugin):
-    def __init__(self, container, config_file=None, environment=None, **kwargs):
+    def __init__(self, container, config_file=None, environment=None, app_name=None, **kwargs):
         super(NewrelicPlugin, self).__init__()
         self.container = container
         self.container.error_hook.install(self.on_error)
         self.container.http_request_hook.install(self.on_http_request)
         newrelic.agent.initialize(config_file, environment)
+
+        settings = newrelic.agent.global_settings()
+        if app_name:
+            settings.app_name = app_name
+            # `app_name` requires post-processing which is only triggered by
+            # initialize(). We manually trigger it again with undocumented api:
+            newrelic.config._process_app_name_setting()
+
         RequestChannel.get = trace_rpc_method(RequestChannel.get, lambda channel: channel.request.subject)
         DeferredReply.get = trace_rpc_method(DeferredReply.get, lambda deferred: deferred.subject)
 
