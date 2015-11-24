@@ -1,4 +1,4 @@
-from .base import BaseServiceRegistry
+from .base import BaseServiceRegistry, SERVICE_NAMESPACE
 from lymph.exceptions import LookupFailure
 
 
@@ -19,10 +19,14 @@ class StaticServiceRegistryHub(object):
             raise LookupFailure()
         return service
 
-    def register(self, service_name, instance):
+    def register(self, service_name, instance, namespace=SERVICE_NAMESPACE):
+        if namespace != SERVICE_NAMESPACE:
+            return
         self.registry.setdefault(service_name, []).append(instance)
 
-    def unregister(self, service_name, instance):
+    def unregister(self, service_name, instance, namespace=SERVICE_NAMESPACE):
+        if namespace != SERVICE_NAMESPACE:
+            return
         self.registry.get(service_name, []).remove(instance)
 
     def discover(self):
@@ -40,8 +44,8 @@ class StaticServiceRegistry(BaseServiceRegistry):
     def lookup(self, service, **kwargs):
         return self.hub.lookup(service, **kwargs)
 
-    def register(self, service_name, instance):
-        return self.hub.register(service_name, instance)
+    def register(self, service_name, instance, **kwargs):
+        return self.hub.register(service_name, instance, **kwargs)
 
-    def unregister(self, service_name, instance):
-        return self.hub.unregister(service_name, instance)
+    def unregister(self, service_name, instance, **kwargs):
+        return self.hub.unregister(service_name, instance, **kwargs)
