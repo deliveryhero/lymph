@@ -1,6 +1,8 @@
 0.13.0
 ======
 - Added ``--json`` option for ``lymph request``
+- Added a generic health check endpoint for WebServiceInterface
+- Added `app_name` support for newrelic plugin
 
 0.12.0
 ======
