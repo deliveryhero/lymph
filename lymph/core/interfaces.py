@@ -1,14 +1,15 @@
 import textwrap
-import functools
 import logging
 
 import six
+import semantic_version
 
 from lymph.core.components import Component, Componentized, ComponentizedBase
 from lymph.core.decorators import rpc, RPCBase
 from lymph.core.events import TaskHandler, EventHandler
 from lymph.core.monitoring import metrics
 from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
+from lymph.utils import hash_id
 
 import gevent
 from gevent.event import AsyncResult
@@ -76,22 +77,25 @@ class ProxyMethod(object):
 
 
 class Proxy(Component):
-    def __init__(self, container, address, timeout=REQUEST_TIMEOUT, namespace='', error_map=None):
+    def __init__(self, container, address, timeout=REQUEST_TIMEOUT, namespace='', version=None, error_map=None):
         super(Proxy, self).__init__()
         self._container = container
         self._address = address
         self._method_cache = {}
         self._timeout = timeout
         self._namespace = namespace or address
+        if version and not isinstance(version, semantic_version.Version):
+            version = semantic_version.Version.coerce(version)
+        self._version = version
         self._error_map = error_map or {}
-    
+
     def on_start(self):
         super(Proxy, self).on_start()
         self.timeout_counts = self.metrics.add(metrics.Counter('rpc.timeout_count', {'address': self._address}))
         self.exception_counts = self.metrics.add(metrics.TaggedCounter('rpc.exception_count', {'address': self._address}))
 
     def _call(self, __name, **kwargs):
-        channel = self._container.send_request(self._address, __name, kwargs)
+        channel = self._container.send_request(self._address, __name, kwargs, version=self._version)
         try:
             return channel.get(timeout=self._timeout).body
         except RemoteError as e:
@@ -118,14 +122,19 @@ class Proxy(Component):
 
 @six.add_metaclass(InterfaceBase)
 class Interface(Componentized):
-    def __init__(self, container, name=None, builtin=False):
+    def __init__(self, container, name=None, builtin=False, version=None):
         super(Interface, self).__init__()
         self.container = container
         self.name = name or self.__class__.__name__
         self.base_name = self.name
         self.builtin = builtin
+        self.version = version
         if container.worker and not builtin:
             self.name = '%s.worker' % self.name
+
+    @property
+    def id(self):
+        return hash_id(self.container.identity, self.name, self.version)
 
     def should_register(self):
         return True
@@ -140,10 +149,11 @@ class Interface(Componentized):
         return {}
 
     def handle_request(self, func_name, channel):
-        self.methods[func_name].rpc_call(self, channel, **channel.request.body)
+        method = self.methods[func_name]
+        method.rpc_call(self, channel, **channel.request.body)
 
-    def request(self, address, subject, body, timeout=REQUEST_TIMEOUT):
-        channel = self.container.send_request(address, subject, body)
+    def request(self, address, subject, body, timeout=REQUEST_TIMEOUT, version=None):
+        channel = self.container.send_request(address, subject, body, version=version)
         return channel.get(timeout=timeout)
 
     def emit(self, event_type, payload, delay=0):
@@ -191,10 +201,11 @@ class DefaultInterface(Interface):
         Returns a description of all available rpc methods of this service
         """
         methods = []
-        for interface_name, interface in list(self.container.installed_interfaces.items()):
+        for interface in list(self.container.iter_interfaces()):
             for name, func in six.iteritems(interface.methods):
                 methods.append({
-                    'name': '%s.%s' % (interface_name, name),
+                    'name': '%s.%s' % (interface.name, name),
+                    'version': str(interface.version),
                     'params': list(func.args.args),
                     'help': textwrap.dedent(func.__doc__ or '').strip(),
                 })

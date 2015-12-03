@@ -13,6 +13,7 @@ from lymph.client import Client
 from lymph.exceptions import Timeout
 from lymph.cli.base import Command, handle_request_errors
 from lymph.core import trace
+from lymph.core.versioning import parse_versioned_name
 from lymph.serializers import json_serializer
 
 
@@ -106,7 +107,7 @@ class RequestCommand(Command):
         except ValueError:
             print("--timeout requires a number (e.g. --timeout=0.42)")
             return 1
-        subject = self.args['<subject>']
+        subject, version = parse_versioned_name(self.args['<subject>'])
         address = self.args.get('--address')
         if not address:
             address = subject.rsplit('.', 1)[0]
@@ -115,7 +116,7 @@ class RequestCommand(Command):
 
         def request():
             trace.set_id(self.args.get('--trace-id'))
-            return client.request(address, subject, body, timeout=timeout)
+            return client.request(address, subject, body, timeout=timeout, version=version)
 
         N, C = int(self.args['-N']), int(self.args['-C'])
 

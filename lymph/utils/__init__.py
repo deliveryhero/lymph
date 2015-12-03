@@ -4,12 +4,15 @@ import collections
 import importlib
 import gc
 import gevent
+import hashlib
 import math
 import os
 import sys
 import threading
 import traceback
 import uuid
+
+import six
 
 
 class UndefinedType(object):
@@ -40,6 +43,10 @@ def import_object(module_name, object_path=None):
 
 def make_id():
     return uuid.uuid4().hex
+
+
+def hash_id(*bits):
+    return hashlib.md5(six.text_type(bits).encode('utf-8')).hexdigest()
 
 
 _sqrt2 = math.sqrt(2)

@@ -71,19 +71,19 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
 
     def on_service_watch(self, service, event):
         try:
-            prefix, service_name, identity = event.path.rsplit('/', 2)
+            prefix, service_name, instance_id = event.path.rsplit('/', 2)
             if event.type == EventType.DELETED:
-                service.remove(identity)
+                service.remove(instance_id)
         except Exception:
             logger.exception('error in service watcher')
 
-    def _get_service_znode(self, service, service_name, identity):
-        path = self._get_zk_path(SERVICE_NAMESPACE, service_name, identity)
+    def _get_service_znode(self, service, service_name, instance_id):
+        path = self._get_zk_path(SERVICE_NAMESPACE, service_name, instance_id)
         result = self.client.get_async(
             path, watch=functools.partial(self.on_service_watch, service))
         value, znode = result.get()
         items = six.iteritems(json.loads(value.decode('utf-8')))
-        return {str(k): str(v) for k, v in items}
+        return {str(k): v for k, v in items}
 
     def discover(self):
         result = self.client.get_children_async(path='/%s' % SERVICE_NAMESPACE)
@@ -101,31 +101,30 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             watch=functools.partial(self.on_service_name_watch, service),
         )
         try:
-            names = result.get(timeout=timeout)
+            instance_ids = result.get(timeout=timeout)
         except NoNodeError:
             raise LookupFailure("failed to resolve %s", service.name)
         except KazooException as e:
             logger.warning("zookeeper lookup failure: %s", e)
             return service
-        logger.info("lookup %s %r", service_name, names)
-        identities = set(service.identities())
-        for name in names:
-            kwargs = self._get_service_znode(service, service_name, name)
-            identity = kwargs.pop('identity')
-            service.update(identity, **kwargs)
+        logger.info("lookup %s %r", service_name, instance_ids)
+        old_instance_ids = {instance.id for instance in service}
+        for instance_id in instance_ids:
+            kwargs = self._get_service_znode(service, service_name, instance_id)
+            service.update(instance_id, **kwargs)
             try:
-                identities.remove(identity)
+                old_instance_ids.remove(instance_id)
             except KeyError:
                 pass
-        for identity in identities:
-            service.remove(identity)
+        for instance_id in old_instance_ids:
+            service.remove(instance_id)
         return service
 
-    def _get_zk_path(self, namespace, service_name, identity):
-        return '/%s/%s/%s' % (namespace, service_name, identity)
+    def _get_zk_path(self, namespace, service_name, instance_id):
+        return '/%s/%s/%s' % (namespace, service_name, instance_id)
 
     def register(self, service_name, instance, timeout=1, namespace=SERVICE_NAMESPACE):
-        path = self._get_zk_path(namespace, service_name, instance.identity)
+        path = self._get_zk_path(namespace, service_name, instance.id)
         value = json.dumps(instance.serialize())
 
         # XXX(Mouad): In case path already exist delete it before registering,
@@ -145,7 +144,7 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
         self.registered_names[(namespace, service_name)] = instance
 
     def unregister(self, service_name, instance, timeout=1, namespace=SERVICE_NAMESPACE):
-        path = self._get_zk_path(namespace, service_name, instance.identity)
+        path = self._get_zk_path(namespace, service_name, instance.id)
         result = self.client.delete_async(path)
         result.set_exception(RegistrationFailure())
         result.get(timeout=timeout)

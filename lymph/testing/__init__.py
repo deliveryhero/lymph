@@ -175,17 +175,13 @@ class LymphServiceTestCase(unittest.TestCase):
             self.service_class,
             interface_name=self.service_name
         )
-        self.service = self.service_container.installed_interfaces[
-            self.service_name
-        ]
+        self.service = self.service_container.installed_interfaces[self.service_name].get(None)
         self.service.apply_config(self.service_config)
         self.client_container = self.network.add_service(
             self.client_class,
             interface_name=self.client_name
         )
-        self.client = self.client_container.installed_interfaces[
-            self.client_name
-        ]
+        self.client = self.client_container.installed_interfaces[self.client_name].get(None)
         self.client.apply_config(self.client_config)
         self.network.start()
 
@@ -204,7 +200,7 @@ class RPCServiceTestCase(unittest.TestCase):
         self.network = MockServiceNetwork()
 
         self.container = self.network.add_service(self.service_class, interface_name=self.service_name)
-        self.service = self.container.installed_interfaces[self.service_name]
+        self.service = self.container.installed_interfaces[self.service_name].get(None)
         self.service.apply_config(self.service_config)
 
         self.network.start()
@@ -223,7 +219,7 @@ class RPCServiceTestCase(unittest.TestCase):
     client = property(get_proxy)
 
     def request(self, *args, **kwargs):
-        channel = self.container.send_request(self.service_name, *args, **kwargs)
+        channel = self.container.send_request(self.service, *args, **kwargs)
         return channel.get(timeout=kwargs.get('timeout', 1))
 
     def emit(self, *args, **kwargs):

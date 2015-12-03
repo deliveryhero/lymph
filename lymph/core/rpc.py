@@ -1,5 +1,4 @@
 import errno
-import hashlib
 import logging
 import random
 import time
@@ -12,7 +11,8 @@ from lymph.core.components import Component
 from lymph.core.connection import Connection
 from lymph.core.messages import Message
 from lymph.core.monitoring import metrics
-from lymph.core.services import Service
+from lymph.core.services import InstanceSet
+from lymph.core.versioning import serialize_version
 from lymph.core import services
 from lymph.core import trace
 from lymph.exceptions import NotConnected
@@ -49,11 +49,6 @@ class ZmqRPCServer(Component):
             pool=pool,
             connection_config=config.get_raw('connection', {}),
         )
-
-    @property
-    def identity(self):
-        if self.endpoint:
-            return hashlib.md5(self.endpoint.encode('utf-8')).hexdigest()
 
     def _bind(self, max_retries=2, retry_delay=0):
         assert not self.bound, 'already bound (endpoint=%s)' % self.endpoint
@@ -136,44 +131,53 @@ class ZmqRPCServer(Component):
         logger.debug('-> %s to %s', msg, endpoint)
         connection.on_send(msg)
 
-    def prepare_headers(self, headers):
-        headers = headers or {}
+    def prepare_headers(self, headers, **extra_headers):
+        if headers:
+            headers.update(extra_headers)
+        else:
+            headers = extra_headers
         headers.setdefault('trace_id', trace.get_id())
         return headers
 
-    def _pick_endpoint(self, service):
-        if not isinstance(service, Service):
-            return service
+    def _pick_instance(self, service):
         service.observe(services.REMOVED, self._on_service_instance_unavailable)
         choices = []
         for instance in service:
             try:
                 connection = self.connections[instance.endpoint]
             except KeyError:
-                choices.append(instance.endpoint)
+                choices.append(instance)
                 continue
             if connection.is_alive():
-                choices.append(instance.endpoint)
+                choices.append(instance)
         if not choices:
-            raise NotConnected('Not connected to %s' % service.name)
+            raise NotConnected('Not connected to %s' % service)
         return random.choice(choices)
 
     def send_request(self, service, subject, body, headers=None):
+        if isinstance(service, InstanceSet):
+            try:
+                instance = self._pick_instance(service)
+            except NotConnected:
+                logger.warning('cannot send request (no instance) subject=%s', subject)
+                raise
+            else:
+                endpoint = instance.endpoint
+                version = instance.version
+        else:
+            endpoint = service
+            version = None
+
         msg = Message(
             msg_type=Message.REQ,
             subject=subject,
             body=body,
             source=self.endpoint,
-            headers=self.prepare_headers(headers),
+            headers=self.prepare_headers(headers, version=serialize_version(version)),
         )
         channel = RequestChannel(msg, self)
         self.channels[msg.id] = channel
-        try:
-            endpoint = self._pick_endpoint(service)
-        except NotConnected:
-            logger.error('cannot send message (no instance): %s', msg)
-        else:
-            self._send_message(endpoint, msg)
+        self._send_message(endpoint, msg)
         return channel
 
     def send_reply(self, msg, body, msg_type=Message.REP, headers=None):
@@ -189,7 +193,7 @@ class ZmqRPCServer(Component):
 
     def dispatch_request(self, msg):
         loglevel = self._get_loglevel(msg)
-        logger.log(loglevel, '%s source=%s', msg.subject, msg.source)
+        logger.log(loglevel, '%s source=%s version=%s', msg.subject, msg.source, msg.version)
         start = time.time()
         self.request_counts.incr(subject=msg.subject)
         channel = ReplyChannel(msg, self)

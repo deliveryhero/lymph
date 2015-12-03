@@ -5,8 +5,9 @@ import sys
 import socket
 
 import six
+import semantic_version
 
-from lymph.exceptions import RegistrationFailure, SocketNotCreated, NoSharedSockets
+from lymph.exceptions import RegistrationFailure, SocketNotCreated, NoSharedSockets, ConfigurationError
 from lymph.core.components import Componentized
 from lymph.core.events import Event
 from lymph.core.monitoring import metrics
@@ -17,6 +18,8 @@ from lymph.core.rpc import ZmqRPCServer
 from lymph.core.interfaces import DefaultInterface
 from lymph.core.plugins import Hook
 from lymph.core import trace
+from lymph.core.versioning import get_lymph_version, serialize_version
+from lymph.utils import hash_id
 
 
 logger = logging.getLogger(__name__)
@@ -40,6 +43,32 @@ def create_container(config, **kwargs):
 
 class InterfaceSkipped(Exception):
     pass
+
+
+class InterfaceVersions(object):
+    def __init__(self):
+        self.versions = {}
+        self.latest = None
+
+    def add(self, interface):
+        if interface.version in self.versions:
+            raise ConfigurationError("Duplicate interface `%s@%s`" % (interface.name, interface.version))
+        if self.versions and not interface.version:
+            raise ConfigurationError("Versioned and unversioned interface for `%s`" % interface.name)
+        if not interface.version or not self.latest or interface.version > self.latest.version:
+            self.latest = interface
+        self.versions[interface.version] = interface
+
+    def __iter__(self):
+        return six.itervalues(self.versions)
+
+    def __str__(self):
+        return ', '.join(str(v) for v in self.versions.keys())
+
+    def __getitem__(self, version):
+        if not version:
+            return self.latest
+        return self.versions[version]
 
 
 class ServiceContainer(Componentized):
@@ -79,7 +108,7 @@ class ServiceContainer(Componentized):
         self.add_component(rpc)
         rpc.request_handler = self.handle_request
 
-        self.install_interface(DefaultInterface, name='lymph', builtin=True)
+        self.install_interface(DefaultInterface, name='lymph', builtin=True, version=get_lymph_version())
 
     @classmethod
     def from_config(cls, config, **explicit_kwargs):
@@ -107,14 +136,15 @@ class ServiceContainer(Componentized):
 
     @property
     def identity(self):
-        return self.server.identity
+        return hash_id(self.endpoint)
 
     def install_interface(self, cls, **kwargs):
         interface = cls(self, **kwargs)
         if not interface.should_install():
             raise InterfaceSkipped('not a worker interface')
         self.add_component(interface)
-        self.installed_interfaces[interface.name] = interface
+        versions = self.installed_interfaces.setdefault(interface.name, InterfaceVersions())
+        versions.add(interface)
         for plugin in self.installed_plugins:
             plugin.on_interface_installation(interface)
         return interface
@@ -136,9 +166,15 @@ class ServiceContainer(Componentized):
         except KeyError:
             raise SocketNotCreated()
 
+    def iter_interfaces(self):
+        for interfaces in six.itervalues(self.installed_interfaces):
+            for interface in interfaces:
+                yield interface
+
     @property
     def service_types(self):
-        return self.installed_interfaces.keys()
+        for interface in self.iter_interfaces():
+            yield '%s@%s' % (interface.name, interface.version)
 
     def subscribe(self, handler, **kwargs):
         return self.events.subscribe(handler, **kwargs)
@@ -149,6 +185,7 @@ class ServiceContainer(Componentized):
     def get_instance_description(self, interface):
         description = interface.get_description()
         description.update({
+            'id': interface.id,
             'endpoint': self.endpoint,
             'identity': self.identity,
             'log_endpoint': self.log_endpoint,
@@ -157,13 +194,14 @@ class ServiceContainer(Componentized):
             'fqdn': self.fqdn,
             'hostname': socket.gethostname(),
             'ip': self.server.ip,
-            'type': self.worker
+            'type': self.worker,
+            'version': serialize_version(interface.version),
         })
         return description
 
     def start(self, register=True):
         logger.info('starting %s (%s)', self.service_name, ', '.join(self.service_types))
-        if all(i.builtin for i in self.installed_interfaces.values()):
+        if all(i.builtin for i in self.iter_interfaces()):
             logger.warning('only builtin interfaces installed')
 
         self.on_start()
@@ -173,14 +211,14 @@ class ServiceContainer(Componentized):
         self.metrics.add(metrics.Callable('greenlets.count', lambda: len(self.pool)))
 
     def register(self):
-        for interface_name, interface in six.iteritems(self.installed_interfaces):
+        for interface in self.iter_interfaces():
             if not interface.should_register():
                 continue
             instance = ServiceInstance(**self.get_instance_description(interface))
             try:
-                self.service_registry.register(interface_name, instance)
+                self.service_registry.register(interface.name, instance)
             except RegistrationFailure:
-                logger.error("registration failed %s, %s", interface_name, interface)
+                logger.error("registration failed %s, %s", interface.name, interface)
                 self.stop()
 
     def stop(self, **kwargs):
@@ -190,11 +228,15 @@ class ServiceContainer(Componentized):
     def join(self):
         self.pool.join()
 
-    def lookup(self, address):
+    def lookup(self, address, version=None):
         if '://' not in address:
-            return self.service_registry.get(address)
-        instance = ServiceInstance(address)
-        return Service(address, instances=[instance])
+            service = self.service_registry.get(address)
+        else:
+            instance = ServiceInstance(address)
+            service = Service(address, instances=[instance])
+        if version:
+            service = service.match_version(version)
+        return service
 
     def discover(self):
         return self.service_registry.discover()
@@ -205,16 +247,25 @@ class ServiceContainer(Componentized):
         event = Event(event_type, payload, source=self.identity, headers=headers)
         self.events.emit(event, **kwargs)
 
-    def send_request(self, address, subject, body, headers=None):
-        service = self.lookup(address)
+    def send_request(self, address, subject, body, headers=None, version=None):
+        service = self.lookup(address, version=version)
         return self.server.send_request(service, subject, body, headers=headers)
 
     def handle_request(self, channel):
         interface_name, func_name = channel.request.subject.rsplit('.', 1)
+        version = channel.request.version
+        if version:
+            version = semantic_version.Version(version)
         try:
-            interface = self.installed_interfaces[interface_name]
+            versions = self.installed_interfaces[interface_name]
         except KeyError:
-            logger.warning('unsupported service type: %s', interface_name)
+            logger.warning('Unsupported interface: %s', interface_name)
+            channel.nack(True)
+            return
+        try:
+            interface = versions[version]
+        except KeyError:
+            logger.warning('Unsupported version: %s@%s', interface_name, version)
             channel.nack(True)
             return
         try:
