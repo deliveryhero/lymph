@@ -13,8 +13,8 @@ class StaticServiceRegistryHub(object):
         service_name = service.name
         try:
             instances = self.registry[service_name]
-            for instance in instances:
-                service.update(instance.identity, endpoint=instance.endpoint)
+            for data in instances:
+                service.update(data.get('id'), **data)
         except KeyError:
             raise LookupFailure()
         return service
@@ -22,12 +22,12 @@ class StaticServiceRegistryHub(object):
     def register(self, service_name, instance, namespace=SERVICE_NAMESPACE):
         if namespace != SERVICE_NAMESPACE:
             return
-        self.registry.setdefault(service_name, []).append(instance)
+        self.registry.setdefault(service_name, []).append(instance.serialize())
 
     def unregister(self, service_name, instance, namespace=SERVICE_NAMESPACE):
         if namespace != SERVICE_NAMESPACE:
             return
-        self.registry.get(service_name, []).remove(instance)
+        self.registry.get(service_name, []).remove(instance.serialize())
 
     def discover(self):
         return list(self.registry.keys())

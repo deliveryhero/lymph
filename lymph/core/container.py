@@ -53,9 +53,7 @@ class InterfaceVersions(object):
     def add(self, interface):
         if interface.version in self.versions:
             raise ConfigurationError("Duplicate interface `%s@%s`" % (interface.name, interface.version))
-        if self.versions and not interface.version:
-            raise ConfigurationError("Versioned and unversioned interface for `%s`" % interface.name)
-        if not interface.version or not self.latest or interface.version > self.latest.version:
+        if not self.latest or interface.version and interface.version > self.latest.version:
             self.latest = interface
         self.versions[interface.version] = interface
 
@@ -66,9 +64,12 @@ class InterfaceVersions(object):
         return ', '.join(str(v) for v in self.versions.keys())
 
     def __getitem__(self, version):
-        if not version:
-            return self.latest
-        return self.versions[version]
+        try:
+            return self.versions[version]
+        except KeyError:
+            if not version:
+                return self.latest
+            raise
 
 
 class ServiceContainer(Componentized):
