@@ -103,22 +103,22 @@ class ConfigView(ConfigObject):
         return self.root.get_raw(self.path)
 
     def get_raw(self, key, default=Undefined):
-        return self.root.get_raw('%s.%s' % (self.path, key), default)
+        return self.root.get_raw(self.path + [key], default)
 
     def get(self, key, default=None):
-        return self.root.get('%s.%s' % (self.path, key), default)
+        return self.root.get(self.path + [key], default)
 
     def set(self, key, value):
-        return self.root.set('%s.%s' % (self.path, key), value)
+        return self.root.set(self.path + [key], value)
 
     def __iter__(self):
         return iter(self.root.get_raw(self.path))
 
     def __str__(self):
-        return '%s -> %r' % (self.path, self.root)
+        return '%s -> %r' % ('.'.join(self.path), self.root)
 
     def __repr__(self):
-        return '%s(%r, %r)' % (self.__class__.__name__, self.root, self.path)
+        return '%s(%r, %r)' % (self.__class__.__name__, self.root, '.'.join(self.path))
 
 
 _dollar_var_re = re.compile(r'\$\((\w+)\.([\w.-]+)\)')
@@ -183,8 +183,13 @@ class Configuration(ConfigObject):
     def update(self, data):
         self.values.update(data)
 
+    def _as_path(self, path):
+        if isinstance(path, six.string_types):
+            path = path.split('.')
+        return path
+
     def set(self, key, data):
-        path = key.split('.')
+        path = self._as_path(key)
         values = self.values
         for bit in path[:-1]:
             new_values = values.setdefault(bit, {})
@@ -196,28 +201,29 @@ class Configuration(ConfigObject):
         values[path[-1]] = data
 
     def get_raw(self, key, default=Undefined):
-        path = key.split('.')
+        path = self._as_path(key)
         values = self.values
         for bit in path[:-1]:
             values = values[bit]
             if values is None:
                 if default is not Undefined:
                     return default
-                raise KeyError(key)
+                raise KeyError('.'.join(path))
         try:
             return values[path[-1]]
         except KeyError:
             if default is not Undefined:
                 return default
-            raise KeyError(key)
+            raise KeyError('.'.join(path))
 
     def get(self, key, default=None):
+        path = self._as_path(key)
         try:
-            value = self.get_raw(key)
+            value = self.get_raw(path)
         except KeyError:
             return default
         if isinstance(value, dict) and not self.raw:
-            value = ConfigView(self, key)
+            value = ConfigView(self, path)
         return value
 
     def __str__(self):
