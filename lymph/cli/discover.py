@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 import json
+import sys
 
 from lymph.client import Client
 from lymph.cli.base import Command
@@ -7,7 +9,7 @@ from lymph.cli.base import Command
 
 class DiscoverCommand(Command):
     """
-    Usage: lymph discover [--instances] [--ip=<address> | --guess-external-ip | -g] [--only-running] [options]
+    Usage: lymph discover [<name>] [--instances] [--ip=<address> | --guess-external-ip | -g] [--only-running] [options]
 
     Shows available services
 
@@ -16,10 +18,12 @@ class DiscoverCommand(Command):
       --instances                  Show service instances.
       --json                       Output json.
       --full                       Show all published instance meta data.
+      --all                        Show services without instances.
+      --versions                   Show available versions.
       --ip=<address>               Use this IP for all sockets.
       --guess-external-ip, -g      Guess the public facing IP of this machine and
                                    use it instead of the provided address.
-      --only-running               Show only running services.
+      --only-running               DEPRECATED
 
     {COMMON_OPTIONS}
     """
@@ -27,14 +31,24 @@ class DiscoverCommand(Command):
     short_description = 'Shows available services'
 
     def run(self):
+        if self.args.get('--only-running'):
+            sys.stderr.write("\n--only-running is deprecated (it's now the default)\n\n")
         client = Client.from_config(self.config)
-        services = client.container.discover()
+
+        name = self.args.get('<name>')
+        if name:
+            services = {name}
+            self.args['--instances'] = True
+        else:
+            services = client.container.discover()
+
         instances = {}
-        for interface_name in sorted(services):
+        for interface_name in services:
             service = client.container.lookup(interface_name)
-            if not service and self.args.get('--only-running'):
+            if not service and not self.args.get('--all'):
                 continue
             instances[interface_name] = service
+
         if self.args.get('--json'):
             print(json.dumps({
                 name: [instance.serialize() for instance in service] for name, service in instances.items()
@@ -42,19 +56,34 @@ class DiscoverCommand(Command):
         else:
             self.print_human_readable_output(instances)
 
+    def print_service_label(self, label, instances):
+        instance_count = len({instance.identity for instance in instances})
+        print(u"%s [%s]" % (self.terminal.red(label), instance_count))
+
+    def print_service_instances(self, instances):
+        if not self.args.get('--instances'):
+            return
+        for d in sorted(instances, key=lambda d: d.identity):
+            print(u'[%s]  %-11s  %s' % (d.identity[:10], d.version if d.version else u'–', d.endpoint))
+            if self.args.get('--full'):
+                for k, v in sorted(d.serialize().items()):
+                    if k == 'endpoint':
+                        continue
+                    print(u'   %s: %r' % (k, v))
+        print()
+
     def print_human_readable_output(self, instances):
         if instances:
-            for interface_name, service in instances.items():
-                print(u"%s [%s]" % (self.terminal.red(interface_name), len(service)))
-                if self.args.get('--instances'):
-                    service_instances = sorted(service, key=lambda d: d.identity)
-                    for i, d in enumerate(service_instances):
-                        prefix = u'└─' if i == len(service_instances) - 1 else u'├─'
-                        print(u'%s [%s] %s' % (prefix, d.identity[:10], d.endpoint))
-                        if self.args.get('--full'):
-                            for k, v in sorted(d.serialize().items()):
-                                if k == 'endpoint':
-                                    continue
-                                print(u'   %s: %r' % (k, v))
+            for interface_name, service in sorted(instances.items()):
+                if self.args.get('--versions'):
+                    instances_by_version = {}
+                    for instance in service:
+                        instances_by_version.setdefault(instance.version, []).append(instance)
+                    for version in sorted(instances_by_version.keys()):
+                        self.print_service_label('%s@%s' % (service.name, version), instances_by_version[version])
+                        self.print_service_instances(instances_by_version[version])
+                else:
+                    self.print_service_label(service.name, service)
+                    self.print_service_instances(service)
         else:
             print(u"No registered services found")
