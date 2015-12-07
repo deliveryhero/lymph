@@ -38,6 +38,7 @@ class RequestCommand(Command):
       --json                       Output JSON.
       -N <number>                  Send a total of <N> requests [default: 1].
       -C <concurrency>             Send requests from <concurrency> concurrent greenlets [default: 1].
+      --dump-headers, -D           Show response headers.
 
     {COMMON_OPTIONS}
     """
@@ -45,11 +46,15 @@ class RequestCommand(Command):
     short_description = 'Sends a single RPC request to a service and outputs the response'
 
     def _run_one_request(self, request):
-        body = request().body
+        reply = request()
+        if self.args.get('--dump-headers'):
+            for key, value in reply.headers.items():
+                print('%s: %r' % (key, value))
+            print()
         if self.args.get('--json'):
-            print(json_serializer.dumps(body))
+            print(json_serializer.dumps(reply.body))
         else:
-            pprint.pprint(body)
+            pprint.pprint(reply.body)
 
     def _run_many_requests(self, request, n, c):
         # one warm up request for lookup and connection creation
