@@ -40,25 +40,29 @@ class ReplyChannel(Channel):
     def __init__(self, request, server):
         super(ReplyChannel, self).__init__(request, server)
         self._sent_reply = False
+        self._headers = {}
+
+    def add_header(self, name, value):
+        self._headers[name] = value
 
     def reply(self, body):
-        self.server.send_reply(self.request, body)
+        self.server.send_reply(self.request, body, headers=self._headers)
         self._sent_reply = True
 
     def ack(self, unless_reply_sent=False):
         if unless_reply_sent and self._sent_reply:
             return
-        self.server.send_reply(self.request, None, msg_type=Message.ACK)
+        self.server.send_reply(self.request, None, msg_type=Message.ACK, headers=self._headers)
         self._sent_reply = True
 
     def nack(self, unless_reply_sent=False):
         if unless_reply_sent and self._sent_reply:
             return
-        self.server.send_reply(self.request, None, msg_type=Message.NACK)
+        self.server.send_reply(self.request, None, msg_type=Message.NACK, headers=self._headers)
         self._sent_reply = True
 
     def error(self, **body):
-        self.server.send_reply(self.request, body, msg_type=Message.ERROR)
+        self.server.send_reply(self.request, body, msg_type=Message.ERROR, headers=self._headers)
 
     def close(self):
         pass

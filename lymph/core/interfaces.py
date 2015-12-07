@@ -10,6 +10,7 @@ from lymph.core.events import TaskHandler, EventHandler
 from lymph.core.monitoring import metrics
 from lymph.exceptions import RemoteError, EventHandlerTimeout, Timeout, Nack
 from lymph.utils import hash_id
+from lymph.core.versioning import serialize_version
 
 import gevent
 from gevent.event import AsyncResult
@@ -150,6 +151,7 @@ class Interface(Componentized):
 
     def handle_request(self, func_name, channel):
         method = self.methods[func_name]
+        channel.add_header('version', serialize_version(self.version))
         method.rpc_call(self, channel, **channel.request.body)
 
     def request(self, address, subject, body, timeout=REQUEST_TIMEOUT, version=None):
