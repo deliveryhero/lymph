@@ -52,7 +52,7 @@ class InterfaceVersions(object):
 
     def add(self, interface):
         if interface.version in self.versions:
-            raise ConfigurationError("Duplicate interface `%s@%s`" % (interface.name, interface.version))
+            raise ConfigurationError("Duplicate interface `%s`" % interface)
         if not self.latest or interface.version and interface.version > self.latest.version:
             self.latest = interface
         self.versions[interface.version] = interface
@@ -175,7 +175,7 @@ class ServiceContainer(Componentized):
     @property
     def service_types(self):
         for interface in self.iter_interfaces():
-            yield '%s@%s' % (interface.name, interface.version)
+            yield str(interface)
 
     def subscribe(self, handler, **kwargs):
         return self.events.subscribe(handler, **kwargs)

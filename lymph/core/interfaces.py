@@ -133,6 +133,9 @@ class Interface(Componentized):
         if container.worker and not builtin:
             self.name = '%s.worker' % self.name
 
+    def __str__(self):
+        return '%s@%s' % (self.name, self.version)
+
     @property
     def id(self):
         return hash_id(self.container.identity, self.name, self.version)
