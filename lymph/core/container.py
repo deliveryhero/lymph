@@ -53,8 +53,9 @@ class InterfaceVersions(object):
     def add(self, interface):
         if interface.version in self.versions:
             raise ConfigurationError("Duplicate interface `%s`" % interface)
-        if not self.latest or interface.version and interface.version > self.latest.version:
-            self.latest = interface
+        if interface.version:
+            if not self.latest or interface.version > self.latest.version:
+                self.latest = interface
         self.versions[interface.version] = interface
 
     def __iter__(self):
