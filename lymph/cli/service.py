@@ -12,6 +12,7 @@ from lymph.utils import import_object, dump_stacks
 from lymph.autoreload import set_source_change_callback
 from lymph.cli.base import Command
 from lymph.core.container import create_container, InterfaceSkipped
+from lymph.core.versioning import parse_versioned_name
 from lymph.utils.sockets import get_unused_port
 
 
@@ -28,15 +29,16 @@ def install_plugins(container, plugins):
 
 
 def install_interfaces(container, interfaces):
-    for name, instance_config in six.iteritems(interfaces):
+    for name_and_version, instance_config in six.iteritems(interfaces):
+        name, version = parse_versioned_name(name_and_version)
         try:
             cls_name = instance_config['class']
         except KeyError:
-            print("no instance class for '%s'" % name)
+            print("no instance class for '%s'" % name_and_version)
             sys.exit(1)
         cls = import_object(cls_name)
         try:
-            interface = container.install_interface(cls, name=name)
+            interface = container.install_interface(cls, name=name, version=version)
         except InterfaceSkipped as e:
             logger.info("skipping interface %s: %s", name, e)
             continue

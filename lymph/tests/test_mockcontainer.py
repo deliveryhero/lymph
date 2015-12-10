@@ -65,7 +65,7 @@ class BasicMockTest(RPCServiceTestCase):
         reply = self.request('lymph.status', {})
         self.assertEqual(reply.body, {
             'endpoint': 'mock://127.0.0.1:1',
-            'identity': '79ca257817ccccee3ee62997b864b397',
+            'identity': '52d967815c003dd3cd5c492971508657',
         })
 
     def test_error(self):

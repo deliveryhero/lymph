@@ -58,7 +58,7 @@ class NoSharedSockets(Exception):
     pass
 
 
-class NotConnected(Exception):
+class NotConnected(RpcError):
     pass
 
 

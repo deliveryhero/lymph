@@ -135,7 +135,7 @@ def _get_rpc_mock(rpc_mocks=None, original=ServiceContainer.send_request):
     class RequestSender(mock.MagicMock):
         rpc_functions = rpc_mocks or {}
 
-        def __call__(self, container, address, subject, body):
+        def __call__(self, container, address, subject, body, version=None):
             # XXX (Mouad): We need to call MagicMock __call__ here else calls
             # will not be tracked, and we do it for all calls mocked or not.
             super(RequestSender, self).__call__(subject, **body)

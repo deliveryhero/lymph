@@ -46,6 +46,10 @@ class Message(object):
         return not self.is_request() or self.subject == '_ping'
 
     @property
+    def version(self):
+        return self.headers.get('version')
+
+    @property
     def body(self):
         if not hasattr(self, '_body'):
             self._body = msgpack_serializer.loads(self._packed_body)

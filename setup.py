@@ -26,6 +26,7 @@ install_requires = [
     'PyHamcrest>=1.8.2',
     'pytz>=2015.4',
     'iso8601>=0.1.10',
+    'semantic-version>=2.4.2',
 ]
 
 if sys.version_info.major == 2:

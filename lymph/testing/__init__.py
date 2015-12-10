@@ -15,6 +15,7 @@ from lymph.core.interfaces import Interface
 from lymph.core.rpc import ZmqRPCServer
 from lymph.core.messages import Message
 from lymph.core.monitoring.aggregator import Aggregator
+from lymph.core.versioning import parse_versioned_name
 from lymph.discovery.static import StaticServiceRegistryHub
 from lymph.events.local import LocalEventSystem
 from lymph.client import Client
@@ -33,7 +34,7 @@ class MockServiceNetwork(object):
         self.discovery_hub = StaticServiceRegistryHub()
         self.events = LocalEventSystem()
 
-    def add_service(self, cls, interface_name=None, **kwargs):
+    def add_service(self, **kwargs):
         port = self.next_port
         self.next_port += 1
         registry = self.discovery_hub.create_registry()
@@ -43,7 +44,6 @@ class MockServiceNetwork(object):
             rpc=MockRPCServer(ip='127.0.0.1', port=port, mock_network=self),
             metrics=Aggregator(),
             **kwargs)
-        container.install_interface(cls, name=interface_name)
         self.service_containers[container.endpoint] = container
         container._mock_network = self
         return container
@@ -171,28 +171,38 @@ class LymphServiceTestCase(unittest.TestCase):
         warnings.warn("deprecated, please use either RPCServiceTestCase or WebServiceTestCase")
         super(LymphServiceTestCase, self).setUp()
         self.network = MockServiceNetwork()
-        self.service_container = self.network.add_service(
-            self.service_class,
-            interface_name=self.service_name
-        )
-        self.service = self.service_container.installed_interfaces[
-            self.service_name
-        ]
+
+        self.service_container = self.network.add_service()
+        self.service = self.service_container.install_interface(self.service_class, name=self.service_name)
         self.service.apply_config(self.service_config)
-        self.client_container = self.network.add_service(
-            self.client_class,
-            interface_name=self.client_name
-        )
-        self.client = self.client_container.installed_interfaces[
-            self.client_name
-        ]
+
+        self.client_container = self.network.add_service()
+        self.client = self.client_container.install_interface(self.client_class, name=self.client_name)
         self.client.apply_config(self.client_config)
+
         self.network.start()
 
     def tearDown(self):
         super(LymphServiceTestCase, self).tearDown()
         self.network.stop()
         self.network.join()
+
+
+class MultiServiceRPCTestCase(unittest.TestCase):
+    containers = []
+
+    def setUp(self):
+        super(MultiServiceRPCTestCase, self).setUp()
+        self.network = MockServiceNetwork()
+        for interfaces in self.containers:
+            container = self.network.add_service()
+            for name, config in interfaces.items():
+                cls = config.pop('class')
+                name, version = parse_versioned_name(name)
+                interface = container.install_interface(cls, name=name, version=version)
+                interface.apply_config(config)
+        self.client = self.network.add_service().install_interface(ClientInterface)
+        self.network.start()
 
 
 @six.add_metaclass(abc.ABCMeta)
@@ -203,8 +213,8 @@ class RPCServiceTestCase(unittest.TestCase):
         super(RPCServiceTestCase, self).setUp()
         self.network = MockServiceNetwork()
 
-        self.container = self.network.add_service(self.service_class, interface_name=self.service_name)
-        self.service = self.container.installed_interfaces[self.service_name]
+        self.container = self.network.add_service()
+        self.service = self.container.install_interface(self.service_class, name=self.service_name)
         self.service.apply_config(self.service_config)
 
         self.network.start()
