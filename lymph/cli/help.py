@@ -1,7 +1,7 @@
 from lymph.cli.base import Command, get_command_classes, get_command_class, format_docstring
 
 
-HEADER = 'Usage: lymph [options] <command> [<args>...]'
+HEADER = 'Usage: lymph <command> [options] [<args>...]'
 
 HELP = HEADER + """
   lymph help             display help overview

@@ -64,7 +64,7 @@ class ListCommandTests(CliTestMixin, unittest.TestCase):
 
 class HelpCommandTests(CliTestMixin, unittest.TestCase):
     def test_help(self):
-        self.assert_first_line_equals(['help'], 'Usage: lymph [options] <command> [<args>...]', config=False)
+        self.assert_first_line_equals(['help'], 'Usage: lymph <command> [options] [<args>...]', config=False)
 
     def test_help_list(self):
         self.assert_first_line_equals(['help', 'list'], 'Usage: lymph list [options]', config=False)
