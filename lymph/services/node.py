@@ -30,6 +30,7 @@ class Process(object):
         self._popen = subprocess.Popen(
             self.cmd, env=self.env, close_fds=False)
         self._process = psutil.Process(self._popen.pid)
+        self._process.cpu_percent()
 
     def stop(self, **kwargs):
         signalnum = kwargs.get('signalnum')
@@ -55,8 +56,7 @@ class Process(object):
             memory = self._process.memory_info()
             yield 'node.process.memory.rss', memory.rss, tags
             yield 'node.process.memory.vms', memory.vms, tags
-            cpu = self._process.cpu_percent(interval=2.0)
-            yield 'node.process.cpu', cpu, tags
+            yield 'node.process.cpu', self._process.cpu_percent(), tags
         except psutil.NoSuchProcess:
             pass
 
