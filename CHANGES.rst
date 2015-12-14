@@ -1,3 +1,8 @@
+0.14.0
+======
+- Added RPC versioning support
+- Added --dump-headers option for ``lymph request``
+
 0.13.0
 ======
 - Added ``--json`` option for ``lymph request``
