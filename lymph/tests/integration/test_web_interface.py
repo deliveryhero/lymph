@@ -40,10 +40,14 @@ class Web(WebServiceInterface):
         HandledRule("/bar/", endpoint="bar", handler=HandledRuleHandler),
         Rule("/fail/", endpoint="fail"),
         Rule("/fail-wrong-endpoint/", endpoint=42),
+        Rule("/bad-handler-return-type/", endpoint='return_none')
     ])
 
     def test(self, request):
         return Response("method test")
+
+    def return_none(self, request):
+        pass
 
 
 class CustomErrorHandlingWeb(Web):
@@ -98,6 +102,10 @@ class WebIntegrationTest(WebServiceTestCase):
 
         response = self.client.post("/baz/")
         self.assertEqual(response.status_code, 405)
+
+    def test_bad_handler_return_type(self):
+        response = self.client.get("/bad-handler-return-type/")
+        self.assertIn('X-Trace-Id', response.headers)
 
 
 class CustomErrorHandlingWebIntegrationTest(WebIntegrationTest):
