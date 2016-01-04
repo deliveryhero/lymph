@@ -58,7 +58,7 @@ class ZmqRPCServer(Component):
         retries = 0
         while True:
             if not self.port:
-                port = random.randint(35536, 65536)
+                port = random.randrange(35536, 65536)
             try:
                 self.endpoint = 'tcp://%s:%s' % (self.ip, port)
                 endpoint = self.endpoint.encode('utf-8')
