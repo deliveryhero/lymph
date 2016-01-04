@@ -122,6 +122,8 @@ class WebServiceInterface(Interface):
                 response = handler.dispatch(kwargs)
             else:
                 response = handler(request, **kwargs)
+            if not isinstance(response, Response):
+                raise TypeError('%r is not a valid response - expected werkzeug.wrappers.Response instance' % response)
         except MethodNotAllowed:
             response = self.MethodNotAllowed().get_response(request.environ)
         except HTTPException as e:
