@@ -37,6 +37,9 @@ class ZmqRPCServer(Component):
         self.request_handler = lambda channel: None
         self.connection_config = connection_config or {}
 
+        self.recv_sock = None
+        self.send_sock = None
+
     @classmethod
     def from_config(cls, config, **kwargs):
         if 'pool' in config:
@@ -114,8 +117,10 @@ class ZmqRPCServer(Component):
         self._close_sockets()
 
     def _close_sockets(self):
-        self.recv_sock.close()
-        self.send_sock.close()
+        if self.recv_sock:
+            self.recv_sock.close()
+        if self.send_sock:
+            self.send_sock.close()
 
     def _on_service_instance_unavailable(self, instance, action=None):
         self.disconnect(instance.endpoint)
