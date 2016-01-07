@@ -103,6 +103,11 @@ class ConfigurationTests(unittest.TestCase):
             'bad_namespace': '$(env.FOO_BAR)',
         }, other={})
 
+    def test_config_view_get(self):
+        config = Configuration({'namespace': {'values': {'foo': 42}}})
+        config_view = config.get('namespace')
+        self.assertEqual(config_view.get('values.foo'), 42)
+
 
 class ConfigurableThing(object):
     def __init__(self, config):

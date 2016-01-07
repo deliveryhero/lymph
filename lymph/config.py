@@ -18,6 +18,10 @@ def to_dict(value):
 
 @six.add_metaclass(abc.ABCMeta)
 class ConfigObject(collections.Mapping):
+    def _as_path(self, path):
+        if isinstance(path, six.string_types):
+            path = path.split('.')
+        return path
 
     @abc.abstractmethod
     def get(self, key, default=None):
@@ -103,10 +107,10 @@ class ConfigView(ConfigObject):
         return self.root.get_raw(self.path)
 
     def get_raw(self, key, default=Undefined):
-        return self.root.get_raw(self.path + [key], default)
+        return self.root.get_raw(self.path + self._as_path(key), default)
 
     def get(self, key, default=None):
-        return self.root.get(self.path + [key], default)
+        return self.root.get(self.path + self._as_path(key), default)
 
     def set(self, key, value):
         return self.root.set(self.path + [key], value)
@@ -119,6 +123,11 @@ class ConfigView(ConfigObject):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.root, '.'.join(self.path))
+
+    def iteritems(self):
+        keys = self.root.get_raw(self.path).keys()
+        for key in keys:
+            yield key, self.get([key])
 
 
 _dollar_var_re = re.compile(r'\$\((\w+)\.([\w.-]+)\)')
@@ -182,11 +191,6 @@ class Configuration(ConfigObject):
 
     def update(self, data):
         self.values.update(data)
-
-    def _as_path(self, path):
-        if isinstance(path, six.string_types):
-            path = path.split('.')
-        return path
 
     def set(self, key, data):
         path = self._as_path(key)
