@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import os
 from functools import partial
@@ -133,7 +135,8 @@ class InstanceCommand(Command):
         sys.exit(0)
 
     def _set_process_title(self):
-        setproctitle('lymph-instance (identity: %s, endpoint: %s, config: %s)' % (
+        setproctitle('%s (identity: %s, endpoint: %s, config: %s)' % (
+            self.proctitle,
             self.container.identity,
             self.container.endpoint,
             self.config.source,
@@ -183,4 +186,3 @@ class NodeCommand(InstanceCommand):
         })
         os.environ['LYMPH_NODE_CONFIG'] = self.config.source
         super(NodeCommand, self).run()
-
