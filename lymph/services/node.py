@@ -114,10 +114,6 @@ class Node(Interface):
                 '%s:%s' % (host or self.container.server.ip, port), inheritable=True)
             self.sockets[port] = sock
 
-    def restart_all(self):
-        for process in self.processes:
-            process.stop()
-
     def watch_processes(self):
         while True:
             for process in self.processes:
