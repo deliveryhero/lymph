@@ -27,11 +27,17 @@ logger = logging.getLogger(__name__)
 
 def create_container(config, **kwargs):
     if 'registry' in config:
-        logger.warning('global `registry` configuration is deprecated. please use `container.registry` instead.')
+        logger.warning('global `registry` configuration is deprecated. '
+                       'Please use `container` and define a `registry` entry '
+                       'inside `container` instead.')
         config.set('container.registry', config.get_raw('registry'))
+
     if 'event_system' in config:
-        logger.warning('global `event_system` configuration is deprecated. please use `container.events` instead.')
+        logger.warning('global `event_system` configuration is deprecated. '
+                       'Please use `container` and define an `events` '
+                       'entry inside `container` instead.')
         config.set('container.events', config.get_raw('event_system'))
+
     container = config.create_instance(
         'container',
         default_class='lymph.core.container:ServiceContainer',
