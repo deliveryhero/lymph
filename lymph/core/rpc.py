@@ -147,7 +147,9 @@ class ZmqRPCServer(Component):
     def _pick_instance(self, service):
         service.observe(services.REMOVED, self._on_service_instance_unavailable)
         choices = []
+        count = 0
         for instance in service:
+            count += 1
             try:
                 connection = self.connections[instance.endpoint]
             except KeyError:
@@ -155,16 +157,18 @@ class ZmqRPCServer(Component):
                 continue
             if connection.is_alive():
                 choices.append(instance)
+        if count == 0:
+            raise NotConnected('service have no instance')
         if not choices:
-            raise NotConnected('Not connected to %s' % service)
+            raise NotConnected('all %d instance connection are dead' % count)
         return random.choice(choices)
 
     def send_request(self, service, subject, body, headers=None):
         if isinstance(service, InstanceSet):
             try:
                 instance = self._pick_instance(service)
-            except NotConnected:
-                logger.warning('cannot send request (no instance) subject=%s', subject)
+            except NotConnected as ex:
+                logger.warning('cannot send request (%s) subject=%s', ex, subject)
                 raise
             else:
                 endpoint = instance.endpoint
