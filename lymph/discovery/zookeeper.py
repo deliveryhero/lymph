@@ -1,6 +1,8 @@
 import functools
 import json
 import logging
+
+import gevent
 import six
 
 from kazoo.protocol.states import EventType, KazooState
@@ -140,7 +142,11 @@ class ZookeeperServiceRegistry(BaseServiceRegistry):
             value.encode('utf-8'),
             ephemeral=True, makepath=True)
         # FIXME: result.set_exception(RegistrationFailure())
-        result.get(timeout=timeout)
+        try:
+            result.get(timeout=timeout)
+        except gevent.Timeout:
+            logger.exception('registration of %s:%s failed', namespace, service_name)
+            raise
         self.registered_names[(namespace, service_name)] = instance
 
     def unregister(self, service_name, instance, timeout=1, namespace=SERVICE_NAMESPACE):
