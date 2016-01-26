@@ -85,6 +85,7 @@ class WebServiceInterface(Interface):
         self.wsgi_server.start()
 
         web_instance = ServiceInstance(
+            id=self.id,
             identity=self.container.identity,
             hostname=socket.gethostname(),
             ip=self.container.server.ip,
