@@ -4,6 +4,8 @@ import logging
 import pkg_resources
 import six
 import textwrap
+import traceback
+import sys
 
 from lymph.exceptions import Timeout, LookupFailure
 
@@ -61,6 +63,21 @@ class Command(object):
         raise NotImplementedError
 
 
+class FailedToLoadCommand(Command):
+    def __init__(self, exc_type, exc_value, exc_traceback):
+        self.exc_type = exc_type
+        self.exc_value = exc_value
+        self.exc_traceback = exc_traceback
+        self.short_description = "Command unavailable: %s: %s" % (exc_type, exc_value)
+
+    @classmethod
+    def get_help(cls):
+        raise NotImplementedError("Command failed to load required module")
+
+    def run(self):
+        raise NotImplementedError("Command failed to load required module")
+
+
 _command_class_cache = None
 
 
@@ -74,9 +91,14 @@ def get_command_classes():
                 logger.error('ignoring duplicate command definition for %s (already installed: %s)', entry_point, entry_points[name])
                 continue
             entry_points[name] = entry_point
-            cls = entry_point.load()
-            cls.name = name
-            _command_class_cache[name] = cls
+            try:
+                cls = entry_point.load()
+                cls.name = name
+                _command_class_cache[name] = cls
+            except ImportError:
+                logger.error('Import error in %s, %s', entry_point, name)
+                traceback.print_exc()
+                _command_class_cache[name] = FailedToLoadCommand(sys.exc_type, sys.exc_value, sys.exc_traceback)
     return _command_class_cache
 
 
