@@ -96,8 +96,7 @@ def get_command_classes():
                 cls.name = name
                 _command_class_cache[name] = cls
             except ImportError:
-                logger.error('Import error in %s, %s', entry_point, name)
-                traceback.print_exc()
+                logger.exception('Import error for command entry point %s', entry_point)
                 _command_class_cache[name] = FailedToLoadCommand(sys.exc_type, sys.exc_value, sys.exc_traceback)
     return _command_class_cache
 

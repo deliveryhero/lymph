@@ -70,6 +70,9 @@ def main(argv=None):
     from lymph.cli.base import get_command_class
     from lymph.utils import logging as lymph_logging
 
+    bootup_handler = logging.StreamHandler()
+    logging.getLogger().addHandler(bootup_handler)
+
     args = docopt.docopt(HELP, argv, version=VERSION, options_first=True)
     name = args.pop('<command>')
     argv = args.pop('<args>')
@@ -83,6 +86,7 @@ def main(argv=None):
 
     config = setup_config(args) if command_cls.needs_config else None
 
+    logging.getLogger().removeHandler(bootup_handler)
     if config:
         loglevel = args.get('--loglevel', 'ERROR')
         logfile = args.get('--logfile')
