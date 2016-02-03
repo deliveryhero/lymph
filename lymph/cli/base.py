@@ -63,21 +63,6 @@ class Command(object):
         raise NotImplementedError
 
 
-class FailedToLoadCommand(Command):
-    def __init__(self, exc_type, exc_value, exc_traceback):
-        self.exc_type = exc_type
-        self.exc_value = exc_value
-        self.exc_traceback = exc_traceback
-        self.short_description = "Command unavailable: %s: %s" % (exc_type, exc_value)
-
-    @classmethod
-    def get_help(cls):
-        raise NotImplementedError("Command failed to load required module")
-
-    def run(self):
-        raise NotImplementedError("Command failed to load required module")
-
-
 _command_class_cache = None
 
 
@@ -97,7 +82,6 @@ def get_command_classes():
                 _command_class_cache[name] = cls
             except ImportError:
                 logger.exception('Import error for command entry point %s', entry_point)
-                _command_class_cache[name] = FailedToLoadCommand(sys.exc_type, sys.exc_value, sys.exc_traceback)
     return _command_class_cache
 
 
