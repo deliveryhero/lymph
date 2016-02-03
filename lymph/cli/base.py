@@ -4,6 +4,8 @@ import logging
 import pkg_resources
 import six
 import textwrap
+import traceback
+import sys
 
 from lymph.exceptions import Timeout, LookupFailure
 
@@ -74,9 +76,12 @@ def get_command_classes():
                 logger.error('ignoring duplicate command definition for %s (already installed: %s)', entry_point, entry_points[name])
                 continue
             entry_points[name] = entry_point
-            cls = entry_point.load()
-            cls.name = name
-            _command_class_cache[name] = cls
+            try:
+                cls = entry_point.load()
+                cls.name = name
+                _command_class_cache[name] = cls
+            except ImportError:
+                logger.exception('Import error for command entry point %s', entry_point)
     return _command_class_cache
 
 
