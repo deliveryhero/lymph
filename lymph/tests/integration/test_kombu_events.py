@@ -55,14 +55,19 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
         exchange = kombu.Exchange(self.exchange_name)
         exchange(connection).delete()
 
-        # FIXME: there should be a better way to get this exchange name
-        waiting_exchange = kombu.Exchange('%s_waiting' % self.exchange_name)
+        waiting_exchange = kombu.Exchange(self.the_container.events.waiting_exchange.name)
         waiting_exchange(connection).delete()
 
-        # FIXME: there should be a better way to get the queue names
-        for name in ('foo-wait_500', 'test-on_foo'):
-            queue = kombu.Queue(name)
-            queue(connection).delete()
+        retry_exchange = kombu.Exchange(self.the_container.events.retry_exchange.name)
+        retry_exchange(connection).delete()
+
+        for q in ('test-on_foo', 'test-on_retryable_foo'):
+            self.delete_queue(q)
+
+    def delete_queue(self, name):
+        connection = self.get_kombu_connection()
+        queue = kombu.Queue(name)
+        queue(connection).delete()
 
     def get_kombu_connection(self):
         return kombu.Connection(transport='amqp', host='127.0.0.1')
@@ -90,6 +95,7 @@ class KombuIntegrationTest(LymphIntegrationTestCase, AsyncTestsMixin):
 
     def test_delayed_emit(self):
         self.lymph_client.emit('foo', {}, delay=.5)
+        self.addCleanup(self.delete_queue, 'foo-wait_500')
         self.assert_temporarily_true(self.received_check(0), timeout=.2)
         self.assert_eventually_true(self.received_check(1), timeout=10)
         self.assertEqual(self.the_interface.collected_events[0].evt_type, 'foo')
