@@ -124,6 +124,9 @@ class ConfigView(ConfigObject):
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.root, '.'.join(self.path))
 
+    def items(self):
+        return self.iteritems()
+
     def iteritems(self):
         keys = self.root.get_raw(self.path).keys()
         for key in keys:
@@ -208,7 +211,7 @@ class Configuration(ConfigObject):
         path = self._as_path(key)
         values = self.values
         for bit in path[:-1]:
-            values = values[bit]
+            values = values.get(bit)
             if values is None:
                 if default is not Undefined:
                     return default
