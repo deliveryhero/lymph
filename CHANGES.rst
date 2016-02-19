@@ -1,3 +1,8 @@
+0.15.0
+======
+- Added nose2 plugin
+- Fixed access to dotted config keys
+
 0.14.0
 ======
 - Added RPC versioning support
