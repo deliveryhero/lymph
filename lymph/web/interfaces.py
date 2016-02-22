@@ -53,6 +53,8 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).apply_config(config)
         self.http_port = config.get('port')
         self.pool_size = config.get('wsgi_pool_size')
+        self.request_trace_id_header = config.get('tracing.request_header')
+        self.response_trace_id_header = config.get('tracing.response_header', 'X-Trace-Id')
         if not self.http_port:
             self.uses_static_port = False
             self.http_port = sockets.get_unused_port()
@@ -98,7 +100,11 @@ class WebServiceInterface(Interface):
         super(WebServiceInterface, self).on_stop()
 
     def dispatch_request(self, request):
-        trace.set_id()
+        if self.request_trace_id_header:
+            trace_id = request.headers.get(self.request_trace_id_header)
+        else:
+            trace_id = None
+        trace.set_id(trace_id)
         logger.info('%s %s', request.method, request.path)
         urls = self.url_map.bind_to_environ(request.environ)
         request.urls = urls
@@ -112,7 +118,7 @@ class WebServiceInterface(Interface):
             response = ex.get_response(request.environ)
         else:
             response = self.handle(request, rule, kwargs)
-        response.headers['X-Trace-Id'] = trace.get_id()
+        response.headers[self.response_trace_id_header] = trace.get_id()
         return response
 
     def handle(self, request, rule, kwargs):

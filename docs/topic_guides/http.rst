@@ -40,3 +40,13 @@ Interface configuration
     Listen on this port. Defaults to a random port.
 
 .. describe:: interfaces.<name>.wsgi_pool_size
+
+.. describe:: interfaces.<name>.tracing.request_header
+
+    Name of an HTTP request header that may provide the trace id.
+    Defaults to ``None``.
+
+.. describe:: interfaces.<name>.tracing.response_header
+
+    Name of the HTTP response header that contains the trace id.
+    Defaults to ``"X-Trace-Id"``.
