@@ -77,6 +77,10 @@ class InstanceCommand(Command):
 
         self._register_signals()
 
+        # set process title early since start() may take some time,
+        # even though endpoint may not be known yet
+        self._set_process_title()
+
         self.container.start(register=not self.args.get('--isolated', False))
 
         self._set_process_title()
