@@ -186,3 +186,21 @@ class CustomHealthcheckEndpointTest(WebServiceTestCase):
         response = self.client.get('/_foo/')
         self.assertEqual(response.status_code, 200)
 
+
+class NoRequestTraceIdPropagation(WebServiceTestCase):
+    service_class = Web
+
+    def test_no_trace_id_propagation_by_default(self):
+        response = self.client.get('/test/', headers={'X-Trace-Id': 'forced'})
+        self.assertNotEqual(response.headers.get('X-Trace-Id'), 'forced')
+
+
+class RequestTraceIdPropagation(WebServiceTestCase):
+    service_class = Web
+    service_config = Configuration({
+        'tracing': {'request_header': 'X-Trace-Id'},
+    })
+
+    def test_trace_id_propagation(self):
+        response = self.client.get('/test/', headers={'X-Trace-Id': 'forced'})
+        self.assertEqual(response.headers.get('X-Trace-Id'), 'forced')
